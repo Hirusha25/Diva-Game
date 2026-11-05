@@ -6,7 +6,7 @@ export const ROAD_HALF = (LANE_WIDTH * LANE_COUNT) / 2; // 3.75
 
 // Cross-section of the street, measured from the road centre line outward.
 // These match the bus-shelter model so shelters sit flush on the pavement.
-export const KERB = { inner: ROAD_HALF, outer: 4.0, height: 0.16 };
+export const KERB = { inner: ROAD_HALF, outer: 4.05, height: 0.24 };
 export const PAVEMENT = { inner: 4.0, outer: 6.26, height: 0.135 };
 export const WALL = { inner: 6.26, outer: 6.56, height: 2.2 };
 export const SHELTER_OFFSET_X = 4.98; // shelter origin → its kerb edge lands on the road edge
@@ -24,16 +24,22 @@ export const SCORE_PER_METRE = 0.5;
 export const INVULNERABLE_TIME = 1.6;
 
 export const COLORS = {
-  skyTop: 0x2f8fe8,
-  skyHorizon: 0xd7ecff,
-  fog: 0xcfe4f7,
-  asphaltTint: 0xb8bcc0,
-  laneLine: 0xf2f2ec,
-  kerbWhite: 0xe5e5e1,
-  kerbBlack: 0x2a2a2a,
-  pavement: 0x8c8d89,
-  wall: 0xd5c179,
-  wallCap: 0x76726a,
-  ground: 0x7c9a4b,
-  dirt: 0xa08a5c,
+  skyTop: 0x0f5fdc,
+  skyMid: 0x3d9bf2,
+  skyHorizon: 0xeaf6ff,
+  fog: 0xe4f1fb,
+  asphaltTint: 0x9fa3a7,
+  laneLine: 0xffffff,
+  kerbWhite: 0xf3f3ee,
+  kerbBlack: 0x262626,
+  pavement: 0xffffff,      // tinted by the paving texture
+  wall: 0xeccf5e,
+  wallCap: 0xbdb6a8,
+  ground: 0x79b24a,
+  dirt: 0x8d7a4e,
+  shrub: 0x3f9a2f,
+  shrubLight: 0x6cc24a,
+  flowerPink: 0xff4fa3,
+  flowerWhite: 0xffffff,
+  trunk: 0x6b4a2b,
 };

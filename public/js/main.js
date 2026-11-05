@@ -16,10 +16,10 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPrefere
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
+renderer.toneMappingExposure = 1.2;
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(COLORS.fog, 70, 190);
+scene.fog = new THREE.Fog(COLORS.fog, 80, 210);
 scene.add(createSky(), createClouds());
 
 // Sun high and slightly behind the camera so both sides of the street are lit;

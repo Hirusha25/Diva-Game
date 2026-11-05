@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { COLORS } from './config.js';
+import { cloudTexture } from './textures.js';
 
 /** Cheap vertical-gradient sky dome. */
 export function createSky() {
@@ -10,6 +11,7 @@ export function createSky() {
     fog: false,
     uniforms: {
       top: { value: new THREE.Color(COLORS.skyTop) },
+      mid: { value: new THREE.Color(COLORS.skyMid) },
       horizon: { value: new THREE.Color(COLORS.skyHorizon) },
     },
     vertexShader: `
@@ -19,10 +21,13 @@ export function createSky() {
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }`,
     fragmentShader: `
-      uniform vec3 top; uniform vec3 horizon; varying float vY;
+      uniform vec3 top; uniform vec3 mid; uniform vec3 horizon; varying float vY;
       void main() {
-        float t = smoothstep(-0.05, 0.45, vY);
-        gl_FragColor = vec4(mix(horizon, top, t), 1.0);
+        // horizon haze -> vivid mid blue -> deep zenith, like a sunny midday sky
+        float a = smoothstep(-0.02, 0.18, vY);
+        float b = smoothstep(0.18, 0.75, vY);
+        vec3 c = mix(mix(horizon, mid, a), top, b);
+        gl_FragColor = vec4(c, 1.0);
       }`,
   });
   const sky = new THREE.Mesh(geo, mat);
@@ -30,27 +35,22 @@ export function createSky() {
   return sky;
 }
 
-/** A handful of soft cloud sprites drifting far away. */
+/** Cumulus cloud sprites drifting far away on both sides of the road. */
 export function createClouds() {
   const group = new THREE.Group();
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = 128;
-  const ctx = canvas.getContext('2d');
-  const g = ctx.createRadialGradient(64, 64, 10, 64, 64, 64);
-  g.addColorStop(0, 'rgba(255,255,255,0.95)');
-  g.addColorStop(0.6, 'rgba(255,255,255,0.55)');
-  g.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 128, 128);
-  const map = new THREE.CanvasTexture(canvas);
-  const mat = new THREE.SpriteMaterial({ map, transparent: true, depthWrite: false, fog: false, opacity: 0.9 });
-  for (let i = 0; i < 14; i++) {
-    const s = new THREE.Sprite(mat);
-    const x = (Math.random() - 0.5) * 360;
-    const z = -120 - Math.random() * 200;
-    s.position.set(x, 40 + Math.random() * 30, z);
-    const w = 40 + Math.random() * 60;
-    s.scale.set(w, w * (0.35 + Math.random() * 0.25), 1);
+  const mats = [cloudTexture(), cloudTexture(), cloudTexture()].map(
+    (map) => new THREE.SpriteMaterial({ map, transparent: true, depthWrite: false, fog: false }),
+  );
+  // Spread across the view above the road's vanishing point so several
+  // clouds sit inside a portrait phone frame.
+  for (let i = 0; i < 12; i++) {
+    const s = new THREE.Sprite(mats[i % mats.length]);
+    const x = (Math.random() - 0.5) * 340;
+    const z = -260 - Math.random() * 120;
+    const y = 45 + Math.random() * 110;
+    s.position.set(x, y, z);
+    const w = 38 + Math.random() * 42;
+    s.scale.set(w, w * 0.5, 1);
     group.add(s);
   }
   return group;
