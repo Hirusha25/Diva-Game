@@ -4,3 +4,4 @@ config/local.php
 storage/*.log
 storage/sms/
 .DS_Store
+storage/*.sqlite
