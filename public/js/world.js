@@ -7,8 +7,8 @@ import {
 import { pavingTexture } from './textures.js';
 
 const TREES_PER_CHUNK = 16;   // 8 per side, one row set back behind the wall
-const BUSHES_FRONT_PER_CHUNK = 10;  // small clumps on the pavement at the wall base
-const BUSHES_BACK_PER_CHUNK = 28;   // dense hedge behind the wall, hides the ground
+const BUSHES_FRONT_PER_CHUNK = 6;   // a few small clumps on the pavement at the wall base
+const BUSHES_BACK_PER_CHUNK = 14;   // loose hedge behind the wall
 
 /**
  * The running world: an endless street built from CHUNK_COUNT identical
@@ -272,15 +272,15 @@ export class World {
         const h = 0.55 + rng() * 0.3;                     // low, so the wall stays visible
         bush.scale.set(h * kind.aspect, h, 1);
         bush.position.set(s * (WALL.inner - 0.45), PAVEMENT.height, z);
-        bush.visible = !blocked;
+        bush.visible = !blocked && rng() < 0.8;
       } else {
         const j = i - BUSHES_FRONT_PER_CHUNK;
         const slot = Math.floor(j / 2);
         const z = -CHUNK_LENGTH / 2 + (slot + rng() * 0.6) * (CHUNK_LENGTH / (BUSHES_BACK_PER_CHUNK / 2));
-        const h = 2.5 + rng() * 0.5;                      // tops just peek over the 2.2 m wall
+        const h = 2.4 + rng() * 0.4;                      // tops just peek over the 2.2 m wall
         bush.scale.set(h * kind.aspect, h, 1);
         bush.position.set(s * (WALL.outer + 0.9 + rng() * 0.8), -0.02, z);
-        bush.visible = true;
+        bush.visible = rng() < 0.75;
       }
     });
   }
