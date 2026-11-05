@@ -51,7 +51,8 @@ export class CloudField {
     for (let i = 0; i < count; i++) {
       const kind = i % 4 === 3 ? 3 : i % 3;            // mix of banks and puffs
       const c = clouds[kind];
-      const mat = new THREE.SpriteMaterial({ map: c.map, transparent: true, depthWrite: false, fog: false });
+      // toneMapped:false keeps the artwork's pure white fill instead of a tone-mapped grey.
+      const mat = new THREE.SpriteMaterial({ map: c.map, transparent: true, depthWrite: false, fog: false, toneMapped: false });
       const sprite = new THREE.Sprite(mat);
       const item = { sprite, aspect: c.aspect, phase: Math.random() * Math.PI * 2 };
       this._spawn(item, -140 - (i / count) * 420);       // stagger along the depth, none too close at start
@@ -86,8 +87,8 @@ export class CloudField {
       const depth = THREE.MathUtils.clamp((-it.z) / 500, 0, 1);
       const y = it.baseY + Math.sin(this.time * 0.35 + it.phase) * 1.8;
       it.sprite.position.set(it.x, y, it.z);
-      // Distant clouds fade into the horizon haze; near ones are crisp.
-      it.sprite.material.opacity = 1 - depth * 0.35;
+      // Only the farthest clouds soften slightly into the haze.
+      it.sprite.material.opacity = 1 - depth * 0.12;
     }
   }
 }
