@@ -63,6 +63,23 @@ ${inlineScript}<script type="module">
 ${js}
 </script>
 `;
+// --full-html: a complete standalone document (GitHub Pages / any static host).
+if (process.argv.includes('--full-html')) {
+  const doc = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a4fb5">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+${page.replace('<style>', '<style>html,body{height:100%}')}
+</head>
+<body></body>
+</html>`.replace('</head>\n<body></body>', '</head>\n<body>').replace('</html>', '</body>\n</html>');
+  await writeFile(path.join(out, 'index.html'), doc);
+  console.log('wrote', path.join(out, 'index.html'));
+}
 await writeFile(path.join(out, 'diva-fresh-run.html'), page);
 if (!inline) await cp('public/assets', path.join(out, 'assets'), { recursive: true });
 console.log('wrote', path.join(out, 'diva-fresh-run.html'), (page.length / 1024).toFixed(0) + ' KB');
