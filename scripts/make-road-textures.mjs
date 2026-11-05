@@ -26,7 +26,7 @@ const kb = async (f) => ((await stat(f)).size / 1024).toFixed(0) + ' KB';
 
   await sharp(base)
     .composite([{ input: grain, blend: 'overlay' }])
-    .modulate({ brightness: 1.12, saturation: 0.35 })  // neutralise the photo's blue cast
+    .modulate({ brightness: 1.12, saturation: 0 })     // pure neutral grey, no blue cast
     .webp({ quality: 82 })
     .toFile(`${OUT}/asphalt.webp`);
   console.log('asphalt tile ->', await kb(`${OUT}/asphalt.webp`));
@@ -64,7 +64,7 @@ const kb = async (f) => ((await stat(f)).size / 1024).toFixed(0) + ' KB';
     const { width, height } = mask.info;
     const alpha = mask.info.channels === 1 ? mask.data : Buffer.from(mask.data.filter((_, idx) => idx % mask.info.channels === 0));
     // Dark blue-black layer carrying that mask as its alpha.
-    const black = await sharp({ create: { width, height, channels: 3, background: '#06101c' } })
+    const black = await sharp({ create: { width, height, channels: 3, background: '#000000' } })
       .joinChannel(alpha, { raw: { width, height, channels: 1 } })
       .png().toBuffer();
     // Place on a padded canvas (offsets must stay positive), crop afterwards.

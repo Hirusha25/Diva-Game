@@ -24,7 +24,7 @@ scene.add(createSky(), createClouds());
 
 // Sun high and slightly behind the camera so both sides of the street are lit;
 // the hemisphere light fills the faces that look away from it.
-const hemi = new THREE.HemisphereLight(0xd6e8ff, 0x9a8a60, 1.5);
+const hemi = new THREE.HemisphereLight(0xf4f6f8, 0x9a8a60, 1.5); // near-neutral so the road stays grey
 const sun = new THREE.DirectionalLight(0xfff1d9, 2.0);
 sun.position.set(3, 18, 10);
 scene.add(hemi, sun);

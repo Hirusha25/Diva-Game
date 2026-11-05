@@ -30,7 +30,7 @@ export const COLORS = {
   skyLow: 0x82cffb,
   skyHorizon: 0xe1f7fd,
   fog: 0xe1f7fd,
-  asphaltTint: 0xe4e4e2,
+  asphaltTint: 0xe6e6e6,
   laneLine: 0xf6f6f2,
   kerbWhite: 0xf3f3ee,
   kerbBlack: 0x262626,
