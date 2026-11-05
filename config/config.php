@@ -51,7 +51,7 @@ $config = [
     'admin' => [
         // Default login admin / diva2026 – CHANGE IN config/local.php
         'username'      => getenv('DIVA_ADMIN_USER') ?: 'admin',
-        'password_hash' => getenv('DIVA_ADMIN_HASH') ?: '$2y$10$Q3b3Q8n1m0Yg9gq3vB2h1u2pS7h8fJx8V6v1Cw6l8Qd6yYg5uY6EK',
+        'password_hash' => getenv('DIVA_ADMIN_HASH') ?: '$2y$10$59eeZtrgUChojtXxNBWAAu8r4n1Kh/FnuxyKyX0jLcJXahI.IXTEy',
     ],
 ];
 $local = __DIR__ . '/local.php';

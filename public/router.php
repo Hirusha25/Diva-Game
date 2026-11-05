@@ -3,6 +3,7 @@
 // Serves static files from /public and lets /api/*.php and /admin/* run as PHP.
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $file = realpath(__DIR__ . $path);
+if ($file && is_dir($file) && is_file($file . '/index.php')) return false; // let PHP serve admin/index.php
 if ($path !== '/' && $file && str_starts_with($file, __DIR__) && is_file($file)) {
     $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
     if ($ext === 'php') return false; // let PHP execute it

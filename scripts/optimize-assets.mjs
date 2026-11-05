@@ -168,7 +168,12 @@ const kb = async (f) => ((await stat(f)).size / 1024).toFixed(0) + ' KB';
   // Illustrated bus stand -> trimmed WebP billboard.
   const src = `${RAW}/props/bus-stand.png`;
   const out = `${OUT_TEX}/bus-stand.webp`;
-  await sharp(src).trim().resize({ width: 768 }).webp({ quality: 86, alphaQuality: 92 }).toFile(out);
+  // Crop the art's own pavement slab + kerb off the bottom (keep the post feet)
+  // so the stand sits on the game's pavement instead of floating on its own.
+  const trimmed = await sharp(src).trim().toBuffer({ resolveWithObject: true });
+  const keepH = Math.round(trimmed.info.height * 0.87);
+  await sharp(trimmed.data).extract({ left: 0, top: 0, width: trimmed.info.width, height: keepH })
+    .resize({ width: 768 }).webp({ quality: 86, alphaQuality: 92 }).toFile(out);
   const final = await sharp(out).metadata();
   await writeFile(`${OUT_TEX}/props.json`, JSON.stringify({ 'bus-stand': { aspect: final.width / final.height } }, null, 2));
   console.log('bus-stand: ->', await kb(out));

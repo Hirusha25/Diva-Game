@@ -181,7 +181,7 @@ async function endRun() {
   try {
     const r = await api.submitScore(score, distance, duration);
     if (me) me.best = Math.max(me.best || 0, r.best);
-    hud.result({ best: r.best, rank: r.rank, top: r.top, myName: me?.name });
+    hud.result({ best: r.best, rank: r.rank, gift: r.gift, top: r.top, myName: me?.name });
   } catch (err) {
     hud.result({ best: Math.max(me?.best || 0, score), rank: null, top: [] });
     $('final-rank').textContent = err.status === 401 ? 'Session expired. Sign in again to save scores.' : 'Could not save this run: ' + err.message;
@@ -202,7 +202,7 @@ try {
   hud.setProgress(1, 'Ready');
   if (me) showLobby(); else showRegister();
   window.__gameReady = true;       // hook for automated screenshots
-  window.__game = { state, startRun, endRun, player, showLobby, showRegister, api };
+  window.__game = { state, startRun, endRun, player, world, showLobby, showRegister, api };
 } catch (err) {
   hud.setProgress(1, 'Failed to load: ' + err.message);
   console.error(err);

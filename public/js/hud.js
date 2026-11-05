@@ -53,9 +53,9 @@ export class Hud {
   }
 
   /** Fill the game-over card with the server's answer (or the offline fallback). */
-  result({ best, rank, top = [], myName = '' }) {
+  result({ best, rank, gift, top = [], myName = '' }) {
     this.$('final-best').textContent = best;
-    this.$('final-rank').textContent = rank ? `You are #${rank} on the leaderboard` : '';
+    this.$('final-rank').textContent = rank ? `You are #${rank} on the leaderboard${gift ? ' · Prize: ' + gift : ''}` : '';
     const ol = this.$('board');
     ol.textContent = '';
     for (const row of top) {

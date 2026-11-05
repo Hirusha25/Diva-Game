@@ -207,17 +207,19 @@ export class World {
       chunk.userData.trees.push(tree);
       chunk.add(tree);
     }
-    chunk.userData.billboards = [...chunk.userData.trees, ...chunk.userData.bushes, chunk.userData.shelters.left, chunk.userData.shelters.right];
+    chunk.userData.billboards = [...chunk.userData.trees, ...chunk.userData.bushes];
     return chunk;
   }
 
   _makeShelter(side) {
-    // Illustrated bus stand on the pavement; mirrored on the left so the open
-    // side faces the road. Turned toward the camera each frame like the trees.
+    // Illustrated bus stand on the pavement. It is NOT camera-facing: the art
+    // is a 3/4 view, so it stays angled toward the road like a real stand.
+    // Never mirrored (the Diva lettering would read backwards).
     const shelter = this._makeBillboard(this.busStandMaterial);
-    const h = 4.4;                                       // art has margins; this reads ~3 m tall
-    shelter.scale.set(side * h * this.busStandAspect, h, 1);
-    shelter.position.set(side * ((PAVEMENT.inner + PAVEMENT.outer) / 2 + 0.2), PAVEMENT.height, 0);
+    const h = 3.6;
+    shelter.scale.set(h * this.busStandAspect, h, 1);
+    shelter.rotation.y = side < 0 ? 0.45 : -0.45;
+    shelter.position.set(side * ((PAVEMENT.inner + PAVEMENT.outer) / 2 + 0.3), PAVEMENT.height, 0);
     return shelter;
   }
 
