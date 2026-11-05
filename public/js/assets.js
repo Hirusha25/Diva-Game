@@ -4,7 +4,7 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
 /**
  * Loads every runtime asset with one progress callback.
- * Returns { shelter, asphalt, trees: [{front, side, width, height}], leaf }.
+ * Returns { shelter, asphalt, shadows, trees: [{front, side, width, height}], leaf }.
  */
 export async function loadAssets(onProgress = () => {}) {
   const manager = new THREE.LoadingManager();
@@ -48,9 +48,10 @@ export async function loadAssets(onProgress = () => {}) {
 
   const treeMeta = await loadJson('assets/textures/trees.json');
 
-  const [shelterGltf, asphalt, leaf, aFront, aSide, bFront, bSide] = await Promise.all([
+  const [shelterGltf, asphalt, shadows, leaf, aFront, aSide, bFront, bSide] = await Promise.all([
     loadGltf('assets/models/bus-shelter.glb'),
     loadTex('assets/textures/asphalt.webp', { repeat: true }),
+    loadTex('assets/textures/tree-shadows.webp', { srgb: false, repeat: true }),
     loadTex('assets/textures/leaf.webp'),
     loadTex('assets/textures/tree-a-front.webp'),
     loadTex('assets/textures/tree-a-side.webp'),
@@ -70,6 +71,7 @@ export async function loadAssets(onProgress = () => {}) {
   return {
     shelter,
     asphalt,
+    shadows,
     leaf,
     trees: [
       { front: aFront, side: aSide, width: treeMeta.a.width, height: treeMeta.a.height },

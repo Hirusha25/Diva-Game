@@ -29,7 +29,7 @@ if (inline) {
   // Textures become data: URIs (loaded through <img>, which strict CSPs allow);
   // the model and JSON are handed to the loader in memory via window.__DIVA_INLINE.
   const textures = [
-    'assets/textures/asphalt.webp', 'assets/textures/leaf.webp',
+    'assets/textures/asphalt.webp', 'assets/textures/tree-shadows.webp', 'assets/textures/leaf.webp',
     'assets/textures/tree-a-front.webp', 'assets/textures/tree-a-side.webp',
     'assets/textures/tree-b-front.webp', 'assets/textures/tree-b-side.webp',
   ];

@@ -30,8 +30,8 @@ export const COLORS = {
   skyLow: 0x82cffb,
   skyHorizon: 0xe1f7fd,
   fog: 0xe1f7fd,
-  asphaltTint: 0x9fa3a7,
-  laneLine: 0xffffff,
+  asphaltTint: 0xe4e4e2,
+  laneLine: 0xf6f6f2,
   kerbWhite: 0xf3f3ee,
   kerbBlack: 0x262626,
   pavement: 0xffffff,      // tinted by the paving texture

@@ -8,7 +8,8 @@
     "assets": "node scripts/optimize-assets.mjs",
     "bake": "node scripts/bake-trees.mjs",
     "vendor": "node scripts/vendor-three.mjs",
-    "build:assets": "npm run assets && npm run bake && npm run vendor",
+    "build:assets": "npm run assets && npm run bake && npm run road-textures && npm run vendor",
+    "road-textures": "node scripts/make-road-textures.mjs",
     "serve": "php -S 0.0.0.0:8080 -t public public/router.php"
   },
   "devDependencies": {

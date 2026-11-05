@@ -4,7 +4,7 @@ import {
   LANE_WIDTH, LANE_COUNT, ROAD_HALF, KERB, PAVEMENT, WALL, SHELTER_OFFSET_X,
   CHUNK_LENGTH, CHUNK_COUNT, COLORS,
 } from './config.js';
-import { pavingTexture, dappleTexture } from './textures.js';
+import { pavingTexture } from './textures.js';
 
 const SHRUBS_PER_CHUNK = 26;
 const FLOWERS_PER_SHRUB = 5;
@@ -59,15 +59,17 @@ export class World {
   // ---------------------------------------------------------------- materials
   _materials() {
     const asphalt = this.assets.asphalt;
-    asphalt.repeat.set(LANE_COUNT, CHUNK_LENGTH / 6.67);
+    asphalt.repeat.set(LANE_COUNT * 1.5, CHUNK_LENGTH / 1.67); // one tile ≈ 1.67 m of real asphalt
     const paving = pavingTexture();
     const tile = 0.55; // metres per paving slab
     paving.repeat.set((PAVEMENT.outer - PAVEMENT.inner) / tile, CHUNK_LENGTH / tile);
-    const dapple = dappleTexture();
-    dapple.repeat.set(1, CHUNK_LENGTH / 24);
+    // Baked leafy tree shadows: one texture spans the full street width and
+    // 30 m of road; mirrored wrapping keeps it continuous across chunks.
+    const shadows = this.assets.shadows;
+    shadows.repeat.set(1, CHUNK_LENGTH / 30);
     return {
       asphalt: new THREE.MeshStandardMaterial({ map: asphalt, color: COLORS.asphaltTint, roughness: 0.95, metalness: 0 }),
-      laneLine: new THREE.MeshStandardMaterial({ color: COLORS.laneLine, roughness: 0.8, polygonOffset: true, polygonOffsetFactor: -1 }),
+      laneLine: new THREE.MeshBasicMaterial({ color: COLORS.laneLine, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -1 }),
       kerbWhite: new THREE.MeshStandardMaterial({ color: COLORS.kerbWhite, roughness: 0.85 }),
       kerbBlack: new THREE.MeshStandardMaterial({ color: COLORS.kerbBlack, roughness: 0.85 }),
       pavement: new THREE.MeshStandardMaterial({ map: paving, color: COLORS.pavement, roughness: 0.9 }),
@@ -75,7 +77,7 @@ export class World {
       wallCap: new THREE.MeshStandardMaterial({ color: COLORS.wallCap, roughness: 0.9 }),
       ground: new THREE.MeshStandardMaterial({ color: COLORS.ground, roughness: 1 }),
       dirt: new THREE.MeshStandardMaterial({ color: COLORS.dirt, roughness: 1 }),
-      dapple: new THREE.MeshBasicMaterial({ map: dapple, transparent: true, depthWrite: false, opacity: 0.6, polygonOffset: true, polygonOffsetFactor: -2 }),
+      dapple: new THREE.MeshBasicMaterial({ map: shadows, transparent: true, depthWrite: false, opacity: 0.7, polygonOffset: true, polygonOffsetFactor: -2 }),
       shrub: new THREE.MeshStandardMaterial({ color: COLORS.shrub, roughness: 0.9, flatShading: true }),
       shrubLight: new THREE.MeshStandardMaterial({ color: COLORS.shrubLight, roughness: 0.9, flatShading: true }),
       flowerPink: new THREE.MeshStandardMaterial({ color: COLORS.flowerPink, roughness: 0.7 }),
@@ -103,7 +105,7 @@ export class World {
     for (let lane = 1; lane < LANE_COUNT; lane++) {
       const x = -ROAD_HALF + lane * LANE_WIDTH;
       for (let z = -L / 2; z < L / 2; z += 7.5) {
-        marks.push(new THREE.PlaneGeometry(0.22, 3).rotateX(-Math.PI / 2).translate(x, 0.012, z + 1.5));
+        marks.push(new THREE.PlaneGeometry(0.25, 3).rotateX(-Math.PI / 2).translate(x, 0.012, z + 1.5));
       }
     }
     for (const s of [1, -1]) {
@@ -127,10 +129,18 @@ export class World {
     const wallCap = mirrored((s) => box(s * (WALL.inner - 0.08), s * (WALL.outer + 0.08), WALL.height, WALL.height + 0.14, -L / 2, L / 2));
     // Dappled shadow overlays for the road and both pavements.
     const dapple = mergeGeometries([
-      new THREE.PlaneGeometry(ROAD_HALF * 2, L).rotateX(-Math.PI / 2).translate(0, 0.02, 0),
+      new THREE.PlaneGeometry(ROAD_HALF * 2, L, 1, 1).rotateX(-Math.PI / 2).translate(0, 0.02, 0),
       ...[1, -1].map((s) => new THREE.PlaneGeometry(PAVEMENT.outer - PAVEMENT.inner, L).rotateX(-Math.PI / 2)
         .translate(s * (PAVEMENT.inner + PAVEMENT.outer) / 2, PAVEMENT.height + 0.005, 0)),
     ]);
+    // Map UVs from world position so road and pavements share one continuous shadow image.
+    {
+      const pos = dapple.attributes.position, uv = dapple.attributes.uv;
+      for (let i = 0; i < pos.count; i++) {
+        uv.setXY(i, (pos.getX(i) + PAVEMENT.outer) / (PAVEMENT.outer * 2), (pos.getZ(i) + L / 2) / L);
+      }
+      uv.needsUpdate = true;
+    }
     const ground = mirrored((s) => {
       const g = new THREE.PlaneGeometry(80, L).rotateX(-Math.PI / 2);
       g.translate(s * (WALL.outer + 40), -0.02, 0);
