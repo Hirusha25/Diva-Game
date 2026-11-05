@@ -24,19 +24,24 @@ let js = result.outputFiles[0].text;
 // --inline-assets: embed every model/texture as a data: URI so the page needs
 // no supporting files (claude.ai Artifacts refuse .glb and sandbox fetches).
 const inline = process.argv.includes('--inline-assets') || process.argv.includes('--inline-models');
+let inlineScript = '';
 if (inline) {
-  const mime = { glb: 'model/gltf-binary', webp: 'image/webp', json: 'application/json' };
-  const files = [
-    'assets/models/bus-shelter.glb',
-    'assets/textures/asphalt.webp', 'assets/textures/leaf.webp', 'assets/textures/trees.json',
+  // Textures become data: URIs (loaded through <img>, which strict CSPs allow);
+  // the model and JSON are handed to the loader in memory via window.__DIVA_INLINE.
+  const textures = [
+    'assets/textures/asphalt.webp', 'assets/textures/leaf.webp',
     'assets/textures/tree-a-front.webp', 'assets/textures/tree-a-side.webp',
     'assets/textures/tree-b-front.webp', 'assets/textures/tree-b-side.webp',
   ];
-  for (const f of files) {
+  for (const f of textures) {
     const buf = await readFile('public/' + f);
-    const uri = `data:${mime[f.split('.').pop()]};base64,${buf.toString('base64')}`;
-    js = js.replaceAll(f, uri);
+    js = js.replaceAll(f, `data:image/webp;base64,${buf.toString('base64')}`);
   }
+  const data = {
+    models: { 'assets/models/bus-shelter.glb': (await readFile('public/assets/models/bus-shelter.glb')).toString('base64') },
+    json: { 'assets/textures/trees.json': JSON.parse(await readFile('public/assets/textures/trees.json', 'utf8')) },
+  };
+  inlineScript = `<script>window.__DIVA_INLINE = ${JSON.stringify(data)};</script>\n`;
 }
 const css = await readFile('public/css/game.css', 'utf8');
 const html = await readFile('public/index.html', 'utf8');
@@ -48,7 +53,7 @@ html, body { height: 100%; }
 ${css}
 </style>
 ${body}
-<script type="module">
+${inlineScript}<script type="module">
 ${js}
 </script>
 `;
