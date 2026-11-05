@@ -24,10 +24,12 @@ export const SCORE_PER_METRE = 0.5;
 export const INVULNERABLE_TIME = 1.6;
 
 export const COLORS = {
-  skyTop: 0x0f5fdc,
-  skyMid: 0x3d9bf2,
-  skyHorizon: 0xeaf6ff,
-  fog: 0xe4f1fb,
+  // Sampled from the reference concept art, top of frame to horizon.
+  skyTop: 0x0174f8,
+  skyMid: 0x39a4fd,
+  skyLow: 0x82cffb,
+  skyHorizon: 0xe1f7fd,
+  fog: 0xe1f7fd,
   asphaltTint: 0x9fa3a7,
   laneLine: 0xffffff,
   kerbWhite: 0xf3f3ee,

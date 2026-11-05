@@ -21,10 +21,22 @@ const result = await build({
   // 'three' resolves from node_modules (same version as public/vendor/three).
 });
 let js = result.outputFiles[0].text;
-// Static hosts that refuse .glb (e.g. claude.ai Artifacts) get the model inlined.
-if (process.argv.includes('--inline-models')) {
-  const glb = await readFile('public/assets/models/bus-shelter.glb');
-  js = js.replaceAll('assets/models/bus-shelter.glb', 'data:model/gltf-binary;base64,' + glb.toString('base64'));
+// --inline-assets: embed every model/texture as a data: URI so the page needs
+// no supporting files (claude.ai Artifacts refuse .glb and sandbox fetches).
+const inline = process.argv.includes('--inline-assets') || process.argv.includes('--inline-models');
+if (inline) {
+  const mime = { glb: 'model/gltf-binary', webp: 'image/webp', json: 'application/json' };
+  const files = [
+    'assets/models/bus-shelter.glb',
+    'assets/textures/asphalt.webp', 'assets/textures/leaf.webp', 'assets/textures/trees.json',
+    'assets/textures/tree-a-front.webp', 'assets/textures/tree-a-side.webp',
+    'assets/textures/tree-b-front.webp', 'assets/textures/tree-b-side.webp',
+  ];
+  for (const f of files) {
+    const buf = await readFile('public/' + f);
+    const uri = `data:${mime[f.split('.').pop()]};base64,${buf.toString('base64')}`;
+    js = js.replaceAll(f, uri);
+  }
 }
 const css = await readFile('public/css/game.css', 'utf8');
 const html = await readFile('public/index.html', 'utf8');
@@ -41,5 +53,5 @@ ${js}
 </script>
 `;
 await writeFile(path.join(out, 'diva-fresh-run.html'), page);
-await cp('public/assets', path.join(out, 'assets'), { recursive: true });
+if (!inline) await cp('public/assets', path.join(out, 'assets'), { recursive: true });
 console.log('wrote', path.join(out, 'diva-fresh-run.html'), (page.length / 1024).toFixed(0) + ' KB');
