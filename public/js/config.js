@@ -36,8 +36,10 @@ export const COLORS = {
   kerbWhite: 0xf3f3ee,
   kerbBlack: 0x262626,
   pavement: 0xffffff,      // tinted by the paving texture
-  wall: 0xf7dc62,
-  wallCap: 0xbdb6a8,
+  wall: 0xfcdc65,        // sampled from the reference (sunlit face)
+  wallShade: 0xe0b848,   // faces turned away from the sun
+  wallCap: 0x9c7868,     // stone slab, sampled
+  wallCapTop: 0xb58c77,
   ground: 0x5a9a2e,
   dirt: 0x8d7a4e,
   shrub: 0x3f9a2f,

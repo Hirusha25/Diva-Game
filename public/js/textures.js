@@ -22,7 +22,7 @@ export function pavingTexture() {
     const n = 4, s = w / n;
     for (let y = 0; y < n; y++) {
       for (let x = 0; x < n; x++) {
-        const l = 196 + Math.floor(Math.random() * 18) - 9;
+        const l = 212 + Math.floor(Math.random() * 16) - 8;
         ctx.fillStyle = `rgb(${l + 6},${l + 2},${l - 6})`;
         ctx.fillRect(x * s, y * s, s, s);
         // subtle speckle

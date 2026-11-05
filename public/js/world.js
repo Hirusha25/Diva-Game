@@ -7,7 +7,7 @@ import {
 import { pavingTexture, grassTexture } from './textures.js';
 
 const TREES_PER_CHUNK = 40;   // 20 per side: 12 in a near row + 8 in a far row filling the gaps
-const BUSHES_FRONT_PER_CHUNK = 8;   // small clumps on the pavement at the wall base
+const BUSHES_FRONT_PER_CHUNK = 16;  // 8 per side, every ~7 m along the wall base
 const BUSHES_BACK_PER_CHUNK = 0;    // nothing peeks over the wall (reference shows canopy only)
 
 /**
@@ -78,7 +78,7 @@ export class World {
     const asphalt = this.assets.asphalt;
     asphalt.repeat.set(LANE_COUNT * 1.5, CHUNK_LENGTH / 1.67); // one tile ≈ 1.67 m of real asphalt
     const paving = pavingTexture();
-    const tile = 0.55; // metres per paving slab
+    const tile = 0.8;  // metres per paving slab
     paving.repeat.set((PAVEMENT.outer - PAVEMENT.inner) / tile, CHUNK_LENGTH / tile);
     // Baked leafy tree shadows: one texture spans the full street width and
     // 30 m of road; mirrored wrapping keeps it continuous across chunks.
@@ -92,10 +92,12 @@ export class World {
       kerbWhite: new THREE.MeshStandardMaterial({ color: COLORS.kerbWhite, roughness: 0.85 }),
       kerbBlack: new THREE.MeshStandardMaterial({ color: COLORS.kerbBlack, roughness: 0.85 }),
       pavement: new THREE.MeshStandardMaterial({ map: paving, color: COLORS.pavement, roughness: 0.9 }),
-      wall: new THREE.MeshStandardMaterial({ color: COLORS.wall, roughness: 1 }),
-      wallCap: new THREE.MeshStandardMaterial({ color: COLORS.wallCap, roughness: 0.9 }),
+      wall: new THREE.MeshBasicMaterial({ color: COLORS.wall, toneMapped: false }),
+      wallCap: new THREE.MeshBasicMaterial({ color: COLORS.wallCap, toneMapped: false }),
+      wallCapTop: new THREE.MeshBasicMaterial({ color: COLORS.wallCapTop, toneMapped: false }),
       ground: new THREE.MeshStandardMaterial({ map: grass, roughness: 1 }),
       dirt: new THREE.MeshStandardMaterial({ color: COLORS.dirt, roughness: 1 }),
+      bed: new THREE.MeshBasicMaterial({ color: 0xd9bfa8, toneMapped: false }),
       dapple: new THREE.MeshBasicMaterial({ map: shadows, transparent: true, depthWrite: false, opacity: 0.7, polygonOffset: true, polygonOffsetFactor: -2 }),
     };
   }
@@ -141,7 +143,12 @@ export class World {
     // Pavement, boundary wall with a darker cap, and the ground beyond.
     const pavement = mirrored((s) => box(s * PAVEMENT.inner, s * PAVEMENT.outer, 0, PAVEMENT.height, -L / 2, L / 2));
     const wall = mirrored((s) => box(s * WALL.inner, s * WALL.outer, 0, WALL.height, -L / 2, L / 2));
-    const wallCap = mirrored((s) => box(s * (WALL.inner - 0.08), s * (WALL.outer + 0.08), WALL.height, WALL.height + 0.14, -L / 2, L / 2));
+    // Soil bed along the wall base that the bushes sit in (reference art).
+    const bed = mirrored((s) => box(s * (WALL.inner - 0.75), s * WALL.inner, PAVEMENT.height, PAVEMENT.height + 0.03, -L / 2, L / 2));
+    // Coping stone: a thick slab overhanging both faces, with a lighter top.
+    const CAP_T = 0.22, CAP_O = 0.14;
+    const wallCap = mirrored((s) => box(s * (WALL.inner - CAP_O), s * (WALL.outer + CAP_O), WALL.height, WALL.height + CAP_T, -L / 2, L / 2));
+    const wallCapTop = mirrored((s) => box(s * (WALL.inner - CAP_O), s * (WALL.outer + CAP_O), WALL.height + CAP_T, WALL.height + CAP_T + 0.01, -L / 2, L / 2));
     // Dappled shadow overlays for the road and both pavements.
     const dapple = mergeGeometries([
       new THREE.PlaneGeometry(ROAD_HALF * 2, L, 1, 1).rotateX(-Math.PI / 2).translate(0, 0.02, 0),
@@ -167,7 +174,7 @@ export class World {
       return g;
     });
 
-    return { road, laneLines, kerbWhite, kerbBlack, pavement, wall, wallCap, ground, dirt, dapple };
+    return { road, laneLines, kerbWhite, kerbBlack, pavement, wall, wallCap, wallCapTop, ground, dirt, dapple, bed };
   }
 
   _buildChunk() {
@@ -188,6 +195,8 @@ export class World {
     add(g.pavement, m.pavement);
     add(g.wall, m.wall);
     add(g.wallCap, m.wallCap);
+    add(g.wallCapTop, m.wallCapTop);
+    add(g.bed, m.bed);
     add(g.dapple, m.dapple);
 
     // Dynamic dressing: one shelter per side (toggled), bushes and trees.
@@ -277,12 +286,12 @@ export class World {
       const s = i % 2 === 0 ? -1 : 1;
       if (i < BUSHES_FRONT_PER_CHUNK) {
         const slot = Math.floor(i / 2);
-        const z = -CHUNK_LENGTH / 2 + (slot + 0.15 + rng() * 0.7) * (CHUNK_LENGTH / (BUSHES_FRONT_PER_CHUNK / 2));
+        const z = -CHUNK_LENGTH / 2 + (slot + 0.3 + rng() * 0.4) * (CHUNK_LENGTH / (BUSHES_FRONT_PER_CHUNK / 2));
         const blocked = s === shelterSide && Math.abs(z - shelterZ) < 7.5;
-        const h = 0.55 + rng() * 0.3;                     // low, so the wall stays visible
+        const h = 0.7 + rng() * 0.25;                     // about a third of the 2.2 m wall
         bush.scale.set(h * kind.aspect, h, 1);
-        bush.position.set(s * (WALL.inner - 0.45), PAVEMENT.height, z);
-        bush.visible = !blocked && rng() < 0.85;
+        bush.position.set(s * (WALL.inner - 0.38), PAVEMENT.height + 0.03, z);
+        bush.visible = !blocked && rng() < 0.9;
       } else {
         const j = i - BUSHES_FRONT_PER_CHUNK;
         const slot = Math.floor(j / 2);
