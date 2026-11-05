@@ -36,7 +36,16 @@ function resize() {
   const w = window.innerWidth, h = window.innerHeight;
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
-  camera.fov = h > w ? 68 : 55;       // portrait phones need a wider view
+  if (h > w) {
+    // Portrait: lock the HORIZONTAL view angle (approved framing was tuned on
+    // a 390x844 frame = 68° vertical). Browser bars make the visible area
+    // shorter and wider; keeping the horizontal angle constant keeps the road,
+    // trees and player the same size regardless of the bar height.
+    const halfH = Math.tan(THREE.MathUtils.degToRad(68 / 2)) * (390 / 844);
+    camera.fov = THREE.MathUtils.clamp(THREE.MathUtils.radToDeg(2 * Math.atan(halfH / camera.aspect)), 45, 75);
+  } else {
+    camera.fov = 55;
+  }
   camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', resize);
