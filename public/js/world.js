@@ -159,6 +159,7 @@ export class World {
     const bed = mirrored((s) => box(s * (WALL.inner - 0.75), s * WALL.inner, PAVEMENT.height, PAVEMENT.height + 0.03, -L / 2, L / 2));
     // Coping stone: a thick slab overhanging both faces, with a lighter top.
     const CAP_T = 0.22, CAP_O = 0.14;
+    const bedEdge = mirrored((s) => box(s * (WALL.inner - 0.75), s * (WALL.inner - 0.63), PAVEMENT.height, PAVEMENT.height + 0.07, -L / 2, L / 2));
     const wallCap = mirrored((s) => box(s * (WALL.inner - CAP_O), s * (WALL.outer + CAP_O), WALL.height, WALL.height + CAP_T, -L / 2, L / 2));
     const wallCapTop = mirrored((s) => box(s * (WALL.inner - CAP_O), s * (WALL.outer + CAP_O), WALL.height + CAP_T, WALL.height + CAP_T + 0.01, -L / 2, L / 2));
     // Dappled shadow overlays for the road and both pavements.
@@ -186,7 +187,7 @@ export class World {
       return g;
     });
 
-    return { road, laneLines, kerbWhite, kerbBlack, pavement, wall, wallCap, wallCapTop, ground, dirt, dapple, bed };
+    return { road, laneLines, kerbWhite, kerbBlack, pavement, wall, wallCap, wallCapTop, ground, dirt, dapple, bed, bedEdge };
   }
 
   _buildChunk() {
@@ -209,6 +210,7 @@ export class World {
     add(g.wallCap, m.wallCap);
     add(g.wallCapTop, m.wallCapTop);
     add(g.bed, m.bed);
+    add(g.bedEdge, m.kerbWhite);
     add(g.dapple, m.dapple);
 
     // Dynamic dressing: one shelter per side (toggled), bushes and trees.
@@ -231,7 +233,7 @@ export class World {
       chunk.userData.trees.push(tree);
       chunk.add(tree);
     }
-    chunk.userData.billboards = [...chunk.userData.trees, ...chunk.userData.bushes];
+    chunk.userData.billboards = [...chunk.userData.trees];   // bushes stay flat against the wall
     return chunk;
   }
 
@@ -302,7 +304,9 @@ export class World {
         const blocked = s === shelterSide && Math.abs(z - shelterZ) < 7.5;
         const h = 0.7 + rng() * 0.25;                     // about a third of the 2.2 m wall
         bush.scale.set(h * kind.aspect, h, 1);
-        bush.position.set(s * (WALL.inner - 0.38), PAVEMENT.height + 0.03, z);
+        // Flat against the wall (plane faces the road), base sunk into the soil bed.
+        bush.rotation.y = s < 0 ? Math.PI / 2 : -Math.PI / 2;
+        bush.position.set(s * (WALL.inner - 0.2), PAVEMENT.height - 0.07, z);
         bush.visible = !blocked && rng() < 0.9;
       } else {
         const j = i - BUSHES_FRONT_PER_CHUNK;
