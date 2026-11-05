@@ -4,7 +4,7 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
 /**
  * Loads every runtime asset with one progress callback.
- * Returns { shelter, asphalt, shadows, clouds, trees: [{map, aspect}], leaf }.
+ * Returns { busStand, asphalt, shadows, clouds, trees, bushes, leaf } (sprites are {map, aspect}).
  */
 export async function loadAssets(onProgress = () => {}) {
   const manager = new THREE.LoadingManager();
@@ -49,13 +49,15 @@ export async function loadAssets(onProgress = () => {}) {
   const treeMeta = await loadJson('assets/textures/trees.json');
   const cloudMeta = await loadJson('assets/textures/clouds.json');
   const bushMeta = await loadJson('assets/textures/bushes.json');
+  const propMeta = await loadJson('assets/textures/props.json');
 
-  const [shelterGltf, asphalt, shadows, leaf] = await Promise.all([
-    loadGltf('assets/models/bus-shelter.glb'),
+  const [asphalt, shadows, leaf, busStandMap] = await Promise.all([
     loadTex('assets/textures/asphalt.webp', { repeat: true }),
     loadTex('assets/textures/tree-shadows.webp', { srgb: false, repeat: true }),
     loadTex('assets/textures/leaf.webp'),
+    loadTex('assets/textures/bus-stand.webp'),
   ]);
+  const busStand = { map: busStandMap, aspect: propMeta['bus-stand'].aspect };
   const treeFiles = [
     ['tree-1', 'assets/textures/tree-1.webp'],
     ['tree-2', 'assets/textures/tree-2.webp'],
@@ -86,17 +88,8 @@ export async function loadAssets(onProgress = () => {}) {
     aspect: cloudMeta[key].aspect,
   })));
 
-  const shelter = shelterGltf.scene;
-  shelter.traverse((o) => {
-    if (o.isMesh) {
-      o.frustumCulled = true;
-      o.castShadow = false;
-      o.receiveShadow = false;
-    }
-  });
-
   return {
-    shelter,
+    busStand,
     asphalt,
     shadows,
     leaf,

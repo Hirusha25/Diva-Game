@@ -162,3 +162,14 @@ const kb = async (f) => ((await stat(f)).size / 1024).toFixed(0) + ' KB';
   }
   await writeFile(`${OUT_TEX}/bushes.json`, JSON.stringify(meta, null, 2));
 }
+
+// ---------------------------------------------------------------- props
+{
+  // Illustrated bus stand -> trimmed WebP billboard.
+  const src = `${RAW}/props/bus-stand.png`;
+  const out = `${OUT_TEX}/bus-stand.webp`;
+  await sharp(src).trim().resize({ width: 768 }).webp({ quality: 86, alphaQuality: 92 }).toFile(out);
+  const final = await sharp(out).metadata();
+  await writeFile(`${OUT_TEX}/props.json`, JSON.stringify({ 'bus-stand': { aspect: final.width / final.height } }, null, 2));
+  console.log('bus-stand: ->', await kb(out));
+}

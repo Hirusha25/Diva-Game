@@ -35,6 +35,8 @@ export class World {
       material: new THREE.MeshBasicMaterial({ map: b.map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false }),
       aspect: b.aspect,
     }));
+    this.busStandMaterial = new THREE.MeshBasicMaterial({ map: assets.busStand.map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false });
+    this.busStandAspect = assets.busStand.aspect;
     this.treeGeometry = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
 
     this.chunks = [];
@@ -205,15 +207,17 @@ export class World {
       chunk.userData.trees.push(tree);
       chunk.add(tree);
     }
-    chunk.userData.billboards = [...chunk.userData.trees, ...chunk.userData.bushes];
+    chunk.userData.billboards = [...chunk.userData.trees, ...chunk.userData.bushes, chunk.userData.shelters.left, chunk.userData.shelters.right];
     return chunk;
   }
 
   _makeShelter(side) {
-    const shelter = this.assets.shelter.clone();
-    // Model: road along +x, front faces +z. Rotate so the front faces the road.
-    shelter.rotation.y = side < 0 ? Math.PI / 2 : -Math.PI / 2;
-    shelter.position.x = side * SHELTER_OFFSET_X;
+    // Illustrated bus stand on the pavement; mirrored on the left so the open
+    // side faces the road. Turned toward the camera each frame like the trees.
+    const shelter = this._makeBillboard(this.busStandMaterial);
+    const h = 3.2;
+    shelter.scale.set(side * h * this.busStandAspect, h, 1);
+    shelter.position.set(side * ((PAVEMENT.inner + PAVEMENT.outer) / 2 + 0.2), PAVEMENT.height, 0);
     return shelter;
   }
 
