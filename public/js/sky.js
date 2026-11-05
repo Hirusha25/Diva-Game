@@ -43,7 +43,7 @@ export function createSky() {
  * behind the camera respawn far ahead.
  */
 export class CloudField {
-  constructor(clouds, count = 20) {
+  constructor(clouds, count = 11) {
     this.group = new THREE.Group();
     this.clouds = clouds;
     this.items = [];
@@ -54,7 +54,7 @@ export class CloudField {
       const mat = new THREE.SpriteMaterial({ map: c.map, transparent: true, depthWrite: false, fog: false });
       const sprite = new THREE.Sprite(mat);
       const item = { sprite, aspect: c.aspect, phase: Math.random() * Math.PI * 2 };
-      this._spawn(item, -60 - (i / count) * 460);        // stagger along the depth
+      this._spawn(item, -140 - (i / count) * 420);       // stagger along the depth, none too close at start
       this.group.add(sprite);
       this.items.push(item);
     }
@@ -67,7 +67,7 @@ export class CloudField {
     // Keep the lane ahead clear: clouds sit off to the sides, higher ones may sit over the road.
     // Portrait phones only see about ±0.3 × depth sideways, so keep the field
     // tight; high clouds may float straight over the road.
-    const high = Math.random() < 0.35;
+    const high = Math.random() < 0.25;
     item.x = high ? (Math.random() - 0.5) * 60 : side * (18 + Math.random() * 70) * (0.7 + depth * 0.5);
     item.baseY = (high ? 70 : 34) + Math.random() * 50 + depth * 30;
     item.width = 40 + Math.random() * 55;
