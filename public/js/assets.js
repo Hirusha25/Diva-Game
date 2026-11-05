@@ -59,9 +59,16 @@ export async function loadAssets(onProgress = () => {}) {
     loadTex('assets/textures/tree-b-front.webp'),
     loadTex('assets/textures/tree-b-side.webp'),
   ]);
-  const clouds = await Promise.all([1, 2, 3, 4].map(async (n) => ({
-    map: await loadTex(`assets/textures/cloud-${n}.webp`),
-    aspect: cloudMeta[`cloud-${n}`].aspect,
+  // Literal paths (not template strings) so the single-file build can inline them.
+  const cloudFiles = [
+    ['cloud-1', 'assets/textures/cloud-1.webp'],
+    ['cloud-2', 'assets/textures/cloud-2.webp'],
+    ['cloud-3', 'assets/textures/cloud-3.webp'],
+    ['cloud-4', 'assets/textures/cloud-4.webp'],
+  ];
+  const clouds = await Promise.all(cloudFiles.map(async ([key, url]) => ({
+    map: await loadTex(url),
+    aspect: cloudMeta[key].aspect,
   })));
 
   const shelter = shelterGltf.scene;
