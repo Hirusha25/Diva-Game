@@ -8,7 +8,7 @@ import { pavingTexture } from './textures.js';
 
 const SHRUBS_PER_CHUNK = 26;
 const FLOWERS_PER_SHRUB = 5;
-const TREES_PER_CHUNK = 56;   // 28 per side: a near row + a far row, overlapping canopies
+const TREES_PER_CHUNK = 16;   // 8 per side, one row set back behind the wall
 const HEDGE_PER_CHUNK = 24;
 
 /**
@@ -252,21 +252,20 @@ export class World {
     const shelterSide = side === 'left' ? -1 : 1;
 
     // Trees: a dense row just behind the wall on both sides, alternating left/right.
+    // One row per side, set back 3–5 m behind the wall so the trunk is hidden
+    // and only the canopy rises above it (as in the reference art). Spacing
+    // roughly one canopy width, so neighbours just touch.
     trees.forEach((tree, i) => {
       const kind = this.treeMaterials[Math.floor(rng() * this.treeMaterials.length)];
       const s = i % 2 === 0 ? -1 : 1;
-      const perSide = TREES_PER_CHUNK / 2;
-      const j = Math.floor(i / 2);                        // 0..perSide-1
-      const nearRow = j < perSide / 2;                    // first half near, second half far
-      const slots = perSide / 2;                          // slots per row
-      const slot = nearRow ? j : j - slots;
-      const z = -CHUNK_LENGTH / 2 + (slot + (nearRow ? 0.15 : 0.6) + rng() * 0.4) * (CHUNK_LENGTH / slots);
-      const height = nearRow ? 11 + rng() * 4 : 9 + rng() * 4;
-      const x = s * (WALL.outer + (nearRow ? 0.4 + rng() * 1.2 : 3.5 + rng() * 3));
+      const slot = Math.floor(i / 2);                     // 8 slots per side
+      const z = -CHUNK_LENGTH / 2 + (slot + 0.25 + rng() * 0.5) * (CHUNK_LENGTH / 8);
+      const height = 9 + rng() * 3;                       // 9–12 m
+      const x = s * (WALL.outer + 3 + rng() * 2);
       tree.userData.front.material = kind.material;
       tree.scale.set(height * kind.aspect, height, 1);
       tree.position.set(x, -0.05, z);
-      tree.visible = true;
+      tree.visible = rng() < 0.9;
     });
 
     // Shrubs hug the wall; leave the shelter's platform clear.
