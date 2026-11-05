@@ -38,7 +38,7 @@ export const COLORS = {
   pavement: 0xffffff,      // tinted by the paving texture
   wall: 0xf7dc62,
   wallCap: 0xbdb6a8,
-  ground: 0x79b24a,
+  ground: 0x4f8f36,
   dirt: 0x8d7a4e,
   shrub: 0x3f9a2f,
   shrubLight: 0x6cc24a,

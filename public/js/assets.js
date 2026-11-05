@@ -48,6 +48,7 @@ export async function loadAssets(onProgress = () => {}) {
 
   const treeMeta = await loadJson('assets/textures/trees.json');
   const cloudMeta = await loadJson('assets/textures/clouds.json');
+  const bushMeta = await loadJson('assets/textures/bushes.json');
 
   const [shelterGltf, asphalt, shadows, leaf] = await Promise.all([
     loadGltf('assets/models/bus-shelter.glb'),
@@ -72,6 +73,14 @@ export async function loadAssets(onProgress = () => {}) {
     ['cloud-3', 'assets/textures/cloud-3.webp'],
     ['cloud-4', 'assets/textures/cloud-4.webp'],
   ];
+  const bushFiles = [
+    ['bush-1', 'assets/textures/bush-1.webp'],
+    ['bush-2', 'assets/textures/bush-2.webp'],
+  ];
+  const bushes = await Promise.all(bushFiles.map(async ([key, url]) => ({
+    map: await loadTex(url),
+    aspect: bushMeta[key].aspect,
+  })));
   const clouds = await Promise.all(cloudFiles.map(async ([key, url]) => ({
     map: await loadTex(url),
     aspect: cloudMeta[key].aspect,
@@ -93,5 +102,6 @@ export async function loadAssets(onProgress = () => {}) {
     leaf,
     clouds,
     trees,
+    bushes,
   };
 }

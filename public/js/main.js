@@ -102,7 +102,7 @@ try {
 // ---------------------------------------------------------------------- loop
 const clock = new THREE.Clock();
 const camTarget = new THREE.Vector3();
-const camPos = new THREE.Vector3(0, 4.1, 6.8);
+const camPos = new THREE.Vector3(0, 3.6, 7.0);
 
 function frame() {
   requestAnimationFrame(frame);
@@ -140,9 +140,9 @@ function frame() {
   // Camera: chase from behind, easing toward the player's lane.
   const lead = state.mode === 'running' ? player.x * 0.55 : 0;
   camPos.x += (lead - camPos.x) * Math.min(1, dt * 6);
-  camPos.y = 4.1 + player.height * 0.3;
+  camPos.y = 3.6 + player.height * 0.3;
   camera.position.copy(camPos);
-  camTarget.set(lead * 0.6, 1.1, -9);
+  camTarget.set(lead * 0.6, 1.3, -9);
   camera.lookAt(camTarget);
 
   renderer.render(scene, camera);

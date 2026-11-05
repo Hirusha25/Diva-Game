@@ -147,3 +147,18 @@ const kb = async (f) => ((await stat(f)).size / 1024).toFixed(0) + ' KB';
   }
   await writeFile(`${OUT_TEX}/trees.json`, JSON.stringify(meta, null, 2));
 }
+
+// ---------------------------------------------------------------- bushes
+{
+  // Flowering bush art (transparent PNGs) -> trimmed WebP billboards, 512 px wide.
+  const meta = {};
+  for (const n of [1, 2]) {
+    const src = `${RAW}/bushes/bush-${n}.png`;
+    const out = `${OUT_TEX}/bush-${n}.webp`;
+    await sharp(src).trim().resize({ width: 512 }).webp({ quality: 84, alphaQuality: 90 }).toFile(out);
+    const final = await sharp(out).metadata();
+    meta[`bush-${n}`] = { aspect: final.width / final.height };
+    console.log(`bush-${n}: ->`, await kb(out));
+  }
+  await writeFile(`${OUT_TEX}/bushes.json`, JSON.stringify(meta, null, 2));
+}
