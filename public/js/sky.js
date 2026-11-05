@@ -12,6 +12,7 @@ export function createSky() {
       top: { value: new THREE.Color(COLORS.skyTop) },
       mid: { value: new THREE.Color(COLORS.skyMid) },
       low: { value: new THREE.Color(COLORS.skyLow) },
+      low2: { value: new THREE.Color(COLORS.skyLow2) },
       horizon: { value: new THREE.Color(COLORS.skyHorizon) },
     },
     vertexShader: `
@@ -21,12 +22,13 @@ export function createSky() {
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }`,
     fragmentShader: `
-      uniform vec3 top; uniform vec3 mid; uniform vec3 low; uniform vec3 horizon; varying float vY;
+      uniform vec3 top; uniform vec3 mid; uniform vec3 low; uniform vec3 low2; uniform vec3 horizon; varying float vY;
       void main() {
-        // white haze at the horizon -> light blue -> vivid blue -> saturated zenith
-        vec3 c = mix(horizon, low, smoothstep(0.0, 0.07, vY));
-        c = mix(c, mid, smoothstep(0.07, 0.22, vY));
-        c = mix(c, top, smoothstep(0.22, 0.6, vY));
+        // pale haze -> cyan -> sky blue -> vivid blue -> deep saturated zenith
+        vec3 c = mix(horizon, low2, smoothstep(0.0, 0.04, vY));
+        c = mix(c, low, smoothstep(0.04, 0.12, vY));
+        c = mix(c, mid, smoothstep(0.12, 0.26, vY));
+        c = mix(c, top, smoothstep(0.26, 0.55, vY));
         gl_FragColor = vec4(c, 1.0);
         #include <colorspace_fragment>
       }`,
