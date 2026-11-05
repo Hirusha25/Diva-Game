@@ -6,7 +6,7 @@
  * Bus shelter:
  *   - removes every advert / text texture (ad screens become plain panels)
  *   - removes the model's own road + kerb (the game builds a continuous road)
- *   - removes the two 1M-vertex trees (they are baked to billboards by bake-trees.mjs)
+ *   - removes the two 1M-vertex trees (the game uses the stylised tree art instead)
  *   - dedups, joins meshes by material, welds, quantizes, meshopt-compresses
  *   - converts textures to WebP and shrinks them
  * Road:
@@ -131,4 +131,19 @@ const kb = async (f) => ((await stat(f)).size / 1024).toFixed(0) + ' KB';
     console.log(`cloud-${n}:`, info.info.width + 'x' + info.info.height, '->', await kb(out));
   }
   await writeFile(`${OUT_TEX}/clouds.json`, JSON.stringify(meta, null, 2));
+}
+
+// ---------------------------------------------------------------- trees
+{
+  // Stylised tree art (transparent PNGs) -> trimmed WebP billboards, 768 px wide.
+  const meta = {};
+  for (const n of [1, 2, 3, 4]) {
+    const src = `${RAW}/trees/tree-${n}.png`;
+    const out = `${OUT_TEX}/tree-${n}.webp`;
+    await sharp(src).trim().resize({ width: 768 }).webp({ quality: 84, alphaQuality: 90 }).toFile(out);
+    const final = await sharp(out).metadata();
+    meta[`tree-${n}`] = { aspect: final.width / final.height };
+    console.log(`tree-${n}: ->`, await kb(out));
+  }
+  await writeFile(`${OUT_TEX}/trees.json`, JSON.stringify(meta, null, 2));
 }

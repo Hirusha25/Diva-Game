@@ -116,7 +116,7 @@ function frame() {
   }
   const step = state.speed * dt;
 
-  world.update(step);
+  world.update(step, camera.position);
   cloudField.update(dt, step);
   player.update(dt, state.speed);
   player.group.visible = state.mode === 'running';

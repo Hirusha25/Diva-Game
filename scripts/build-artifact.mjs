@@ -30,8 +30,7 @@ if (inline) {
   // the model and JSON are handed to the loader in memory via window.__DIVA_INLINE.
   const textures = [
     'assets/textures/asphalt.webp', 'assets/textures/tree-shadows.webp', 'assets/textures/leaf.webp',
-    'assets/textures/tree-a-front.webp', 'assets/textures/tree-a-side.webp',
-    'assets/textures/tree-b-front.webp', 'assets/textures/tree-b-side.webp',
+    'assets/textures/tree-1.webp', 'assets/textures/tree-2.webp', 'assets/textures/tree-3.webp', 'assets/textures/tree-4.webp',
     'assets/textures/cloud-1.webp', 'assets/textures/cloud-2.webp', 'assets/textures/cloud-3.webp', 'assets/textures/cloud-4.webp',
   ];
   for (const f of textures) {

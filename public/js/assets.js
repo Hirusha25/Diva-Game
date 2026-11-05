@@ -4,7 +4,7 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
 /**
  * Loads every runtime asset with one progress callback.
- * Returns { shelter, asphalt, shadows, clouds, trees: [{front, side, width, height}], leaf }.
+ * Returns { shelter, asphalt, shadows, clouds, trees: [{map, aspect}], leaf }.
  */
 export async function loadAssets(onProgress = () => {}) {
   const manager = new THREE.LoadingManager();
@@ -49,16 +49,22 @@ export async function loadAssets(onProgress = () => {}) {
   const treeMeta = await loadJson('assets/textures/trees.json');
   const cloudMeta = await loadJson('assets/textures/clouds.json');
 
-  const [shelterGltf, asphalt, shadows, leaf, aFront, aSide, bFront, bSide] = await Promise.all([
+  const [shelterGltf, asphalt, shadows, leaf] = await Promise.all([
     loadGltf('assets/models/bus-shelter.glb'),
     loadTex('assets/textures/asphalt.webp', { repeat: true }),
     loadTex('assets/textures/tree-shadows.webp', { srgb: false, repeat: true }),
     loadTex('assets/textures/leaf.webp'),
-    loadTex('assets/textures/tree-a-front.webp'),
-    loadTex('assets/textures/tree-a-side.webp'),
-    loadTex('assets/textures/tree-b-front.webp'),
-    loadTex('assets/textures/tree-b-side.webp'),
   ]);
+  const treeFiles = [
+    ['tree-1', 'assets/textures/tree-1.webp'],
+    ['tree-2', 'assets/textures/tree-2.webp'],
+    ['tree-3', 'assets/textures/tree-3.webp'],
+    ['tree-4', 'assets/textures/tree-4.webp'],
+  ];
+  const trees = await Promise.all(treeFiles.map(async ([key, url]) => ({
+    map: await loadTex(url),
+    aspect: treeMeta[key].aspect,
+  })));
   // Literal paths (not template strings) so the single-file build can inline them.
   const cloudFiles = [
     ['cloud-1', 'assets/textures/cloud-1.webp'],
@@ -86,9 +92,6 @@ export async function loadAssets(onProgress = () => {}) {
     shadows,
     leaf,
     clouds,
-    trees: [
-      { front: aFront, side: aSide, width: treeMeta.a.width, height: treeMeta.a.height },
-      { front: bFront, side: bSide, width: treeMeta.b.width, height: treeMeta.b.height },
-    ],
+    trees,
   };
 }

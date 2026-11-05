@@ -8,7 +8,8 @@ import { pavingTexture } from './textures.js';
 
 const SHRUBS_PER_CHUNK = 26;
 const FLOWERS_PER_SHRUB = 5;
-const TREES_PER_CHUNK = 16;
+const TREES_PER_CHUNK = 56;   // 28 per side: a near row + a far row, overlapping canopies
+const HEDGE_PER_CHUNK = 24;
 
 /**
  * The running world: an endless street built from CHUNK_COUNT identical
@@ -26,10 +27,10 @@ export class World {
 
     this.materials = this._materials();
     this.staticGeometry = this._buildStaticGeometry();
+    // Stylised tree art as unlit billboards (the art carries its own shading).
     this.treeMaterials = assets.trees.map((t) => ({
-      front: new THREE.MeshBasicMaterial({ map: t.front, color: 0xc2ecaa, alphaTest: 0.45, side: THREE.DoubleSide, fog: true }),
-      side: new THREE.MeshBasicMaterial({ map: t.side, color: 0xc2ecaa, alphaTest: 0.45, side: THREE.DoubleSide, fog: true }),
-      width: t.width, height: t.height,
+      material: new THREE.MeshBasicMaterial({ map: t.map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false }),
+      aspect: t.aspect,
     }));
     this.treeGeometry = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
 
@@ -44,14 +45,25 @@ export class World {
     this.chunkSerial = CHUNK_COUNT;
   }
 
-  /** Advance the world by `distance` metres (towards the player). */
-  update(distance) {
+  /**
+   * Advance the world by `distance` metres (towards the player) and turn the
+   * tree billboards to face the camera so they keep their volume as they pass.
+   */
+  update(distance, cameraPos) {
     for (const chunk of this.chunks) {
       chunk.position.z += distance;
       // Chunk fully behind the camera → move it to the far end and re-dress.
       if (chunk.position.z - CHUNK_LENGTH / 2 > 12) {
         chunk.position.z -= CHUNK_LENGTH * CHUNK_COUNT;
         this._dressChunk(chunk, this.chunkSerial++);
+      }
+      if (cameraPos) {
+        for (const tree of chunk.userData.trees) {
+          if (!tree.visible) continue;
+          const dz = cameraPos.z - (chunk.position.z + tree.position.z);
+          const dx = cameraPos.x - tree.position.x;
+          tree.rotation.y = Math.atan2(dx, dz);        // cylindrical billboard
+        }
       }
     }
   }
@@ -186,6 +198,14 @@ export class World {
     chunk.add(shrubs, shrubsLight, flowersPink, flowersWhite);
     chunk.userData.shrubs = { shrubs, shrubsLight, flowersPink, flowersWhite };
 
+    // A flowering hedge peeking over the wall from behind, for depth layering.
+    const hedge = new THREE.InstancedMesh(shrubGeo, m.shrub, HEDGE_PER_CHUNK * 2);
+    const hedgeLight = new THREE.InstancedMesh(shrubGeo, m.shrubLight, HEDGE_PER_CHUNK);
+    const hedgePink = new THREE.InstancedMesh(flowerGeo, m.flowerPink, HEDGE_PER_CHUNK * 4);
+    const hedgeWhite = new THREE.InstancedMesh(flowerGeo, m.flowerWhite, HEDGE_PER_CHUNK * 4);
+    chunk.add(hedge, hedgeLight, hedgePink, hedgeWhite);
+    chunk.userData.hedge = { hedge, hedgeLight, hedgePink, hedgeWhite };
+
     // Dynamic dressing: one shelter per side (toggled), a pool of trees.
     chunk.userData.shelters = {
       left: this._makeShelter(-1),
@@ -211,12 +231,11 @@ export class World {
   }
 
   _makeTree() {
+    // One plane that is turned toward the camera every frame (see update()).
     const group = new THREE.Group();
-    const front = new THREE.Mesh(this.treeGeometry, this.treeMaterials[0].front);
-    const side = new THREE.Mesh(this.treeGeometry, this.treeMaterials[0].side);
-    side.rotation.y = Math.PI / 2;
-    group.add(front, side);
-    group.userData = { front, side };
+    const front = new THREE.Mesh(this.treeGeometry, this.treeMaterials[0].material);
+    group.add(front);
+    group.userData = { front };
     return group;
   }
 
@@ -236,15 +255,18 @@ export class World {
     trees.forEach((tree, i) => {
       const kind = this.treeMaterials[Math.floor(rng() * this.treeMaterials.length)];
       const s = i % 2 === 0 ? -1 : 1;
-      const scale = 0.7 + rng() * 0.4;
-      tree.userData.front.material = kind.front;
-      tree.userData.side.material = kind.side;
-      tree.scale.set(kind.width * scale, kind.height * scale, 1);
-      const slot = Math.floor(i / 2);                     // 8 slots per side
-      const z = -CHUNK_LENGTH / 2 + (slot + 0.2 + rng() * 0.6) * (CHUNK_LENGTH / 8);
-      tree.position.set(s * (WALL.outer + 1.5 + rng() * 5), -0.05, z);
-      tree.rotation.y = (rng() - 0.5) * 0.6;
-      tree.visible = rng() < 0.9;
+      const perSide = TREES_PER_CHUNK / 2;
+      const j = Math.floor(i / 2);                        // 0..perSide-1
+      const nearRow = j < perSide / 2;                    // first half near, second half far
+      const slots = perSide / 2;                          // slots per row
+      const slot = nearRow ? j : j - slots;
+      const z = -CHUNK_LENGTH / 2 + (slot + (nearRow ? 0.15 : 0.6) + rng() * 0.4) * (CHUNK_LENGTH / slots);
+      const height = nearRow ? 11 + rng() * 4 : 9 + rng() * 4;
+      const x = s * (WALL.outer + (nearRow ? 0.4 + rng() * 1.2 : 3.5 + rng() * 3));
+      tree.userData.front.material = kind.material;
+      tree.scale.set(height * kind.aspect, height, 1);
+      tree.position.set(x, -0.05, z);
+      tree.visible = true;
     });
 
     // Shrubs hug the wall; leave the shelter's platform clear.
@@ -281,6 +303,37 @@ export class World {
     for (; pi < flowersPink.count; pi++) flowersPink.setMatrixAt(pi, mat.compose(pos, quat, scl));
     for (; wi < flowersWhite.count; wi++) flowersWhite.setMatrixAt(wi, mat.compose(pos, quat, scl));
     for (const im of [shrubs, shrubsLight, flowersPink, flowersWhite]) im.instanceMatrix.needsUpdate = true;
+
+    // Hedge behind the wall: bushy clumps whose tops show above the cap.
+    const { hedge, hedgeLight, hedgePink, hedgeWhite } = chunk.userData.hedge;
+    let hi = 0, hl = 0, hp = 0, hw = 0;
+    for (let i = 0; i < HEDGE_PER_CHUNK; i++) {
+      const s = i % 2 === 0 ? -1 : 1;
+      const z = -CHUNK_LENGTH / 2 + (Math.floor(i / 2) + rng()) * (CHUNK_LENGTH / (HEDGE_PER_CHUNK / 2));
+      const x = s * (WALL.outer + 0.55);
+      const size = rng() < 0.7 ? 0.8 + rng() * 0.5 : 0;   // gaps in the hedge
+      const top = WALL.height + size * 0.35;              // centre so ~half shows over the cap
+      for (let b = 0; b < 2; b++) {
+        pos.set(x + (rng() - 0.5) * 0.4, top - size * 0.3, z + (rng() - 0.5) * 1.2 + b * 0.5);
+        quat.setFromEuler(new THREE.Euler(rng() * 3, rng() * 3, 0));
+        scl.setScalar(size * (0.8 + rng() * 0.4));
+        hedge.setMatrixAt(hi++, mat.compose(pos, quat, scl));
+      }
+      pos.set(x, top, z);
+      scl.setScalar(size * 0.7);
+      hedgeLight.setMatrixAt(hl++, mat.compose(pos, quat, scl));
+      const pink = rng() < 0.5;
+      for (let f = 0; f < 4; f++) {
+        pos.set(x + (rng() - 0.5) * size, top + size * (0.1 + rng() * 0.5), z + (rng() - 0.5) * size * 1.5);
+        scl.setScalar(size ? 0.9 + rng() * 0.7 : 0);
+        const mtx = mat.compose(pos, quat.identity(), scl);
+        if (pink) hedgePink.setMatrixAt(hp++, mtx); else hedgeWhite.setMatrixAt(hw++, mtx);
+      }
+    }
+    scl.setScalar(0);
+    for (; hp < hedgePink.count; hp++) hedgePink.setMatrixAt(hp, mat.compose(pos, quat, scl));
+    for (; hw < hedgeWhite.count; hw++) hedgeWhite.setMatrixAt(hw, mat.compose(pos, quat, scl));
+    for (const im of [hedge, hedgeLight, hedgePink, hedgeWhite]) im.instanceMatrix.needsUpdate = true;
   }
 }
 

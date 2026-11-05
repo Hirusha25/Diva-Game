@@ -35,7 +35,7 @@ export const COLORS = {
   kerbWhite: 0xf3f3ee,
   kerbBlack: 0x262626,
   pavement: 0xffffff,      // tinted by the paving texture
-  wall: 0xeccf5e,
+  wall: 0xf7dc62,
   wallCap: 0xbdb6a8,
   ground: 0x79b24a,
   dirt: 0x8d7a4e,

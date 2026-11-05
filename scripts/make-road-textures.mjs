@@ -1,9 +1,9 @@
 /**
  * Road surface textures:
  *   - asphalt.webp      seamless coarse asphalt tile cut from the reference photo
- *   - tree-shadows.webp leafy shadow overlay built from the baked tree silhouettes
+ *   - tree-shadows.webp leafy shadow overlay built from the tree art canopies
  *
- *   node scripts/make-road-textures.mjs     (run after bake-trees.mjs)
+ *   node scripts/make-road-textures.mjs     (run after optimize-assets.mjs)
  */
 import sharp from 'sharp';
 import { stat } from 'node:fs/promises';
@@ -37,10 +37,12 @@ const kb = async (f) => ((await stat(f)).size / 1024).toFixed(0) + ' KB';
   const W = 1024, H = 2048, PAD = 1100;
   // Leafy silhouettes: the baked tree sprites' alpha, slightly blurred.
   const silhouettes = [];
-  for (const f of ['tree-a-front', 'tree-b-front', 'tree-a-side']) {
-    // Drop the trunk (bottom of the sprite) so only the canopy casts the shadow.
+  for (const f of ['tree-1', 'tree-2', 'tree-3', 'tree-4']) {
+    // Canopy only: drop the trunk (bottom ~30 %) so it doesn't print as a bar.
+    const m = await sharp(`${OUT}/${f}.webp`).metadata();
     const alpha = await sharp(`${OUT}/${f}.webp`).ensureAlpha().extractChannel('alpha')
-      .extract({ left: 0, top: 0, width: 1024, height: 850 }).resize(1024, 1024, { fit: 'fill' })
+      .extract({ left: 0, top: 0, width: m.width, height: Math.round(m.height * 0.68) })
+      .resize(1024, 1024, { fit: 'fill' })
       .blur(1.2).raw().toBuffer();
     silhouettes.push(alpha);
   }
