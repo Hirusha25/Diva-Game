@@ -38,7 +38,7 @@ export const COLORS = {
   pavement: 0xffffff,      // tinted by the paving texture
   wall: 0xfcdc65,        // sampled from the reference (sunlit face)
   wallShade: 0xe0b848,   // faces turned away from the sun
-  wallCap: 0x9c7868,     // stone slab, sampled
+  wallCap: 0x8e6c5c,     // stone slab front/underside (slightly darker than sampled for depth)
   wallCapTop: 0xb58c77,
   ground: 0x5a9a2e,
   dirt: 0x8d7a4e,

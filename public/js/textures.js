@@ -115,5 +115,13 @@ export function wallGridTexture(topHex, bottomHex = topHex) {
     ctx.strokeStyle = 'rgba(255,255,255,0.25)';
     ctx.lineWidth = 2;
     for (let r = 0; r < rows; r++) { ctx.beginPath(); ctx.moveTo(0, r * rh + 3); ctx.lineTo(w, r * rh + 3); ctx.stroke(); }
+    // Baked depth: the coping's cast shadow just below the top, and a soft
+    // grounding band at the base, so the unlit wall still reads as 3D.
+    const top = ctx.createLinearGradient(0, 0, 0, h * 0.14);
+    top.addColorStop(0, 'rgba(60,30,0,0.42)'); top.addColorStop(1, 'rgba(60,30,0,0)');
+    ctx.fillStyle = top; ctx.fillRect(0, 0, w, h * 0.14);
+    const base = ctx.createLinearGradient(0, h * 0.9, 0, h);
+    base.addColorStop(0, 'rgba(60,30,0,0)'); base.addColorStop(1, 'rgba(60,30,0,0.22)');
+    ctx.fillStyle = base; ctx.fillRect(0, h * 0.9, w, h * 0.1);
   });
 }
