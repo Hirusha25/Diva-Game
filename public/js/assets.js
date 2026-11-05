@@ -4,7 +4,7 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
 /**
  * Loads every runtime asset with one progress callback.
- * Returns { shelter, asphalt, shadows, trees: [{front, side, width, height}], leaf }.
+ * Returns { shelter, asphalt, shadows, clouds, trees: [{front, side, width, height}], leaf }.
  */
 export async function loadAssets(onProgress = () => {}) {
   const manager = new THREE.LoadingManager();
@@ -47,6 +47,7 @@ export async function loadAssets(onProgress = () => {}) {
     : fetch(url).then((r) => r.json());
 
   const treeMeta = await loadJson('assets/textures/trees.json');
+  const cloudMeta = await loadJson('assets/textures/clouds.json');
 
   const [shelterGltf, asphalt, shadows, leaf, aFront, aSide, bFront, bSide] = await Promise.all([
     loadGltf('assets/models/bus-shelter.glb'),
@@ -58,6 +59,10 @@ export async function loadAssets(onProgress = () => {}) {
     loadTex('assets/textures/tree-b-front.webp'),
     loadTex('assets/textures/tree-b-side.webp'),
   ]);
+  const clouds = await Promise.all([1, 2, 3, 4].map(async (n) => ({
+    map: await loadTex(`assets/textures/cloud-${n}.webp`),
+    aspect: cloudMeta[`cloud-${n}`].aspect,
+  })));
 
   const shelter = shelterGltf.scene;
   shelter.traverse((o) => {
@@ -73,6 +78,7 @@ export async function loadAssets(onProgress = () => {}) {
     asphalt,
     shadows,
     leaf,
+    clouds,
     trees: [
       { front: aFront, side: aSide, width: treeMeta.a.width, height: treeMeta.a.height },
       { front: bFront, side: bSide, width: treeMeta.b.width, height: treeMeta.b.height },

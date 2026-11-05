@@ -114,3 +114,21 @@ const kb = async (f) => ((await stat(f)).size / 1024).toFixed(0) + ' KB';
   await sharp(src).resize(256, 256).webp({ quality: 80 }).toFile(out);
   console.log('leaf sprite ->', await kb(out));
 }
+
+// ---------------------------------------------------------------- clouds
+{
+  // Cartoon cloud sprites (transparent PNGs) -> trimmed WebP, max 1024 px wide.
+  const meta = {};
+  for (const n of [1, 2, 3, 4]) {
+    const src = `${RAW}/clouds/cloud-${n}.png`;
+    const out = `${OUT_TEX}/cloud-${n}.webp`;
+    const img = sharp(src).trim();
+    const info = await img.clone().toBuffer({ resolveWithObject: true });
+    const w = Math.min(1024, info.info.width);
+    await sharp(src).trim().resize({ width: w }).webp({ quality: 82, alphaQuality: 85 }).toFile(out);
+    const final = await sharp(out).metadata();
+    meta[`cloud-${n}`] = { aspect: final.width / final.height };
+    console.log(`cloud-${n}:`, info.info.width + 'x' + info.info.height, '->', await kb(out));
+  }
+  await writeFile(`${OUT_TEX}/clouds.json`, JSON.stringify(meta, null, 2));
+}

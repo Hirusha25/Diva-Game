@@ -58,30 +58,3 @@ export function dappleTexture() {
     }
   }, { srgb: false });
 }
-
-/** A puffy cumulus cloud sprite with a faint blue underside. */
-export function cloudTexture() {
-  return canvasTexture(512, 256, (ctx, w, h) => {
-    ctx.clearRect(0, 0, w, h);
-    const puffs = [];
-    for (let i = 0; i < 9; i++) {
-      puffs.push({ x: 90 + Math.random() * (w - 180), y: 120 + Math.random() * 60, r: 45 + Math.random() * 55 });
-    }
-    // shadowed base
-    for (const p of puffs) {
-      const g = ctx.createRadialGradient(p.x, p.y + 10, p.r * 0.2, p.x, p.y + 10, p.r * 1.05);
-      g.addColorStop(0, 'rgba(205,222,245,1)');
-      g.addColorStop(0.75, 'rgba(205,222,245,0.9)');
-      g.addColorStop(1, 'rgba(205,222,245,0)');
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y + 10, p.r * 1.05, 0, Math.PI * 2); ctx.fill();
-    }
-    // bright tops
-    for (const p of puffs) {
-      const g = ctx.createRadialGradient(p.x - p.r * 0.2, p.y - p.r * 0.35, p.r * 0.1, p.x, p.y - 6, p.r);
-      g.addColorStop(0, 'rgba(255,255,255,1)');
-      g.addColorStop(0.7, 'rgba(255,255,255,0.95)');
-      g.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y - 6, p.r, 0, Math.PI * 2); ctx.fill();
-    }
-  }, { repeat: false });
-}

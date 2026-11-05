@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { COLORS } from './config.js';
-import { cloudTexture } from './textures.js';
 
 /** Cheap vertical-gradient sky dome. */
 export function createSky() {
@@ -37,23 +36,29 @@ export function createSky() {
   return sky;
 }
 
-/** Cumulus cloud sprites drifting far away on both sides of the road. */
-export function createClouds() {
+/**
+ * Cartoon cloud sprites from the art pack, laid out around the road's vanishing
+ * point: the big puffy one sits low and wide, the long banks float higher.
+ * Everything is far away so clouds barely move as the player runs.
+ */
+export function createClouds(clouds) {
   const group = new THREE.Group();
-  const mats = [cloudTexture(), cloudTexture(), cloudTexture()].map(
-    (map) => new THREE.SpriteMaterial({ map, transparent: true, depthWrite: false, fog: false }),
-  );
-  // Spread across the view above the road's vanishing point so several
-  // clouds sit inside a portrait phone frame.
-  for (let i = 0; i < 12; i++) {
-    const s = new THREE.Sprite(mats[i % mats.length]);
-    const x = (Math.random() - 0.5) * 340;
-    const z = -260 - Math.random() * 120;
-    const y = 45 + Math.random() * 110;
+  const mats = clouds.map((c) => new THREE.SpriteMaterial({ map: c.map, transparent: true, depthWrite: false, fog: false }));
+  const add = (i, x, y, z, width) => {
+    const s = new THREE.Sprite(mats[i]);
     s.position.set(x, y, z);
-    const w = 38 + Math.random() * 42;
-    s.scale.set(w, w * 0.5, 1);
+    s.scale.set(width, width / clouds[i].aspect, 1);
     group.add(s);
-  }
+  };
+  // Hand-placed composition (0-2: long banks, 3: big puff). Portrait phones
+  // see roughly x = ±100 at this depth; the outer ones appear in landscape.
+  add(3, 85, 58, -340, 70);
+  add(3, -95, 100, -380, 60);
+  add(0, -30, 138, -420, 150);
+  add(1, 125, 122, -400, 130);
+  add(2, -125, 66, -360, 120);
+  add(2, 205, 85, -390, 140);
+  add(0, -225, 90, -380, 140);
+  add(3, 25, 168, -440, 45);
   return group;
 }

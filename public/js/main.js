@@ -20,7 +20,7 @@ renderer.toneMappingExposure = 1.2;
 
 const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(COLORS.fog, 80, 210);
-scene.add(createSky(), createClouds());
+scene.add(createSky());
 
 // Sun high and slightly behind the camera so both sides of the street are lit;
 // the hemisphere light fills the faces that look away from it.
@@ -84,6 +84,7 @@ document.getElementById('btn-retry').addEventListener('click', startRun);
 try {
   hud.setProgress(0.05, 'Loading world…');
   const assets = await loadAssets((p) => hud.setProgress(0.05 + p * 0.9));
+  scene.add(createClouds(assets.clouds));
   world = new World(scene, assets);
   player = new Player(scene);
   spawner = new Spawner(scene);
