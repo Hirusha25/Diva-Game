@@ -9,7 +9,8 @@
     "vendor": "node scripts/vendor-three.mjs",
     "build:assets": "npm run assets && npm run road-textures && npm run vendor",
     "road-textures": "node scripts/make-road-textures.mjs",
-    "serve": "php -S 0.0.0.0:8080 -t public public/router.php"
+    "serve": "php -S 0.0.0.0:8080 -t public public/router.php",
+    "build:pages": "node scripts/build-artifact.mjs docs --inline-assets --full-html && rm -f docs/diva-fresh-run.html"
   },
   "devDependencies": {
     "@gltf-transform/cli": "^4.1.1",
