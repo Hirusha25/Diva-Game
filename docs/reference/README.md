@@ -15,3 +15,9 @@ Rules distilled from feedback:
 - Nothing pokes through or over the wall except tree canopies.
 - Trees and bushes stay sparse; do not crowd.
 - Clouds stay white and move with parallax; not too many at the start.
+
+## Approved baseline
+
+`approved-world-view.webp` is the in-game view the client signed off on
+(2026-11-05). Camera height/angle, tree spacing, bush density, cloud count and
+sky gradient are frozen here: do not change these without asking.
