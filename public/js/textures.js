@@ -85,13 +85,9 @@ export function grassTexture() {
 }
 
 /** Yellow wall with a panel grid: wide rectangular blocks and thin darker joints. */
-export function wallGridTexture(topHex, bottomHex = topHex) {
+export function wallGridTexture(hex) {
   return canvasTexture(512, 256, (ctx, w, h) => {
-    // Warm vertical gradient: bright at the coping, deeper orange-yellow at the base.
-    const grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, topHex);
-    grad.addColorStop(1, bottomHex);
-    ctx.fillStyle = grad;
+    ctx.fillStyle = hex;
     ctx.fillRect(0, 0, w, h);
     // faint plaster variation
     for (let i = 0; i < 1200; i++) {
