@@ -1,0 +1,23 @@
+{
+  "name": "diva-fresh-run",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Diva Fresh Stain Fighter Run - mobile browser runner game (Three.js + PHP/MySQL)",
+  "type": "module",
+  "scripts": {
+    "assets": "node scripts/optimize-assets.mjs",
+    "bake": "node scripts/bake-trees.mjs",
+    "vendor": "node scripts/vendor-three.mjs",
+    "build:assets": "npm run assets && npm run bake && npm run vendor",
+    "serve": "php -S 0.0.0.0:8080 -t public public/router.php"
+  },
+  "devDependencies": {
+    "@gltf-transform/cli": "^4.1.1",
+    "@gltf-transform/core": "^4.1.1",
+    "@gltf-transform/extensions": "^4.1.1",
+    "@gltf-transform/functions": "^4.1.1",
+    "meshoptimizer": "^0.22.0",
+    "sharp": "^0.33.5",
+    "three": "^0.170.0"
+  }
+}
