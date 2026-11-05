@@ -6,7 +6,7 @@ import {
 } from './config.js';
 import { pavingTexture } from './textures.js';
 
-const TREES_PER_CHUNK = 16;   // 8 per side, one row set back behind the wall
+const TREES_PER_CHUNK = 40;   // 20 per side: 12 in a near row + 8 in a far row filling the gaps
 const BUSHES_FRONT_PER_CHUNK = 8;   // small clumps on the pavement at the wall base
 const BUSHES_BACK_PER_CHUNK = 0;    // nothing peeks over the wall (reference shows canopy only)
 
@@ -245,20 +245,23 @@ export class World {
     const shelterSide = side === 'left' ? -1 : 1;
 
     // Trees: a dense row just behind the wall on both sides, alternating left/right.
-    // One row per side, set back 3–5 m behind the wall so the trunk is hidden
-    // and only the canopy rises above it (as in the reference art). Spacing
-    // roughly one canopy width, so neighbours just touch.
+    // Continuous tree line: a near row (canopies overlapping) plus a far row
+    // staggered behind it so no sky shows through between trees. Trees are
+    // set back behind the wall so trunks stay hidden.
     trees.forEach((tree, i) => {
       const kind = this.treeMaterials[Math.floor(rng() * this.treeMaterials.length)];
       const s = i % 2 === 0 ? -1 : 1;
-      const slot = Math.floor(i / 2);                     // 8 slots per side
-      const z = -CHUNK_LENGTH / 2 + (slot + 0.25 + rng() * 0.5) * (CHUNK_LENGTH / 8);
-      const height = 9 + rng() * 3;                       // 9–12 m
-      const x = s * (WALL.outer + 3 + rng() * 2);
+      const j = Math.floor(i / 2);                        // 0..19
+      const near = j < 12;
+      const slots = near ? 12 : 8;
+      const slot = near ? j : j - 12;
+      const z = -CHUNK_LENGTH / 2 + (slot + (near ? 0.5 : 0.1) + (rng() - 0.5) * 0.3) * (CHUNK_LENGTH / slots);
+      const height = near ? 10 + rng() * 2.5 : 10.5 + rng() * 2.5;
+      const x = s * (WALL.outer + (near ? 3 + rng() * 1.5 : 6.5 + rng() * 2));
       tree.userData.front.material = kind.material;
       tree.scale.set(height * kind.aspect, height, 1);
       tree.position.set(x, -0.05, z);
-      tree.visible = rng() < 0.9;
+      tree.visible = true;
     });
 
     // Bushes. Front row: on the pavement at the wall base (gap at the shelter).
