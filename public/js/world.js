@@ -7,8 +7,8 @@ import {
 import { pavingTexture } from './textures.js';
 
 const TREES_PER_CHUNK = 16;   // 8 per side, one row set back behind the wall
-const BUSHES_FRONT_PER_CHUNK = 6;   // a few small clumps on the pavement at the wall base
-const BUSHES_BACK_PER_CHUNK = 14;   // loose hedge behind the wall
+const BUSHES_FRONT_PER_CHUNK = 8;   // small clumps on the pavement at the wall base
+const BUSHES_BACK_PER_CHUNK = 0;    // nothing peeks over the wall (reference shows canopy only)
 
 /**
  * The running world: an endless street built from CHUNK_COUNT identical
@@ -176,8 +176,6 @@ export class World {
       mesh.updateMatrix();
       chunk.add(mesh);
     };
-    add(g.ground, m.ground);
-    add(g.dirt, m.dirt);
     add(g.road, m.asphalt);
     add(g.laneLines, m.laneLine);
     add(g.kerbWhite, m.kerbWhite);
@@ -272,7 +270,7 @@ export class World {
         const h = 0.55 + rng() * 0.3;                     // low, so the wall stays visible
         bush.scale.set(h * kind.aspect, h, 1);
         bush.position.set(s * (WALL.inner - 0.45), PAVEMENT.height, z);
-        bush.visible = !blocked && rng() < 0.8;
+        bush.visible = !blocked && rng() < 0.85;
       } else {
         const j = i - BUSHES_FRONT_PER_CHUNK;
         const slot = Math.floor(j / 2);

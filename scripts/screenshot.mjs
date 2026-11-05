@@ -28,5 +28,8 @@ await page.waitForTimeout(2500);
 await page.screenshot({ path: `${out}/03-running-left-lane.png` });
 await page.waitForTimeout(4000);
 await page.screenshot({ path: `${out}/04-running-later.png` });
+await page.setViewportSize({ width: 844, height: 390 });
+await page.waitForTimeout(1500);
+await page.screenshot({ path: `${out}/05-landscape.png` });
 console.log('saved to', out);
 await browser.close();
