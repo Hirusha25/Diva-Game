@@ -58,3 +58,28 @@ export function dappleTexture() {
     }
   }, { srgb: false });
 }
+
+/** Natural grass: layered green noise with blade-like speckle and darker patches. */
+export function grassTexture() {
+  return canvasTexture(512, 512, (ctx, w, h) => {
+    ctx.fillStyle = '#5a9a2e';
+    ctx.fillRect(0, 0, w, h);
+    // soft tonal patches
+    for (let i = 0; i < 60; i++) {
+      const x = Math.random() * w, y = Math.random() * h, r = 40 + Math.random() * 90;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      const dark = Math.random() < 0.5;
+      g.addColorStop(0, dark ? 'rgba(52,110,30,0.45)' : 'rgba(130,190,70,0.4)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    }
+    // blade speckle
+    for (let i = 0; i < 9000; i++) {
+      const x = Math.random() * w, y = Math.random() * h;
+      const l = 2 + Math.random() * 4;
+      ctx.strokeStyle = Math.random() < 0.5 ? 'rgba(160,215,90,0.55)' : 'rgba(40,95,25,0.5)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + (Math.random() - 0.5) * 2, y - l); ctx.stroke();
+    }
+  });
+}

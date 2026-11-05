@@ -4,7 +4,7 @@ import {
   LANE_WIDTH, LANE_COUNT, ROAD_HALF, KERB, PAVEMENT, WALL, SHELTER_OFFSET_X,
   CHUNK_LENGTH, CHUNK_COUNT, COLORS,
 } from './config.js';
-import { pavingTexture } from './textures.js';
+import { pavingTexture, grassTexture } from './textures.js';
 
 const TREES_PER_CHUNK = 40;   // 20 per side: 12 in a near row + 8 in a far row filling the gaps
 const BUSHES_FRONT_PER_CHUNK = 8;   // small clumps on the pavement at the wall base
@@ -82,6 +82,8 @@ export class World {
     paving.repeat.set((PAVEMENT.outer - PAVEMENT.inner) / tile, CHUNK_LENGTH / tile);
     // Baked leafy tree shadows: one texture spans the full street width and
     // 30 m of road; mirrored wrapping keeps it continuous across chunks.
+    const grass = grassTexture();
+    grass.repeat.set(26, CHUNK_LENGTH / 3);
     const shadows = this.assets.shadows;
     shadows.repeat.set(1, CHUNK_LENGTH / 30);
     return {
@@ -92,7 +94,7 @@ export class World {
       pavement: new THREE.MeshStandardMaterial({ map: paving, color: COLORS.pavement, roughness: 0.9 }),
       wall: new THREE.MeshStandardMaterial({ color: COLORS.wall, roughness: 1 }),
       wallCap: new THREE.MeshStandardMaterial({ color: COLORS.wallCap, roughness: 0.9 }),
-      ground: new THREE.MeshStandardMaterial({ color: COLORS.ground, roughness: 1 }),
+      ground: new THREE.MeshStandardMaterial({ map: grass, roughness: 1 }),
       dirt: new THREE.MeshStandardMaterial({ color: COLORS.dirt, roughness: 1 }),
       dapple: new THREE.MeshBasicMaterial({ map: shadows, transparent: true, depthWrite: false, opacity: 0.7, polygonOffset: true, polygonOffsetFactor: -2 }),
     };
@@ -178,6 +180,7 @@ export class World {
       mesh.updateMatrix();
       chunk.add(mesh);
     };
+    add(g.ground, m.ground);
     add(g.road, m.asphalt);
     add(g.laneLines, m.laneLine);
     add(g.kerbWhite, m.kerbWhite);
