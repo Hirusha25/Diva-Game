@@ -102,7 +102,6 @@ export class World {
       bed: new THREE.MeshBasicMaterial({ color: 0xf2a85c, toneMapped: false }),       // orange-tan soil
       bedEdge: new THREE.MeshBasicMaterial({ color: 0xf7e4c6, toneMapped: false }),   // cream stone edging
       dapple: new THREE.MeshBasicMaterial({ map: shadows, transparent: true, depthWrite: false, opacity: 0.7, polygonOffset: true, polygonOffsetFactor: -2 }),
-      wallShade: new THREE.MeshBasicMaterial({ map: shadows, transparent: true, depthWrite: false, opacity: 0.45, polygonOffset: true, polygonOffsetFactor: -2 }),
     };
   }
 
@@ -164,16 +163,6 @@ export class World {
     const bedEdge = mirrored((s) => box(s * (WALL.inner - 0.75), s * (WALL.inner - 0.63), PAVEMENT.height, PAVEMENT.height + 0.07, -L / 2, L / 2));
     const wallCap = mirrored((s) => box(s * (WALL.inner - CAP_O), s * (WALL.outer + CAP_O), WALL.height, WALL.height + CAP_T, -L / 2, L / 2));
     const wallCapTop = mirrored((s) => box(s * (WALL.inner - CAP_O), s * (WALL.outer + CAP_O), WALL.height + CAP_T, WALL.height + CAP_T + 0.01, -L / 2, L / 2));
-    // Tree-shadow overlay on the road-facing wall faces (adds depth to the flat wall).
-    const wallShade = mergeGeometries([1, -1].map((s) => {
-      const g = new THREE.PlaneGeometry(L, WALL.height);
-      g.rotateY(s < 0 ? Math.PI / 2 : -Math.PI / 2);
-      g.translate(s * (WALL.inner - 0.004), WALL.height / 2, 0);
-      const pos = g.attributes.position, uv = g.attributes.uv;
-      for (let i = 0; i < pos.count; i++) uv.setXY(i, (pos.getZ(i) + L / 2) / 30 + (s > 0 ? 0.37 : 0), pos.getY(i) / 9);
-      uv.needsUpdate = true;
-      return g;
-    }));
     // Dappled shadow overlays for the road and both pavements.
     const dapple = mergeGeometries([
       new THREE.PlaneGeometry(ROAD_HALF * 2, L, 1, 1).rotateX(-Math.PI / 2).translate(0, 0.02, 0),
@@ -199,7 +188,7 @@ export class World {
       return g;
     });
 
-    return { road, laneLines, kerbWhite, kerbBlack, pavement, wall, wallCap, wallCapTop, ground, dirt, dapple, bed, bedEdge, wallShade };
+    return { road, laneLines, kerbWhite, kerbBlack, pavement, wall, wallCap, wallCapTop, ground, dirt, dapple, bed, bedEdge };
   }
 
   _buildChunk() {
@@ -224,7 +213,6 @@ export class World {
     add(g.bed, m.bed);
     add(g.bedEdge, m.bedEdge);
     add(g.dapple, m.dapple);
-    add(g.wallShade, m.wallShade);
 
     // Dynamic dressing: one shelter per side (toggled), bushes and trees.
     chunk.userData.shelters = {
