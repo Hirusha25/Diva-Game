@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { loadAssets } from './assets.js';
-import { createSky, createClouds } from './sky.js';
+import { createSky, CloudField } from './sky.js';
 import { World } from './world.js';
 import { Player } from './player.js';
 import { Controls } from './controls.js';
@@ -49,7 +49,7 @@ const state = {
   lives: LIVES,
   invulnerable: 0,
 };
-let world, player, spawner;
+let world, player, spawner, cloudField;
 
 const controls = new Controls(canvas, (action) => {
   if (state.mode !== 'running') return;
@@ -84,7 +84,8 @@ document.getElementById('btn-retry').addEventListener('click', startRun);
 try {
   hud.setProgress(0.05, 'Loading world…');
   const assets = await loadAssets((p) => hud.setProgress(0.05 + p * 0.9));
-  scene.add(createClouds(assets.clouds));
+  cloudField = new CloudField(assets.clouds);
+  scene.add(cloudField.group);
   world = new World(scene, assets);
   player = new Player(scene);
   spawner = new Spawner(scene);
@@ -116,6 +117,7 @@ function frame() {
   const step = state.speed * dt;
 
   world.update(step);
+  cloudField.update(dt, step);
   player.update(dt, state.speed);
   player.group.visible = state.mode === 'running';
 

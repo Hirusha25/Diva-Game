@@ -37,28 +37,57 @@ export function createSky() {
 }
 
 /**
- * Cartoon cloud sprites from the art pack, laid out around the road's vanishing
- * point: the big puffy one sits low and wide, the long banks float higher.
- * Everything is far away so clouds barely move as the player runs.
+ * A 3D cloud field. Clouds live at different depths and heights, drift with
+ * the wind, bob gently, and roll past the player as the world scrolls, so
+ * near clouds move faster than far ones (motion parallax). Clouds that pass
+ * behind the camera respawn far ahead.
  */
-export function createClouds(clouds) {
-  const group = new THREE.Group();
-  const mats = clouds.map((c) => new THREE.SpriteMaterial({ map: c.map, transparent: true, depthWrite: false, fog: false }));
-  const add = (i, x, y, z, width) => {
-    const s = new THREE.Sprite(mats[i]);
-    s.position.set(x, y, z);
-    s.scale.set(width, width / clouds[i].aspect, 1);
-    group.add(s);
-  };
-  // Hand-placed composition (0-2: long banks, 3: big puff). Portrait phones
-  // see roughly x = ±100 at this depth; the outer ones appear in landscape.
-  add(3, 85, 58, -340, 70);
-  add(3, -95, 100, -380, 60);
-  add(0, -30, 138, -420, 150);
-  add(1, 125, 122, -400, 130);
-  add(2, -125, 66, -360, 120);
-  add(2, 205, 85, -390, 140);
-  add(0, -225, 90, -380, 140);
-  add(3, 25, 168, -440, 45);
-  return group;
+export class CloudField {
+  constructor(clouds, count = 20) {
+    this.group = new THREE.Group();
+    this.clouds = clouds;
+    this.items = [];
+    this.time = 0;
+    for (let i = 0; i < count; i++) {
+      const kind = i % 4 === 3 ? 3 : i % 3;            // mix of banks and puffs
+      const c = clouds[kind];
+      const mat = new THREE.SpriteMaterial({ map: c.map, transparent: true, depthWrite: false, fog: false });
+      const sprite = new THREE.Sprite(mat);
+      const item = { sprite, aspect: c.aspect, phase: Math.random() * Math.PI * 2 };
+      this._spawn(item, -60 - (i / count) * 460);        // stagger along the depth
+      this.group.add(sprite);
+      this.items.push(item);
+    }
+  }
+
+  _spawn(item, z) {
+    const side = Math.random() < 0.5 ? -1 : 1;
+    const depth = THREE.MathUtils.clamp((-z) / 500, 0, 1); // 0 near .. 1 far
+    item.z = z;
+    // Keep the lane ahead clear: clouds sit off to the sides, higher ones may sit over the road.
+    // Portrait phones only see about ±0.3 × depth sideways, so keep the field
+    // tight; high clouds may float straight over the road.
+    const high = Math.random() < 0.35;
+    item.x = high ? (Math.random() - 0.5) * 60 : side * (18 + Math.random() * 70) * (0.7 + depth * 0.5);
+    item.baseY = (high ? 70 : 34) + Math.random() * 50 + depth * 30;
+    item.width = 40 + Math.random() * 55;
+    item.wind = (0.8 + Math.random() * 1.4) * side;      // drifts outward
+    item.parallax = 0.18 + (1 - depth) * 0.22;           // near clouds scroll faster
+    item.sprite.scale.set(item.width, item.width / item.aspect, 1);
+  }
+
+  /** @param dt seconds, @param step metres the world scrolled this frame */
+  update(dt, step) {
+    this.time += dt;
+    for (const it of this.items) {
+      it.z += step * it.parallax;
+      it.x += it.wind * dt;
+      if (it.z > 40) this._spawn(it, -520 - Math.random() * 60);
+      const depth = THREE.MathUtils.clamp((-it.z) / 500, 0, 1);
+      const y = it.baseY + Math.sin(this.time * 0.35 + it.phase) * 1.8;
+      it.sprite.position.set(it.x, y, it.z);
+      // Distant clouds fade into the horizon haze; near ones are crisp.
+      it.sprite.material.opacity = 1 - depth * 0.35;
+    }
+  }
 }
