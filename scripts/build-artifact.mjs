@@ -20,7 +20,12 @@ const result = await build({
   target: ['es2022'],
   // 'three' resolves from node_modules (same version as public/vendor/three).
 });
-const js = result.outputFiles[0].text;
+let js = result.outputFiles[0].text;
+// Static hosts that refuse .glb (e.g. claude.ai Artifacts) get the model inlined.
+if (process.argv.includes('--inline-models')) {
+  const glb = await readFile('public/assets/models/bus-shelter.glb');
+  js = js.replaceAll('assets/models/bus-shelter.glb', 'data:model/gltf-binary;base64,' + glb.toString('base64'));
+}
 const css = await readFile('public/css/game.css', 'utf8');
 const html = await readFile('public/index.html', 'utf8');
 const body = html.slice(html.indexOf('<body>') + 6, html.indexOf('<script type="module" src="js/main.js">'));
