@@ -215,7 +215,7 @@ export class World {
     // Illustrated bus stand on the pavement; mirrored on the left so the open
     // side faces the road. Turned toward the camera each frame like the trees.
     const shelter = this._makeBillboard(this.busStandMaterial);
-    const h = 3.2;
+    const h = 4.4;                                       // art has margins; this reads ~3 m tall
     shelter.scale.set(side * h * this.busStandAspect, h, 1);
     shelter.position.set(side * ((PAVEMENT.inner + PAVEMENT.outer) / 2 + 0.2), PAVEMENT.height, 0);
     return shelter;

@@ -19,9 +19,9 @@ final class Scores
         Db::exec('INSERT INTO scores (player_id, score, distance_m, duration_s, created_at) VALUES (?, ?, ?, ?, ?)',
             [$playerId, $score, round($distance, 1), round($duration, 1), now()]);
         $best = (int) (Db::row('SELECT MAX(score) AS b FROM scores WHERE player_id = ?', [$playerId])['b'] ?? 0);
+        // Integer literal rather than a bound parameter: SQLite would otherwise compare as text.
         $rank = (int) Db::row(
-            'SELECT COUNT(*) + 1 AS r FROM (SELECT player_id, MAX(score) AS best FROM scores GROUP BY player_id) t WHERE t.best > ?',
-            [$best]
+            'SELECT COUNT(*) + 1 AS r FROM (SELECT player_id, MAX(score) AS best FROM scores GROUP BY player_id) t WHERE t.best > ' . $best
         )['r'];
         return ['best' => $best, 'rank' => $rank];
     }

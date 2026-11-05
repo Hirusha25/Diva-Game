@@ -7,7 +7,7 @@ export class Hud {
     this.distance = this.$('hud-distance');
     this.lives = this.$('hud-lives');
     this.toast = this.$('hud-toast');
-    this.screens = { loading: this.$('screen-loading'), lobby: this.$('screen-lobby'), over: this.$('screen-over') };
+    this.screens = { loading: this.$('screen-loading'), register: this.$('screen-register'), otp: this.$('screen-otp'), lobby: this.$('screen-lobby'), over: this.$('screen-over') };
     this.loadBar = this.$('load-bar');
     this.loadText = this.$('load-text');
     this._toastTimer = 0;
@@ -46,6 +46,27 @@ export class Hud {
   gameOver(score, distance) {
     this.$('final-score').textContent = Math.floor(score);
     this.$('final-distance').textContent = `${Math.floor(distance)} m`;
+    this.$('final-best').textContent = '…';
+    this.$('final-rank').textContent = 'Saving your run…';
+    this.$('board').textContent = '';
     this.show('over');
   }
+
+  /** Fill the game-over card with the server's answer (or the offline fallback). */
+  result({ best, rank, top = [], myName = '' }) {
+    this.$('final-best').textContent = best;
+    this.$('final-rank').textContent = rank ? `You are #${rank} on the leaderboard` : '';
+    const ol = this.$('board');
+    ol.textContent = '';
+    for (const row of top) {
+      const li = document.createElement('li');
+      if (row.name === myName && row.score === best) li.className = 'me';
+      li.innerHTML = `<span class="rank">${row.rank}</span><span class="name"></span><span class="pts">${row.score}</span>`;
+      li.querySelector('.name').textContent = row.name;
+      ol.appendChild(li);
+    }
+  }
+
+  error(id, msg) { this.$(id).textContent = msg || ''; }
+  busy(id, on, label) { const b = this.$(id); b.disabled = on; if (label) b.textContent = label; }
 }

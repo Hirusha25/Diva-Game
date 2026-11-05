@@ -47,7 +47,7 @@ if (inline) {
       'assets/textures/props.json': JSON.parse(await readFile('public/assets/textures/props.json', 'utf8')),
     },
   };
-  inlineScript = `<script>window.__DIVA_INLINE = ${JSON.stringify(data)};</script>\n`;
+  inlineScript = `<script>window.__DIVA_OFFLINE = true; window.__DIVA_INLINE = ${JSON.stringify(data)};</script>\n`;
 }
 const css = await readFile('public/css/game.css', 'utf8');
 const html = await readFile('public/index.html', 'utf8');
