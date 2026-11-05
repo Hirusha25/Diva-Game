@@ -4,7 +4,7 @@ import {
   LANE_WIDTH, LANE_COUNT, ROAD_HALF, KERB, PAVEMENT, WALL, SHELTER_OFFSET_X,
   CHUNK_LENGTH, CHUNK_COUNT, COLORS,
 } from './config.js';
-import { pavingTexture, grassTexture } from './textures.js';
+import { pavingTexture, grassTexture, wallGridTexture } from './textures.js';
 
 const TREES_PER_CHUNK = 40;   // 20 per side: 12 in a near row + 8 in a far row filling the gaps
 const BUSHES_FRONT_PER_CHUNK = 16;  // 8 per side, every ~7 m along the wall base
@@ -82,6 +82,8 @@ export class World {
     paving.repeat.set((PAVEMENT.outer - PAVEMENT.inner) / tile, CHUNK_LENGTH / tile);
     // Baked leafy tree shadows: one texture spans the full street width and
     // 30 m of road; mirrored wrapping keeps it continuous across chunks.
+    // Wall texture: one tile = 2 panels wide (3 m) x 2 panels tall (= wall height).
+    const wallTex = wallGridTexture('#' + COLORS.wall.toString(16).padStart(6, '0'));
     const grass = grassTexture();
     grass.repeat.set(26, CHUNK_LENGTH / 3);
     const shadows = this.assets.shadows;
@@ -92,7 +94,7 @@ export class World {
       kerbWhite: new THREE.MeshStandardMaterial({ color: COLORS.kerbWhite, roughness: 0.85 }),
       kerbBlack: new THREE.MeshStandardMaterial({ color: COLORS.kerbBlack, roughness: 0.85 }),
       pavement: new THREE.MeshStandardMaterial({ map: paving, color: COLORS.pavement, roughness: 0.9 }),
-      wall: new THREE.MeshBasicMaterial({ color: COLORS.wall, toneMapped: false }),
+      wall: new THREE.MeshBasicMaterial({ map: wallTex, toneMapped: false }),
       wallCap: new THREE.MeshBasicMaterial({ color: COLORS.wallCap, toneMapped: false }),
       wallCapTop: new THREE.MeshBasicMaterial({ color: COLORS.wallCapTop, toneMapped: false }),
       ground: new THREE.MeshStandardMaterial({ map: grass, roughness: 1 }),
@@ -142,7 +144,17 @@ export class World {
 
     // Pavement, boundary wall with a darker cap, and the ground beyond.
     const pavement = mirrored((s) => box(s * PAVEMENT.inner, s * PAVEMENT.outer, 0, PAVEMENT.height, -L / 2, L / 2));
-    const wall = mirrored((s) => box(s * WALL.inner, s * WALL.outer, 0, WALL.height, -L / 2, L / 2));
+    const wall = mirrored((s) => {
+      const g = box(s * WALL.inner, s * WALL.outer, 0, WALL.height, -L / 2, L / 2);
+      // Re-map UVs from world position so the panel grid is 3 m wide x wall-height tall
+      // on the faces that run along the road (the +x/-x faces of the box).
+      const pos = g.attributes.position, nrm = g.attributes.normal, uv = g.attributes.uv;
+      for (let i = 0; i < pos.count; i++) {
+        if (Math.abs(nrm.getX(i)) > 0.5) uv.setXY(i, (pos.getZ(i) + L / 2) / 3, pos.getY(i) / WALL.height);
+        else uv.setXY(i, 0.1, 0.1);
+      }
+      return g;
+    });
     // Soil bed along the wall base that the bushes sit in (reference art).
     const bed = mirrored((s) => box(s * (WALL.inner - 0.75), s * WALL.inner, PAVEMENT.height, PAVEMENT.height + 0.03, -L / 2, L / 2));
     // Coping stone: a thick slab overhanging both faces, with a lighter top.

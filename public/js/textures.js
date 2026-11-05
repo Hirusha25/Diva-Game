@@ -83,3 +83,33 @@ export function grassTexture() {
     }
   });
 }
+
+/** Yellow wall with a panel grid: wide rectangular blocks and thin darker joints. */
+export function wallGridTexture(hex) {
+  return canvasTexture(512, 256, (ctx, w, h) => {
+    ctx.fillStyle = hex;
+    ctx.fillRect(0, 0, w, h);
+    // faint plaster variation
+    for (let i = 0; i < 1200; i++) {
+      ctx.fillStyle = `rgba(0,0,0,${Math.random() * 0.03})`;
+      ctx.fillRect(Math.random() * w, Math.random() * h, 3, 3);
+    }
+    // grid: 2 rows per texture, 2 columns, running bond (offset every row)
+    ctx.strokeStyle = 'rgba(120,80,10,0.45)';
+    ctx.lineWidth = 3;
+    const rows = 2, cols = 2;
+    const rh = h / rows, cw = w / cols;
+    for (let r = 0; r <= rows; r++) { ctx.beginPath(); ctx.moveTo(0, r * rh); ctx.lineTo(w, r * rh); ctx.stroke(); }
+    for (let r = 0; r < rows; r++) {
+      const off = (r % 2) * cw / 2;
+      for (let c = 0; c <= cols; c++) {
+        const x = (c * cw + off) % w;
+        ctx.beginPath(); ctx.moveTo(x, r * rh); ctx.lineTo(x, (r + 1) * rh); ctx.stroke();
+      }
+    }
+    // light bevel on top edge of each block
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 2;
+    for (let r = 0; r < rows; r++) { ctx.beginPath(); ctx.moveTo(0, r * rh + 3); ctx.lineTo(w, r * rh + 3); ctx.stroke(); }
+  });
+}
