@@ -7,7 +7,7 @@ import {
 import { pavingTexture, grassTexture, wallGridTexture } from './textures.js';
 
 const TREES_PER_CHUNK = 40;   // 20 per side: 12 in a near row + 8 in a far row filling the gaps
-const BUSHES_FRONT_PER_CHUNK = 16;  // 8 per side, every ~7 m along the wall base
+const BUSHES_FRONT_PER_CHUNK = 20;  // 10 per side, every ~6 m along the wall base
 const BUSHES_BACK_PER_CHUNK = 0;    // nothing peeks over the wall (reference shows canopy only)
 
 /**
@@ -302,7 +302,7 @@ export class World {
         const slot = Math.floor(i / 2);
         const z = -CHUNK_LENGTH / 2 + (slot + 0.3 + rng() * 0.4) * (CHUNK_LENGTH / (BUSHES_FRONT_PER_CHUNK / 2));
         const blocked = s === shelterSide && Math.abs(z - shelterZ) < 7.5;
-        const h = 0.7 + rng() * 0.25;                     // about a third of the 2.2 m wall
+        const h = 0.85 + rng() * 0.25;                    // ~40% of the 2.2 m wall, ~2 m wide
         bush.scale.set(h * kind.aspect, h, 1);
         // Flat against the wall (plane faces the road), base sunk into the soil bed.
         bush.rotation.y = s < 0 ? Math.PI / 2 : -Math.PI / 2;
