@@ -85,10 +85,11 @@ export function grassTexture() {
 }
 
 /** Yellow wall with a panel grid: wide rectangular blocks and thin darker joints. */
-export function wallGridTexture(topHex, bottomHex = topHex) {
+export function wallGridTexture(topHex, bottomHex = topHex, { midHex = null, grid = true } = {}) {
   return canvasTexture(512, 256, (ctx, w, h) => {
     const grad = ctx.createLinearGradient(0, 0, 0, h);
     grad.addColorStop(0, topHex);
+    if (midHex) grad.addColorStop(0.5, midHex);
     grad.addColorStop(1, bottomHex);
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
@@ -98,6 +99,7 @@ export function wallGridTexture(topHex, bottomHex = topHex) {
       ctx.fillRect(Math.random() * w, Math.random() * h, 3, 3);
     }
     // grid: 2 rows per texture, 2 columns, running bond (offset every row)
+    if (!grid) { bakeDepth(ctx, w, h); return; }
     ctx.strokeStyle = 'rgba(120,80,10,0.45)';
     ctx.lineWidth = 3;
     const rows = 2, cols = 2;
@@ -114,9 +116,13 @@ export function wallGridTexture(topHex, bottomHex = topHex) {
     ctx.strokeStyle = 'rgba(255,255,255,0.25)';
     ctx.lineWidth = 2;
     for (let r = 0; r < rows; r++) { ctx.beginPath(); ctx.moveTo(0, r * rh + 3); ctx.lineTo(w, r * rh + 3); ctx.stroke(); }
-    // Baked depth: a soft shadow under the coping so the wall still reads as 3D.
-    const top = ctx.createLinearGradient(0, 0, 0, h * 0.12);
-    top.addColorStop(0, 'rgba(90,50,0,0.3)'); top.addColorStop(1, 'rgba(90,50,0,0)');
-    ctx.fillStyle = top; ctx.fillRect(0, 0, w, h * 0.12);
+    bakeDepth(ctx, w, h);
   });
+}
+
+/** Soft shadow under the coping so an unlit wall still reads as 3D. */
+function bakeDepth(ctx, w, h) {
+  const top = ctx.createLinearGradient(0, 0, 0, h * 0.12);
+  top.addColorStop(0, 'rgba(90,50,0,0.3)'); top.addColorStop(1, 'rgba(90,50,0,0)');
+  ctx.fillStyle = top; ctx.fillRect(0, 0, w, h * 0.12);
 }

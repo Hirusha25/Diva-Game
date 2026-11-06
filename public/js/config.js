@@ -38,8 +38,8 @@ export const COLORS = {
   pavement: 0xffffff,      // tinted by the paving texture
   wall: 0xfcdc65,        // sampled from the reference (sunlit face)
   wallShade: 0xe0b848,   // faces turned away from the sun
-  wallCap: 0xd6a485,     // coping front, sampled
-  wallCapTop: 0xe9d3c0,  // coping top, lighter
+  wallCap: 0x7a5d4e,     // dark brown stone coping, sampled
+  wallCapTop: 0xb9866a,  // sunlit top edge of the coping
   ground: 0x5a9a2e,
   dirt: 0x8d7a4e,
   shrub: 0x3f9a2f,
