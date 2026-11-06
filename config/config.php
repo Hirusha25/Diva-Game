@@ -46,7 +46,7 @@ $config = [
         'country_code'   => '94',   // Sri Lanka
         'allowed_origin' => getenv('DIVA_ALLOWED_ORIGIN') ?: '*',
         'score_per_metre' => 0.5,   // must match public/js/config.js
-        'max_speed'       => 24,
+        'max_speed'       => 32,
     ],
     'admin' => [
         // Default login admin / diva2026 – CHANGE IN config/local.php
