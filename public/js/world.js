@@ -83,7 +83,7 @@ export class World {
     // Baked leafy tree shadows: one texture spans the full street width and
     // 30 m of road; mirrored wrapping keeps it continuous across chunks.
     // Wall texture: one tile = 2 panels wide (3 m) x 2 panels tall (= wall height).
-    const wallTex = wallGridTexture('#' + COLORS.wall.toString(16).padStart(6, '0'));
+    const wallTex = wallGridTexture('#fee87d', '#fdd759');   // sampled from the reference
     const grass = grassTexture();
     grass.repeat.set(26, CHUNK_LENGTH / 3);
     const shadows = this.assets.shadows;
@@ -93,13 +93,14 @@ export class World {
       laneLine: new THREE.MeshBasicMaterial({ color: COLORS.laneLine, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -1 }),
       kerbWhite: new THREE.MeshStandardMaterial({ color: COLORS.kerbWhite, roughness: 0.85 }),
       kerbBlack: new THREE.MeshStandardMaterial({ color: COLORS.kerbBlack, roughness: 0.85 }),
-      pavement: new THREE.MeshStandardMaterial({ map: paving, color: COLORS.pavement, roughness: 0.9 }),
+      pavement: new THREE.MeshStandardMaterial({ map: paving, color: 0xffe9cc, roughness: 0.9 }),   // cream slabs
       wall: new THREE.MeshBasicMaterial({ map: wallTex, toneMapped: false }),
       wallCap: new THREE.MeshBasicMaterial({ color: COLORS.wallCap, toneMapped: false }),
       wallCapTop: new THREE.MeshBasicMaterial({ color: COLORS.wallCapTop, toneMapped: false }),
       ground: new THREE.MeshStandardMaterial({ map: grass, roughness: 1 }),
       dirt: new THREE.MeshStandardMaterial({ color: COLORS.dirt, roughness: 1 }),
-      bed: new THREE.MeshBasicMaterial({ color: 0xd9bfa8, toneMapped: false }),
+      bed: new THREE.MeshBasicMaterial({ color: 0xf3b23e, toneMapped: false }),       // orange planter bed
+      bedEdge: new THREE.MeshBasicMaterial({ color: 0x9a6a3a, toneMapped: false }),   // brown bed edging
       dapple: new THREE.MeshBasicMaterial({ map: shadows, transparent: true, depthWrite: false, opacity: 0.7, polygonOffset: true, polygonOffsetFactor: -2 }),
     };
   }
@@ -210,7 +211,7 @@ export class World {
     add(g.wallCap, m.wallCap);
     add(g.wallCapTop, m.wallCapTop);
     add(g.bed, m.bed);
-    add(g.bedEdge, m.kerbWhite);
+    add(g.bedEdge, m.bedEdge);
     add(g.dapple, m.dapple);
 
     // Dynamic dressing: one shelter per side (toggled), bushes and trees.

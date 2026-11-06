@@ -85,9 +85,12 @@ export function grassTexture() {
 }
 
 /** Yellow wall with a panel grid: wide rectangular blocks and thin darker joints. */
-export function wallGridTexture(hex) {
+export function wallGridTexture(topHex, bottomHex = topHex) {
   return canvasTexture(512, 256, (ctx, w, h) => {
-    ctx.fillStyle = hex;
+    const grad = ctx.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, topHex);
+    grad.addColorStop(1, bottomHex);
+    ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
     // faint plaster variation
     for (let i = 0; i < 1200; i++) {
@@ -111,5 +114,9 @@ export function wallGridTexture(hex) {
     ctx.strokeStyle = 'rgba(255,255,255,0.25)';
     ctx.lineWidth = 2;
     for (let r = 0; r < rows; r++) { ctx.beginPath(); ctx.moveTo(0, r * rh + 3); ctx.lineTo(w, r * rh + 3); ctx.stroke(); }
+    // Baked depth: a soft shadow under the coping so the wall still reads as 3D.
+    const top = ctx.createLinearGradient(0, 0, 0, h * 0.12);
+    top.addColorStop(0, 'rgba(90,50,0,0.3)'); top.addColorStop(1, 'rgba(90,50,0,0)');
+    ctx.fillStyle = top; ctx.fillRect(0, 0, w, h * 0.12);
   });
 }
