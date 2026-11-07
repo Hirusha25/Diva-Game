@@ -21,7 +21,7 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.2;
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(COLORS.fog, 45, 170);
+scene.fog = new THREE.Fog(COLORS.fog, 80, 210);
 scene.add(createSky());
 
 // Sun high and slightly behind the camera so both sides of the street are lit;

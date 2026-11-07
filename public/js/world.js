@@ -7,7 +7,7 @@ import {
 import { pavingTexture, grassTexture, wallGridTexture } from './textures.js';
 
 const TREES_PER_CHUNK = 40;   // 20 per side: 12 in a near row + 8 in a far row filling the gaps
-const BUSHES_FRONT_PER_CHUNK = 24;  // 12 per side, every ~5 m along the wall base
+const BUSHES_FRONT_PER_CHUNK = 20;  // 10 per side, every ~6 m along the wall base
 const BUSHES_BACK_PER_CHUNK = 0;    // nothing peeks over the wall (reference shows canopy only)
 
 /**
@@ -78,14 +78,14 @@ export class World {
     const asphalt = this.assets.asphalt;
     asphalt.repeat.set(LANE_COUNT * 1.5, CHUNK_LENGTH / 1.67); // one tile ≈ 1.67 m of real asphalt
     const paving = pavingTexture();
-    const tile = 1.0;  // metres per paving slab (large tiles as in the reference)
+    const tile = 0.8;  // metres per paving slab
     paving.repeat.set((PAVEMENT.outer - PAVEMENT.inner) / tile, CHUNK_LENGTH / tile);
     // Baked leafy tree shadows: one texture spans the full street width and
     // 30 m of road; mirrored wrapping keeps it continuous across chunks.
     // Wall texture: one tile = 2 panels wide (3 m) x 2 panels tall (= wall height).
     // Smooth plaster, sampled from the reference: pale yellow at the coping,
     // richer orange-yellow toward the base. No grid.
-    const wallTex = wallGridTexture('#f2c14d', '#ddbe4d', { midHex: '#e9b137', grid: false });   // golden yellow, sampled
+    const wallTex = wallGridTexture('#fddf62', '#d9992a', { midHex: '#f6b434', grid: false });
     const grass = grassTexture();
     grass.repeat.set(26, CHUNK_LENGTH / 3);
     const shadows = this.assets.shadows;
@@ -95,14 +95,14 @@ export class World {
       laneLine: new THREE.MeshBasicMaterial({ color: COLORS.laneLine, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -1 }),
       kerbWhite: new THREE.MeshStandardMaterial({ color: COLORS.kerbWhite, roughness: 0.85 }),
       kerbBlack: new THREE.MeshStandardMaterial({ color: COLORS.kerbBlack, roughness: 0.85 }),
-      pavement: new THREE.MeshStandardMaterial({ map: paving, color: 0xd9d2cf, roughness: 0.9 }),   // light warm grey slabs, sampled
+      pavement: new THREE.MeshStandardMaterial({ map: paving, color: 0xffe9cc, roughness: 0.9 }),   // cream slabs
       wall: new THREE.MeshBasicMaterial({ map: wallTex, toneMapped: false }),
       wallCap: new THREE.MeshBasicMaterial({ color: COLORS.wallCap, toneMapped: false }),
       wallCapTop: new THREE.MeshBasicMaterial({ color: COLORS.wallCapTop, toneMapped: false }),
       ground: new THREE.MeshStandardMaterial({ map: grass, roughness: 1 }),
       dirt: new THREE.MeshStandardMaterial({ color: COLORS.dirt, roughness: 1 }),
-      bed: new THREE.MeshBasicMaterial({ color: 0x586568, toneMapped: false }),       // grey stone bed strip, sampled
-      bedEdge: new THREE.MeshBasicMaterial({ color: 0x8a8e92, toneMapped: false }),   // lighter stone edge
+      bed: new THREE.MeshBasicMaterial({ color: 0x925f16, toneMapped: false }),       // warm amber soil strip, row-averaged from the reference
+      bedEdge: new THREE.MeshBasicMaterial({ color: 0x7f7e86, toneMapped: false }),   // blue-grey stone edging, row-averaged
       dapple: new THREE.MeshBasicMaterial({ map: shadows, transparent: true, depthWrite: false, opacity: 0.7, polygonOffset: true, polygonOffsetFactor: -2 }),
       wallShade: new THREE.MeshBasicMaterial({ map: shadows, transparent: true, depthWrite: false, opacity: 0.3, polygonOffset: true, polygonOffsetFactor: -2 }),
     };
@@ -321,8 +321,8 @@ export class World {
       const slots = near ? 12 : 8;
       const slot = near ? j : j - 12;
       const z = -CHUNK_LENGTH / 2 + (slot + (near ? 0.5 : 0.1) + (rng() - 0.5) * 0.3) * (CHUNK_LENGTH / slots);
-      const height = near ? 8 + rng() * 2 : 8.5 + rng() * 2;        // smaller canopies, as in the reference
-      const x = s * (WALL.outer + (near ? 4 + rng() * 1.5 : 8 + rng() * 2));
+      const height = near ? 10 + rng() * 2.5 : 10.5 + rng() * 2.5;
+      const x = s * (WALL.outer + (near ? 3 + rng() * 1.5 : 6.5 + rng() * 2));
       tree.userData.front.material = kind.material;
       tree.scale.set(height * kind.aspect, height, 1);
       tree.position.set(x, -0.05, z);
@@ -341,7 +341,7 @@ export class World {
         const slot = Math.floor(i / 2);
         const z = -CHUNK_LENGTH / 2 + (slot + 0.3 + rng() * 0.4) * (CHUNK_LENGTH / (BUSHES_FRONT_PER_CHUNK / 2));
         const blocked = s === shelterSide && Math.abs(z - shelterZ) < 7.5;
-        const h = 1.0 + rng() * 0.35;                     // ~half the 2.2 m wall, as in the reference
+        const h = 0.85 + rng() * 0.25;                    // ~40% of the 2.2 m wall
         for (const pl of bush.userData.planes) pl.scale.x = h * kind.aspect * (pl === bush.userData.front ? 1 : 0.78);
         for (const pl of bush.userData.planes) pl.scale.y = h * (pl === bush.userData.front ? 1 : 0.9);
         bush.userData.shadow.scale.set(h * kind.aspect * 1.05, 1, h * 0.7);
