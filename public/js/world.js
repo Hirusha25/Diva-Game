@@ -4,7 +4,7 @@ import {
   LANE_WIDTH, LANE_COUNT, ROAD_HALF, KERB, PAVEMENT, WALL, SHELTER_OFFSET_X,
   CHUNK_LENGTH, CHUNK_COUNT, COLORS,
 } from './config.js';
-import { pavingTexture, grassTexture, wallGridTexture } from './textures.js';
+import { pavingTexture, grassTexture, wallGridTexture, soilTexture } from './textures.js';
 
 const TREES_PER_CHUNK = 40;   // 20 per side: 12 in a near row + 8 in a far row filling the gaps
 const BUSHES_FRONT_PER_CHUNK = 20;  // 10 per side, every ~6 m along the wall base
@@ -86,6 +86,8 @@ export class World {
     // Smooth plaster, sampled from the reference: pale yellow at the coping,
     // richer orange-yellow toward the base. No grid.
     const wallTex = wallGridTexture('#fddf62', '#d9992a', { midHex: '#f6b434', grid: false });
+    const soil = soilTexture();
+    soil.repeat.set(1, CHUNK_LENGTH / 4);   // 0.75 m wide strip, one tile per 4 m
     const grass = grassTexture();
     grass.repeat.set(26, CHUNK_LENGTH / 3);
     const shadows = this.assets.shadows;
@@ -101,8 +103,8 @@ export class World {
       wallCapTop: new THREE.MeshBasicMaterial({ color: COLORS.wallCapTop, toneMapped: false }),
       ground: new THREE.MeshStandardMaterial({ map: grass, roughness: 1 }),
       dirt: new THREE.MeshStandardMaterial({ color: COLORS.dirt, roughness: 1 }),
-      bed: new THREE.MeshBasicMaterial({ color: 0xc48f48, toneMapped: false }),       // warm tan strip, sampled from the pavement crop
-      bedEdge: new THREE.MeshBasicMaterial({ color: 0xb78244, toneMapped: false }),   // slightly darker edge, sampled
+      bed: new THREE.MeshStandardMaterial({ map: soil, roughness: 1 }),              // textured garden soil
+      bedEdge: new THREE.MeshStandardMaterial({ color: 0x9e7a4a, roughness: 1 }),    // sunken edge, a shade darker
       dapple: new THREE.MeshBasicMaterial({ map: shadows, transparent: true, depthWrite: false, opacity: 0.7, polygonOffset: true, polygonOffsetFactor: -2 }),
       wallShade: new THREE.MeshBasicMaterial({ map: shadows, transparent: true, depthWrite: false, opacity: 0.3, polygonOffset: true, polygonOffsetFactor: -2 }),
     };
@@ -160,7 +162,15 @@ export class World {
       return g;
     });
     // Soil bed along the wall base that the bushes sit in (reference art).
-    const bed = mirrored((s) => box(s * (WALL.inner - 0.75), s * WALL.inner, PAVEMENT.height, PAVEMENT.height + 0.03, -L / 2, L / 2));
+    const bed = mirrored((s) => {
+      const g = box(s * (WALL.inner - 0.75), s * WALL.inner, PAVEMENT.height - 0.02, PAVEMENT.height + 0.03, -L / 2, L / 2);
+      // Top face UVs run along the road so the soil texture does not stretch.
+      const pos = g.attributes.position, nrm = g.attributes.normal, uv = g.attributes.uv;
+      for (let i = 0; i < pos.count; i++) {
+        if (nrm.getY(i) > 0.5) uv.setXY(i, (Math.abs(pos.getX(i)) - (WALL.inner - 0.75)) / 0.75, (pos.getZ(i) + L / 2) / L);
+      }
+      return g;
+    });
     // Coping stone: a thick slab overhanging both faces, with a lighter top.
     const CAP_T = 0.22, CAP_O = 0.14;
     const bedEdge = mirrored((s) => box(s * (WALL.inner - 0.75), s * (WALL.inner - 0.63), PAVEMENT.height, PAVEMENT.height + 0.07, -L / 2, L / 2));
