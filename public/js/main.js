@@ -82,18 +82,7 @@ function showLobby() {
   hud.show('cover');
 }
 
-// ---- hero choice (boy / girl); the runner model swaps in when the characters arrive
-const HERO_KEY = 'diva.hero';
-function setHero(h, animate = true) {
-  try { localStorage.setItem(HERO_KEY, h); } catch { /* private mode */ }
-  $('btn-boy').classList.toggle('selected', h === 'boy');
-  $('btn-girl').classList.toggle('selected', h === 'girl');
-  $('hero-tag').textContent = h === 'boy' ? 'Boy selected' : 'Girl selected';
-  if (animate) pop($('heroes'));
-}
 function pop(el) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
-$('btn-boy').addEventListener('click', () => setHero('boy'));
-$('btn-girl').addEventListener('click', () => setHero('girl'));
 $('btn-logo').addEventListener('click', () => pop($('btn-logo')));
 $('btn-tagline').addEventListener('click', () => pop($('btn-tagline')));
 $('btn-back-cover').addEventListener('click', showLobby);
@@ -231,8 +220,6 @@ try {
   player = new Player(scene);
   spawner = new Spawner(scene);
   hud.layoutCover(assets.cover.meta, assets.cover.images);
-  let hero = 'boy'; try { hero = localStorage.getItem(HERO_KEY) || 'boy'; } catch { /* private mode */ }
-  setHero(hero, false);
   hud.setProgress(0.95, REQUIRE_REGISTRATION ? 'Signing in…' : 'Ready');
   me = REQUIRE_REGISTRATION ? await api.me() : null;
   hud.setProgress(1, 'Ready');
