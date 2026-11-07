@@ -85,8 +85,8 @@ export class World {
           const dz = cameraPos.z - (chunk.position.z + tree.position.z);
           const dx = cameraPos.x - tree.position.x;
           let yaw = Math.atan2(dx, dz);                 // cylindrical billboard
-          const cl = tree.userData.clamp;                // bushes: never turn so far they cut into the wall
-          if (cl) yaw = cl.centre + THREE.MathUtils.clamp(yaw - cl.centre, -cl.range, cl.range);
+          const cl = tree.userData.clamp;                // bushes: pinned at the wall, swing outward only
+          if (cl) yaw = cl.centre + THREE.MathUtils.clamp(yaw - cl.centre, cl.min, cl.max);
           tree.rotation.y = yaw;
         }
       }
@@ -339,7 +339,7 @@ export class World {
 
   _makeBush(material) {
     // Two crossed planes of the same bush image (centre pivot, base at y = 0).
-    if (!this._bushGeo) this._bushGeo = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
+    if (!this._bushGeo) this._bushGeo = new THREE.PlaneGeometry(1, 1).translate(0.5, 0.5, 0);   // pivot at the x = 0 edge
     const group = new THREE.Group();
     const along = new THREE.Mesh(this._bushGeo, material);
     const across = new THREE.Mesh(this._bushGeo, material);
@@ -439,15 +439,19 @@ export class World {
         // One copy of the image that turns to face the camera (see update()),
         // so it always shows its full painted face. Its centre is kept a full
         // half-width off the wall, so even turned side-on it never cuts into it.
-        along.rotation.y = 0; along.scale.set(w * (pick.mirror ? -1 : 1), h, 1);
+        // The image is pinned to the wall at the end nearest the player and
+        // turns toward the camera around that end, so the far end swings out
+        // toward the road by at most ~35°. It can never cut into the wall.
         across.visible = false;
+        along.rotation.y = 0;
+        // span: left wall [0,w] (pivot = near end), right wall [-w,0]
+        const flip = pick.mirror ? -1 : 1;
+        along.scale.set(w * flip, h, 1);
+        along.position.x = s < 0 ? (flip < 0 ? w : 0) : (flip < 0 ? 0 : -w);
         bush.userData.billboard = true;
-        // Turn toward the camera at most ±55° from "facing the road"; with the
-        // centre 0.45 w off the wall the far edge can never reach the wall.
-        bush.userData.clamp = { centre: s < 0 ? Math.PI / 2 : -Math.PI / 2, range: 0.96 };
-        const depth = w * 0.45;
-        bush.position.set(s * (WALL.inner - depth), PAVEMENT.height + 0.03, z);
-        SP.set(s * (WALL.inner - 0.35), PAVEMENT.height + 0.035, z); SQ.identity(); SS.set(0.75, 1, w * 0.9); SM.compose(SP, SQ, SS);
+        bush.userData.clamp = s < 0 ? { centre: Math.PI / 2, min: -0.45, max: 0 } : { centre: -Math.PI / 2, min: 0, max: 0.45 };
+        bush.position.set(s * (WALL.inner - 0.04), PAVEMENT.height + 0.03, z + w / 2);
+        SP.set(s * (WALL.inner - 0.38), PAVEMENT.height + 0.035, z); SQ.identity(); SS.set(0.8, 1, w * 0.9); SM.compose(SP, SQ, SS);
         chunk.userData.bushShadows.setMatrixAt(shadowIdx++, SM);
         bush.userData.shadow.visible = false;
         bush.visible = !blocked && rng() < 0.85;
@@ -458,12 +462,15 @@ export class World {
         const h = isRow ? 2.1 + rng() * 0.3 : 2.7 + rng() * 0.4;
         const w = h * kind.aspect;
         for (const pl of bush.userData.planes) { pl.position.set(0, 0, 0); }
-        along.rotation.y = 0; along.scale.set(w * (pick.mirror ? -1 : 1), h, 1);
         across.visible = false;
+        along.rotation.y = 0;
+        const flip = pick.mirror ? -1 : 1;
+        along.scale.set(w * flip, h, 1);
+        along.position.x = s < 0 ? (flip < 0 ? w : 0) : (flip < 0 ? 0 : -w);
         bush.userData.billboard = true;
-        bush.userData.clamp = { centre: s < 0 ? Math.PI / 2 : -Math.PI / 2, range: 0.9 };
+        bush.userData.clamp = s < 0 ? { centre: Math.PI / 2, min: -0.5, max: 0 } : { centre: -Math.PI / 2, min: 0, max: 0.5 };
         bush.userData.shadow.visible = false;
-        bush.position.set(s * (WALL.outer + 0.15 + w * 0.42), 0, z);
+        bush.position.set(s * (WALL.outer + 0.1), 0, z + w / 2);
         bush.visible = rng() < 0.8;
       }
     });
