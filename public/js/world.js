@@ -42,11 +42,9 @@ export class World {
     }));
     // Which art goes on which wall (art drawn receding to the right suits the
     // left wall; the others are mirrored where needed so the perspective reads).
-    // Never mirror a bush (the flipped perspective looks like it is falling
-    // off the wall). Each wall only uses the art drawn for it; 'both' goes everywhere.
     this.bushSets = {
-      left: this.bushMaterials.map((k, i) => ({ kind: k, i, mirror: false })).filter((e) => e.kind.side !== 'right'),
-      right: this.bushMaterials.map((k, i) => ({ kind: k, i, mirror: false })).filter((e) => e.kind.side !== 'left'),
+      left: this.bushMaterials.map((k, i) => ({ kind: k, i, mirror: k.side === 'right' })),
+      right: this.bushMaterials.map((k, i) => ({ kind: k, i, mirror: k.side === 'left' })),
     };
     this.busStandMaterial = new THREE.MeshBasicMaterial({ map: assets.busStand.map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false });
     this.busStandAspect = assets.busStand.aspect;
