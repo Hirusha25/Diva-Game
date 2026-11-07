@@ -23,6 +23,10 @@ const result = await build({
 let js = result.outputFiles[0].text;
 // --inline-assets: embed every model/texture as a data: URI so the page needs
 // no supporting files (claude.ai Artifacts refuse .glb and sandbox fetches).
+const css = await readFile('public/css/game.css', 'utf8');
+const html = await readFile('public/index.html', 'utf8');
+let body = html.slice(html.indexOf('<body>') + 6, html.indexOf('<script type="module" src="js/main.js">'));
+
 const inline = process.argv.includes('--inline-assets') || process.argv.includes('--inline-models');
 let inlineScript = '';
 if (inline) {
@@ -53,9 +57,6 @@ if (inline) {
   };
   inlineScript = `<script>window.__DIVA_OFFLINE = true; window.__DIVA_INLINE = ${JSON.stringify(data)};</script>\n`;
 }
-const css = await readFile('public/css/game.css', 'utf8');
-const html = await readFile('public/index.html', 'utf8');
-let body = html.slice(html.indexOf('<body>') + 6, html.indexOf('<script type="module" src="js/main.js">'));
 
 const page = `<title>Diva Fresh Run</title>
 <style>
