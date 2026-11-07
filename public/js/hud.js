@@ -35,6 +35,8 @@ export class Hud {
       el.style.width = `${m.w * 100}%`; el.style.height = `${m.h * 100}%`;
       if (el.tagName === 'IMG') el.src = images[key];
       else el.style.backgroundImage = `url("${images[key]}")`;
+      // CSS custom properties resolve URLs against the stylesheet, so pass an absolute URL.
+      if (key === 'start') el.style.setProperty('--start-img', `url("${new URL(images[key], document.baseURI).href}")`);
     }
   }
 
