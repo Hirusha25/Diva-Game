@@ -35,7 +35,7 @@ if (inline) {
   const textures = [
     'assets/textures/asphalt.webp', 'assets/textures/tree-shadows.webp', 'assets/textures/leaf.webp',
     'assets/textures/tree-1.webp', 'assets/textures/tree-2.webp', 'assets/textures/tree-3.webp', 'assets/textures/tree-4.webp',
-    'assets/textures/bush-1.webp', 'assets/textures/bush-2.webp', 'assets/textures/bus-stand.webp',
+    'assets/textures/bush-1.webp', 'assets/textures/bush-2.webp', 'assets/textures/bush-3.webp', 'assets/textures/bush-4.webp', 'assets/textures/bus-stand.webp',
     'assets/ui/cover-bg.webp', 'assets/ui/glow.webp', 'assets/ui/hcb.webp', 'assets/ui/logo.webp', 'assets/ui/tagline.webp', 'assets/ui/heroes.webp', 'assets/ui/ribbon.webp', 'assets/ui/start.webp',
     'assets/textures/cloud-1.webp', 'assets/textures/cloud-2.webp', 'assets/textures/cloud-3.webp', 'assets/textures/cloud-4.webp',
   ];

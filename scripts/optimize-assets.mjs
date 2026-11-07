@@ -150,14 +150,22 @@ const kb = async (f) => ((await stat(f)).size / 1024).toFixed(0) + ' KB';
 
 // ---------------------------------------------------------------- bushes
 {
-  // Flowering bush art (transparent PNGs) -> trimmed WebP billboards, 512 px wide.
+  // Flowering bushes drawn in 3/4 view (assets/raw/bushes-v2). 'side' says which
+  // wall the baked perspective suits: art receding to the upper-right reads
+  // correctly on the LEFT wall, and vice versa; 'both' is near-frontal.
+  const BUSHES = [
+    [1, 'left',  'white, receding right'],
+    [2, 'both',  'pink, near-frontal'],
+    [3, 'left',  'long pink+white row, receding right'],
+    [4, 'right', 'white, receding left'],
+  ];
   const meta = {};
-  for (const n of [1, 2]) {
-    const src = `${RAW}/bushes/bush-${n}.png`;
+  for (const [n, side, note] of BUSHES) {
+    const src = `${RAW}/bushes-v2/bush-${n}.png`;
     const out = `${OUT_TEX}/bush-${n}.webp`;
-    await sharp(src).trim().resize({ width: 512 }).webp({ quality: 84, alphaQuality: 90 }).toFile(out);
+    await sharp(src).trim({ threshold: 40 }).resize({ width: 640 }).webp({ quality: 84, alphaQuality: 90 }).toFile(out);
     const final = await sharp(out).metadata();
-    meta[`bush-${n}`] = { aspect: final.width / final.height };
+    meta[`bush-${n}`] = { aspect: final.width / final.height, side, note };
     console.log(`bush-${n}: ->`, await kb(out));
   }
   await writeFile(`${OUT_TEX}/bushes.json`, JSON.stringify(meta, null, 2));

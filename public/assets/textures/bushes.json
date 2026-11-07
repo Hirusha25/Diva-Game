@@ -1,8 +1,22 @@
 {
   "bush-1": {
-    "aspect": 2.178723404255319
+    "aspect": 1.2903225806451613,
+    "side": "left",
+    "note": "white, receding right"
   },
   "bush-2": {
-    "aspect": 2.178723404255319
+    "aspect": 1.549636803874092,
+    "side": "both",
+    "note": "pink, near-frontal"
+  },
+  "bush-3": {
+    "aspect": 3.062200956937799,
+    "side": "left",
+    "note": "long pink+white row, receding right"
+  },
+  "bush-4": {
+    "aspect": 1.4414414414414414,
+    "side": "right",
+    "note": "white, receding left"
   }
 }

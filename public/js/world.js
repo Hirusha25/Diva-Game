@@ -34,7 +34,14 @@ export class World {
     this.bushMaterials = assets.bushes.map((b) => ({
       material: new THREE.MeshBasicMaterial({ map: b.map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false }),
       aspect: b.aspect,
+      side: b.side,
     }));
+    // Which art goes on which wall (art drawn receding to the right suits the
+    // left wall; the others are mirrored where needed so the perspective reads).
+    this.bushSets = {
+      left: this.bushMaterials.map((k, i) => ({ kind: k, i, mirror: k.side === 'right' })),
+      right: this.bushMaterials.map((k, i) => ({ kind: k, i, mirror: k.side === 'left' })),
+    };
     this.busStandMaterial = new THREE.MeshBasicMaterial({ map: assets.busStand.map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false });
     this.busStandAspect = assets.busStand.aspect;
     this.treeGeometry = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
@@ -282,7 +289,7 @@ export class World {
       chunk.userData.trees.push(tree);
       chunk.add(tree);
     }
-    chunk.userData.billboards = [...chunk.userData.trees];   // bushes stay flat against the wall
+    chunk.userData.billboards = [...chunk.userData.trees, ...chunk.userData.bushes];
     return chunk;
   }
 
@@ -299,26 +306,19 @@ export class World {
   }
 
   _makeBush(material) {
-    // A fan of three planes (−25°, 0°, +25°) so the bush has volume from any
-    // angle, plus a soft blob shadow on the soil underneath.
+    // One plane turned toward the camera every frame (the art carries its own
+    // 3/4 perspective), plus a soft blob shadow on the soil underneath.
     const group = new THREE.Group();
-    const planes = [];
-    for (const a of [-0.45, 0, 0.45]) {
-      const m = new THREE.Mesh(this.treeGeometry, material);
-      m.rotation.y = a;
-      m.position.z = a === 0 ? 0.1 : -0.05;   // centre leaf forward, sides tucked behind
-      m.scale.set(a === 0 ? 1 : 0.78, a === 0 ? 1 : 0.9, 1);
-      group.add(m); planes.push(m);
-    }
+    const front = new THREE.Mesh(this.treeGeometry, material);
+    group.add(front);
     if (!this._bushShadowGeo) {
       this._bushShadowGeo = new THREE.CircleGeometry(0.5, 16).rotateX(-Math.PI / 2);
       this._bushShadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.28, depthWrite: false });
     }
     const shadow = new THREE.Mesh(this._bushShadowGeo, this._bushShadowMat);
-    shadow.scale.set(1.1, 1, 0.55);
     shadow.position.y = 0.075;
     group.add(shadow);
-    group.userData = { front: planes[1], planes, shadow };
+    group.userData = { front, shadow };
     return group;
   }
 
@@ -367,33 +367,28 @@ export class World {
     // Back row: a tall dense hedge behind the wall whose tops peek over the
     // cap and hide the open ground between wall and trees.
     const { bushes } = chunk.userData;
+    const perSide = BUSHES_FRONT_PER_CHUNK / 2;
+    let lastKind = { [-1]: -1, [1]: -1 };
     bushes.forEach((bush, i) => {
-      const kind = this.bushMaterials[Math.floor(rng() * this.bushMaterials.length)];
-      for (const pl of bush.userData.planes) pl.material = kind.material;
       const s = i % 2 === 0 ? -1 : 1;
-      if (i < BUSHES_FRONT_PER_CHUNK) {
-        const slot = Math.floor(i / 2);
-        const z = -CHUNK_LENGTH / 2 + (slot + 0.3 + rng() * 0.4) * (CHUNK_LENGTH / (BUSHES_FRONT_PER_CHUNK / 2));
-        const blocked = s === shelterSide && Math.abs(z - shelterZ) < 7.5;
-        const h = 0.85 + rng() * 0.25;                    // ~40% of the 2.2 m wall
-        for (const pl of bush.userData.planes) pl.scale.x = h * kind.aspect * (pl === bush.userData.front ? 1 : 0.78);
-        for (const pl of bush.userData.planes) pl.scale.y = h * (pl === bush.userData.front ? 1 : 0.9);
-        bush.userData.shadow.scale.set(h * kind.aspect * 1.05, 1, h * 0.7);
-        bush.userData.shadow.position.y = 0.075 - (PAVEMENT.height - 0.07);
-        // Faces the road, sitting in the soil bed with room for the fan's depth.
-        bush.rotation.y = s < 0 ? Math.PI / 2 : -Math.PI / 2;
-        const lift = this.bedStyle === 'plinth' ? 0.06 : this.bedStyle === 'none' ? 0.03 : 0;
-        bush.position.set(s * (WALL.inner - 0.38), PAVEMENT.height - 0.07 + lift, z);
-        bush.visible = !blocked && rng() < 0.9;
-      } else {
-        const j = i - BUSHES_FRONT_PER_CHUNK;
-        const slot = Math.floor(j / 2);
-        const z = -CHUNK_LENGTH / 2 + (slot + rng() * 0.6) * (CHUNK_LENGTH / (BUSHES_BACK_PER_CHUNK / 2));
-        const h = 2.4 + rng() * 0.4;                      // tops just peek over the 2.2 m wall
-        for (const pl of bush.userData.planes) pl.scale.set(h * kind.aspect, h, 1);
-        bush.position.set(s * (WALL.outer + 0.9 + rng() * 0.8), -0.02, z);
-        bush.visible = rng() < 0.75;
-      }
+      const set = s < 0 ? this.bushSets.left : this.bushSets.right;
+      // pick a kind, never the same as the previous one on this side
+      let pick = set[Math.floor(rng() * set.length)];
+      if (pick.i === lastKind[s]) pick = set[(set.indexOf(pick) + 1) % set.length];
+      lastKind[s] = pick.i;
+      const kind = pick.kind;
+      bush.userData.front.material = kind.material;
+      const slot = Math.floor(i / 2);
+      const z = -CHUNK_LENGTH / 2 + (slot + 0.25 + rng() * 0.5) * (CHUNK_LENGTH / perSide);
+      const blocked = s === shelterSide && Math.abs(z - shelterZ) < 7.5;
+      // the long row is lower and wider; the clumps about 40 % of the wall
+      const isRow = kind.aspect > 2.2;
+      const h = isRow ? 0.75 + rng() * 0.15 : 1.0 + rng() * 0.3;
+      bush.userData.front.scale.set(h * kind.aspect * (pick.mirror ? -1 : 1), h, 1);
+      bush.userData.shadow.scale.set(h * kind.aspect * 0.95, 1, h * 0.55);
+      bush.userData.shadow.position.y = 0.075 - (PAVEMENT.height - 0.07);
+      bush.position.set(s * (WALL.inner - 0.4), PAVEMENT.height - 0.07, z);
+      bush.visible = !blocked && rng() < 0.85;   // the odd gap so the wall shows between clumps
     });
   }
 }

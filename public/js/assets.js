@@ -84,10 +84,13 @@ export async function loadAssets(onProgress = () => {}) {
   const bushFiles = [
     ['bush-1', 'assets/textures/bush-1.webp'],
     ['bush-2', 'assets/textures/bush-2.webp'],
+    ['bush-3', 'assets/textures/bush-3.webp'],
+    ['bush-4', 'assets/textures/bush-4.webp'],
   ];
   const bushes = await Promise.all(bushFiles.map(async ([key, url]) => ({
     map: await loadTex(url),
     aspect: bushMeta[key].aspect,
+    side: bushMeta[key].side,
   })));
   const clouds = await Promise.all(cloudFiles.map(async ([key, url]) => ({
     map: await loadTex(url),
