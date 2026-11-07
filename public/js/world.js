@@ -437,17 +437,10 @@ export class World {
         const h = 1.05 + rng() * 0.25;
         const w = h * kind.aspect;
         // Pivot at the clump's centre; 'along' lies parallel to the wall, 'across'
-        // is the same image turned 90° (narrowed) to give it depth.
-        for (const pl of bush.userData.planes) { pl.position.set(0, 0, 0); }
-        // One copy of the image that turns to face the camera (see update()),
-        // so it always shows its full painted face. Its centre is kept a full
-        // half-width off the wall, so even turned side-on it never cuts into it.
-        // The image is pinned to the wall at the end nearest the player and
-        // turns toward the camera around that end, so the far end swings out
-        // toward the road by at most ~35°. It can never cut into the wall.
-        // One full-face copy of the image, centre pivot, turned toward the
-        // player but only within ±32° of facing the road. With the centre
-        // 0.3 w off the wall, the far edge can never reach the wall.
+        // One full-face copy of the image, centred on the group origin, turned
+        // toward the player within ±32° of facing the road. The origin sits a
+        // full half-width (plus a margin) in front of the wall, so the whole
+        // bush is on the soil bed and nothing is buried in the wall.
         const flip = pick.mirror ? -1 : 1;
         planes.forEach((pl, k) => {
           pl.visible = k === 2; pl.rotation.y = 0;
@@ -456,8 +449,9 @@ export class World {
         });
         bush.userData.billboard = true;
         bush.userData.clamp = { centre: s < 0 ? Math.PI / 2 : -Math.PI / 2, min: -0.56, max: 0.56 };
-        bush.position.set(s * (WALL.inner - 0.04), PAVEMENT.height + 0.03, z + w / 2);
-        SP.set(s * (WALL.inner - 0.3 * w), PAVEMENT.height + 0.035, z); SQ.identity(); SS.set(w * 0.75, 1, w * 0.5); SM.compose(SP, SQ, SS);
+        const cx = s * (WALL.inner - 0.5 * w - 0.08);
+        bush.position.set(cx, PAVEMENT.height + 0.03, z);
+        SP.set(cx, PAVEMENT.height + 0.035, z); SQ.identity(); SS.set(w * 0.75, 1, w * 0.5); SM.compose(SP, SQ, SS);
         chunk.userData.bushShadows.setMatrixAt(shadowIdx++, SM);
         bush.userData.shadow.visible = false;
         bush.visible = !blocked && rng() < 0.85;
@@ -477,7 +471,7 @@ export class World {
         bush.userData.billboard = true;
         bush.userData.clamp = { centre: s < 0 ? Math.PI / 2 : -Math.PI / 2, min: -0.4, max: 0.4 };
         bush.userData.shadow.visible = false;
-        bush.position.set(s * (WALL.outer + 0.2 + 0.35 * w), 0, z);
+        bush.position.set(s * (WALL.outer + 0.1 + 0.5 * w), 0, z);
         bush.visible = rng() < 0.8;
       }
     });
