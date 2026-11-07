@@ -88,6 +88,10 @@ export class World {
     const wallTex = wallGridTexture('#fddf62', '#d9992a', { midHex: '#f6b434', grid: false });
     const soil = soilTexture();
     soil.repeat.set(1, CHUNK_LENGTH / 4);   // 0.75 m wide strip, one tile per 4 m
+    const bedGrass = grassTexture();
+    bedGrass.repeat.set(1, CHUNK_LENGTH / 2);
+    // Planter-bed style: 'none' | 'plinth' | 'soil' | 'grass'  (see docs/reference)
+    this.bedStyle = globalThis.__DIVA_BED || 'soil';
     const grass = grassTexture();
     grass.repeat.set(26, CHUNK_LENGTH / 3);
     const shadows = this.assets.shadows;
@@ -103,8 +107,18 @@ export class World {
       wallCapTop: new THREE.MeshBasicMaterial({ color: COLORS.wallCapTop, toneMapped: false }),
       ground: new THREE.MeshStandardMaterial({ map: grass, roughness: 1 }),
       dirt: new THREE.MeshStandardMaterial({ color: COLORS.dirt, roughness: 1 }),
-      bed: new THREE.MeshStandardMaterial({ map: soil, roughness: 1 }),              // textured garden soil
-      bedEdge: new THREE.MeshStandardMaterial({ color: 0x9e7a4a, roughness: 1 }),    // sunken edge, a shade darker
+      bed: ({
+        none: null,
+        plinth: new THREE.MeshStandardMaterial({ color: 0xd4cec6, roughness: 0.95 }),        // pale concrete plinth
+        soil: new THREE.MeshStandardMaterial({ map: soil, roughness: 1 }),                    // textured garden soil
+        grass: new THREE.MeshStandardMaterial({ map: bedGrass, roughness: 1 }),               // turf strip
+      })[this.bedStyle],
+      bedEdge: ({
+        none: null,
+        plinth: new THREE.MeshStandardMaterial({ color: 0xb9b3ab, roughness: 1 }),
+        soil: new THREE.MeshStandardMaterial({ color: 0x9e7a4a, roughness: 1 }),
+        grass: new THREE.MeshStandardMaterial({ color: 0xb9b3ab, roughness: 1 }),
+      })[this.bedStyle],
       dapple: new THREE.MeshBasicMaterial({ map: shadows, transparent: true, depthWrite: false, opacity: 0.7, polygonOffset: true, polygonOffsetFactor: -2 }),
       wallShade: new THREE.MeshBasicMaterial({ map: shadows, transparent: true, depthWrite: false, opacity: 0.3, polygonOffset: true, polygonOffsetFactor: -2 }),
     };
@@ -233,8 +247,8 @@ export class World {
     add(g.wall, m.wall);
     add(g.wallCap, m.wallCap);
     add(g.wallCapTop, m.wallCapTop);
-    add(g.bed, m.bed);
-    add(g.bedEdge, m.bedEdge);
+    if (m.bed) add(g.bed, m.bed);
+    if (m.bedEdge) add(g.bedEdge, m.bedEdge);
     add(g.dapple, m.dapple);
     add(g.wallShade, m.wallShade);
 
@@ -358,7 +372,8 @@ export class World {
         bush.userData.shadow.position.y = 0.075 - (PAVEMENT.height - 0.07);
         // Faces the road, sitting in the soil bed with room for the fan's depth.
         bush.rotation.y = s < 0 ? Math.PI / 2 : -Math.PI / 2;
-        bush.position.set(s * (WALL.inner - 0.38), PAVEMENT.height - 0.07, z);
+        const lift = this.bedStyle === 'plinth' ? 0.06 : this.bedStyle === 'none' ? 0.03 : 0;
+        bush.position.set(s * (WALL.inner - 0.38), PAVEMENT.height - 0.07 + lift, z);
         bush.visible = !blocked && rng() < 0.9;
       } else {
         const j = i - BUSHES_FRONT_PER_CHUNK;
