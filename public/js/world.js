@@ -84,7 +84,10 @@ export class World {
           if (!tree.visible) continue;
           const dz = cameraPos.z - (chunk.position.z + tree.position.z);
           const dx = cameraPos.x - tree.position.x;
-          tree.rotation.y = Math.atan2(dx, dz);        // cylindrical billboard
+          let yaw = Math.atan2(dx, dz);                 // cylindrical billboard
+          const cl = tree.userData.clamp;                // bushes: never turn so far they cut into the wall
+          if (cl) yaw = cl.centre + THREE.MathUtils.clamp(yaw - cl.centre, -cl.range, cl.range);
+          tree.rotation.y = yaw;
         }
       }
     }
@@ -306,6 +309,11 @@ export class World {
     );
     chunk.add(chunk.userData.bushShadows);
     chunk.userData.bushes = [];
+    for (let i = 0; i < BUSHES_FRONT_PER_CHUNK + BUSHES_BACK_PER_CHUNK; i++) {
+      const bush = this._makeBush(this.bushMaterials[0].material);
+      chunk.userData.bushes.push(bush);
+      chunk.add(bush);
+    }
 
     chunk.userData.trees = [];
     for (let i = 0; i < TREES_PER_CHUNK; i++) {
@@ -313,7 +321,7 @@ export class World {
       chunk.userData.trees.push(tree);
       chunk.add(tree);
     }
-    chunk.userData.billboards = [...chunk.userData.trees];   // bushes keep a fixed facing (see _dressChunk)
+    chunk.userData.billboards = [...chunk.userData.trees, ...chunk.userData.bushes];
     return chunk;
   }
 
@@ -330,21 +338,19 @@ export class World {
   }
 
   _makeBush(material) {
-    // Two planes that share the wall-side edge: one lies along the wall, the
-    // other swings out ~40° so the clump still reads from down the road.
-    // Geometry origin is at the wall-side edge (x = 0 .. 1), base at y = 0.
-    if (!this._bushGeo) this._bushGeo = new THREE.PlaneGeometry(1, 1).translate(0.5, 0.5, 0);
+    // Two crossed planes of the same bush image (centre pivot, base at y = 0).
+    if (!this._bushGeo) this._bushGeo = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
     const group = new THREE.Group();
     const along = new THREE.Mesh(this._bushGeo, material);
-    const angled = new THREE.Mesh(this._bushGeo, material);
-    group.add(along, angled);
+    const across = new THREE.Mesh(this._bushGeo, material);
+    group.add(along, across);
     if (!this._bushShadowGeo) {
       this._bushShadowGeo = new THREE.CircleGeometry(0.5, 16).rotateX(-Math.PI / 2);
       this._bushShadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.28, depthWrite: false });
     }
     const shadow = new THREE.Mesh(this._bushShadowGeo, this._bushShadowMat);
     group.add(shadow);
-    group.userData = { front: along, planes: [along, angled], shadow };
+    group.userData = { front: along, planes: [along, across], shadow };
     return group;
   }
 
@@ -392,81 +398,77 @@ export class World {
     // Bushes. Front row: on the pavement at the wall base (gap at the shelter).
     // Back row: a tall dense hedge behind the wall whose tops peek over the
     // cap and hide the open ground between wall and trees.
-    // ---- Volumetric bushes --------------------------------------------
-    const F = chunk.userData.foliage;
-    const counters = { leaf: [0, 0, 0], white: 0, pink: 0 };
-    const M = new THREE.Matrix4(), P = new THREE.Vector3(), Q = new THREE.Quaternion(), SC = new THREE.Vector3();
-    const N = new THREE.Vector3(), UP = new THREE.Vector3(0, 1, 0), TMP = new THREE.Matrix4();
-    const place = (im, idx, pos, normal, size, roll) => {
-      // orient the card so its face points along `normal`, then roll it a little
-      TMP.lookAt(new THREE.Vector3(0, 0, 0), normal, UP); Q.setFromRotationMatrix(TMP);
-      Q.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), roll));
-      SC.setScalar(size); M.compose(pos, Q, SC); im.setMatrixAt(idx, M);
-    };
-    /** A dome of leaf cards (rx, ry, rz radii) at centre c, flowers on the crown. */
-    let coreIdx = 0;
-    const dome = (c, rx, ry, rz, flowerColour, leafCount, flowerCount) => {
-      // solid core
-      P.copy(c); Q.identity(); SC.set(rx * 0.85, ry * 0.85, rz * 0.85); M.compose(P, Q, SC);
-      chunk.userData.bushCores.setMatrixAt(coreIdx++, M);
-      for (let k = 0; k < leafCount; k++) {
-        // points on the upper ~75 % of an ellipsoid, in two shells for depth
-        const u = rng(), v = rng();
-        const phi = Math.acos(1 - 1.35 * u);              // 0 (top) .. ~110°
-        const th = v * Math.PI * 2;
-        const shell = k % 3 === 0 ? 0.72 : 0.95 + rng() * 0.12;
-        N.set(Math.sin(phi) * Math.cos(th), Math.cos(phi), Math.sin(phi) * Math.sin(th));
-        P.set(c.x + N.x * rx * shell, c.y + N.y * ry * shell, c.z + N.z * rz * shell);
-        const li = Math.floor(rng() * 3);
-        place(F.leaf[li], counters.leaf[li]++, P, N.clone().normalize(), (0.6 + rng() * 0.3) * Math.max(rx, ry), (rng() - 0.5) * 1.4);
-      }
-      for (let k = 0; k < flowerCount; k++) {
-        const u = rng(), v = rng();
-        const phi = Math.acos(1 - 0.75 * u);               // crown only
-        const th = v * Math.PI * 2;
-        N.set(Math.sin(phi) * Math.cos(th), Math.cos(phi), Math.sin(phi) * Math.sin(th));
-        P.set(c.x + N.x * rx * 1.02, c.y + N.y * ry * 1.02, c.z + N.z * rz * 1.02);
-        const im = flowerColour === 'pink' ? F.pink : F.white;
-        place(im, counters[flowerColour]++, P, N.clone().normalize(), (0.26 + rng() * 0.12) * Math.max(rx, ry), rng() * 6.28);
-      }
-    };
+    // ---- Bushes: the user's four bush images, whole. Each one is a crossed
+    // pair of planes (the image along the wall + the same image across it) so
+    // the clump has thickness from every angle while staying their artwork.
+    // Hide the leaf-card system (kept in the build for later).
+    {
+      const F = chunk.userData.foliage;
+      const M0 = new THREE.Matrix4().makeScale(0, 0, 0);
+      for (const im of [...F.leaf, F.white, F.pink, chunk.userData.bushCores]) { for (let k = 0; k < im.count; k++) im.setMatrixAt(k, M0); im.instanceMatrix.needsUpdate = true; }
+    }
+    const { bushes } = chunk.userData;
     const perSide = BUSHES_FRONT_PER_CHUNK / 2, backPerSide = BUSHES_BACK_PER_CHUNK / 2;
+    let lastKind = { [-1]: -1, [1]: -1 };
     let shadowIdx = 0;
-    let lastColour = { [-1]: '', [1]: '' };
-    for (let i = 0; i < BUSHES_FRONT_PER_CHUNK; i++) {
+    const SM = new THREE.Matrix4(), SP = new THREE.Vector3(), SQ = new THREE.Quaternion(), SS = new THREE.Vector3();
+    const pickKind = (s) => {
+      const set = s < 0 ? this.bushSets.left : this.bushSets.right;
+      let pick = set[Math.floor(rng() * set.length)];
+      if (pick.i === lastKind[s]) pick = set[(set.indexOf(pick) + 1) % set.length];
+      lastKind[s] = pick.i;
+      return pick;
+    };
+    bushes.forEach((bush, i) => {
       const s = i % 2 === 0 ? -1 : 1;
-      const slot = Math.floor(i / 2);
-      const z = -CHUNK_LENGTH / 2 + (slot + 0.25 + rng() * 0.5) * (CHUNK_LENGTH / perSide);
-      const blocked = s === shelterSide && Math.abs(z - shelterZ) < 7.5;
-      if (blocked || rng() > 0.85) continue;
-      // border clump: ~1.1 m tall, 1.6 m along the wall, 0.9 m deep, back against the wall
-      const big = rng() < 0.35;
-      const ry = (big ? 0.72 : 0.58) + rng() * 0.14, rz = (big ? 1.05 : 0.85) + rng() * 0.25, rx = (big ? 0.55 : 0.48) + rng() * 0.08;
-      const colour = lastColour[s] === 'pink' ? 'white' : (rng() < 0.45 ? 'pink' : 'white');
-      lastColour[s] = colour;
-      const c = new THREE.Vector3(s * (WALL.inner - 0.05 - rx), PAVEMENT.height + 0.03 + ry * 0.9, z);
-      dome(c, rx, ry, rz, colour, BUSH_LEAF_CARDS, BUSH_FLOWER_CARDS);
-      P.set(c.x, PAVEMENT.height + 0.035, c.z); Q.identity(); SC.set(rx * 2.2, 1, rz * 2.1); M.compose(P, Q, SC);
-      chunk.userData.bushShadows.setMatrixAt(shadowIdx++, M);
-    }
-    for (let i = 0; i < BUSHES_BACK_PER_CHUNK; i++) {
-      const s = i % 2 === 0 ? -1 : 1;
-      const slot = Math.floor(i / 2);
-      const z = -CHUNK_LENGTH / 2 + (slot + 0.2 + rng() * 0.6) * (CHUNK_LENGTH / backPerSide);
-      if (rng() > 0.8) continue;
-      // hedge clump behind the wall: big, top ~0.8 m above the coping
-      const ry = 1.4 + rng() * 0.3, rz = 1.6 + rng() * 0.5, rx = 1.0 + rng() * 0.3;
-      const colour = rng() < 0.5 ? 'pink' : 'white';
-      const c = new THREE.Vector3(s * (WALL.outer + 0.2 + rx), WALL.height + 0.22 + 0.8 - ry, z);
-      dome(c, rx, ry, rz, colour, BUSH_LEAF_CARDS * 3, BUSH_FLOWER_CARDS * 3);
-    }
-    // hide unused instances
-    SC.setScalar(0); P.set(0, -10, 0); Q.identity(); M.compose(P, Q, SC);
-    F.leaf.forEach((im, li) => { for (let k = counters.leaf[li]; k < im.count; k++) im.setMatrixAt(k, M); im.instanceMatrix.needsUpdate = true; });
-    for (const col of ['white', 'pink']) { for (let k = counters[col]; k < F[col].count; k++) F[col].setMatrixAt(k, M); F[col].instanceMatrix.needsUpdate = true; }
-    for (let k = shadowIdx; k < chunk.userData.bushShadows.count; k++) chunk.userData.bushShadows.setMatrixAt(k, M);
-    for (let k = coreIdx; k < chunk.userData.bushCores.count; k++) chunk.userData.bushCores.setMatrixAt(k, M);
-    chunk.userData.bushCores.instanceMatrix.needsUpdate = true;
+      const pick = pickKind(s);
+      const kind = pick.kind;
+      const isRow = kind.aspect > 2.2;
+      const [along, across] = bush.userData.planes;
+      for (const pl of bush.userData.planes) pl.material = kind.material;
+      if (i < BUSHES_FRONT_PER_CHUNK) {
+        if (isRow) { bush.visible = false; return; }
+        const slot = Math.floor(i / 2);
+        const z = -CHUNK_LENGTH / 2 + (slot + 0.25 + rng() * 0.5) * (CHUNK_LENGTH / perSide);
+        const blocked = s === shelterSide && Math.abs(z - shelterZ) < 7.5;
+        const h = 1.05 + rng() * 0.25;
+        const w = h * kind.aspect;
+        // Pivot at the clump's centre; 'along' lies parallel to the wall, 'across'
+        // is the same image turned 90° (narrowed) to give it depth.
+        for (const pl of bush.userData.planes) { pl.position.set(0, 0, 0); }
+        // One copy of the image that turns to face the camera (see update()),
+        // so it always shows its full painted face. Its centre is kept a full
+        // half-width off the wall, so even turned side-on it never cuts into it.
+        along.rotation.y = 0; along.scale.set(w * (pick.mirror ? -1 : 1), h, 1);
+        across.visible = false;
+        bush.userData.billboard = true;
+        // Turn toward the camera at most ±55° from "facing the road"; with the
+        // centre 0.45 w off the wall the far edge can never reach the wall.
+        bush.userData.clamp = { centre: s < 0 ? Math.PI / 2 : -Math.PI / 2, range: 0.96 };
+        const depth = w * 0.45;
+        bush.position.set(s * (WALL.inner - depth), PAVEMENT.height + 0.03, z);
+        SP.set(s * (WALL.inner - 0.35), PAVEMENT.height + 0.035, z); SQ.identity(); SS.set(0.75, 1, w * 0.9); SM.compose(SP, SQ, SS);
+        chunk.userData.bushShadows.setMatrixAt(shadowIdx++, SM);
+        bush.userData.shadow.visible = false;
+        bush.visible = !blocked && rng() < 0.85;
+      } else {
+        const j = i - BUSHES_FRONT_PER_CHUNK;
+        const slot = Math.floor(j / 2);
+        const z = -CHUNK_LENGTH / 2 + (slot + 0.2 + rng() * 0.6) * (CHUNK_LENGTH / backPerSide);
+        const h = isRow ? 2.1 + rng() * 0.3 : 2.7 + rng() * 0.4;
+        const w = h * kind.aspect;
+        for (const pl of bush.userData.planes) { pl.position.set(0, 0, 0); }
+        along.rotation.y = 0; along.scale.set(w * (pick.mirror ? -1 : 1), h, 1);
+        across.visible = false;
+        bush.userData.billboard = true;
+        bush.userData.clamp = { centre: s < 0 ? Math.PI / 2 : -Math.PI / 2, range: 0.9 };
+        bush.userData.shadow.visible = false;
+        bush.position.set(s * (WALL.outer + 0.15 + w * 0.42), 0, z);
+        bush.visible = rng() < 0.8;
+      }
+    });
+    SS.setScalar(0); SP.set(0, -10, 0); SQ.identity(); SM.compose(SP, SQ, SS);
+    for (let k = shadowIdx; k < chunk.userData.bushShadows.count; k++) chunk.userData.bushShadows.setMatrixAt(k, SM);
     chunk.userData.bushShadows.instanceMatrix.needsUpdate = true;
   }
 }
