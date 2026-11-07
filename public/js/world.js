@@ -383,26 +383,30 @@ export class World {
       const kind = pick.kind;
       bush.userData.front.material = kind.material;
       const isRow = kind.aspect > 2.2;
-      bush.rotation.y = 0;   // face down the road, like every other roadside sprite
       if (i < BUSHES_FRONT_PER_CHUNK) {
-        // Border clumps at the wall base. The whole sprite stays on the pavement
-        // in front of the wall (never intersecting it), about half the wall height.
+        // Border clumps: every one hugs the wall at the same distance, sits ON
+        // the soil bed, and is turned slightly toward the road so the near ones
+        // show their face instead of a thin edge. The long low "row" sprite is
+        // kept for the hedge only (at the base it read as a fallen bush).
+        if (isRow) { bush.visible = false; return; }
         const slot = Math.floor(i / 2);
         const z = -CHUNK_LENGTH / 2 + (slot + 0.25 + rng() * 0.5) * (CHUNK_LENGTH / perSide);
         const blocked = s === shelterSide && Math.abs(z - shelterZ) < 7.5;
-        const h = isRow ? 0.75 + rng() * 0.15 : 1.05 + rng() * 0.25;
-        const w = Math.min(h * kind.aspect, PAVEMENT.outer - PAVEMENT.inner - 0.3);
+        const h = 1.05 + rng() * 0.2;
+        const w = Math.min(h * kind.aspect, 1.6);
         bush.userData.front.scale.set(w * (pick.mirror ? -1 : 1), h, 1);
         bush.userData.shadow.visible = true;
-        bush.userData.shadow.scale.set(w * 0.95, 1, h * 0.45);
-        bush.userData.shadow.position.y = 0.075 - (PAVEMENT.height - 0.07);
-        bush.position.set(s * (WALL.inner - 0.12 - w / 2), PAVEMENT.height - 0.07, z);
+        bush.userData.shadow.scale.set(w * 0.9, 1, h * 0.4);
+        bush.rotation.y = -s * 0.45;
+        bush.position.set(s * (WALL.inner - 0.1 - (w / 2) * Math.cos(0.45)), PAVEMENT.height + 0.03, z);
+        bush.userData.shadow.position.y = 0.005;
         bush.visible = !blocked && rng() < 0.85;
       } else {
         // Hedge behind the wall: sits fully behind it, flowering top above the coping.
         const j = i - BUSHES_FRONT_PER_CHUNK;
         const slot = Math.floor(j / 2);
         const z = -CHUNK_LENGTH / 2 + (slot + 0.2 + rng() * 0.6) * (CHUNK_LENGTH / backPerSide);
+        bush.rotation.y = 0;
         const h = isRow ? 2.1 + rng() * 0.3 : 2.7 + rng() * 0.4;
         const w = h * kind.aspect;
         bush.userData.front.scale.set(w * (pick.mirror ? -1 : 1), h, 1);
