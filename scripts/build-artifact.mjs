@@ -32,11 +32,14 @@ if (inline) {
     'assets/textures/asphalt.webp', 'assets/textures/tree-shadows.webp', 'assets/textures/leaf.webp',
     'assets/textures/tree-1.webp', 'assets/textures/tree-2.webp', 'assets/textures/tree-3.webp', 'assets/textures/tree-4.webp',
     'assets/textures/bush-1.webp', 'assets/textures/bush-2.webp', 'assets/textures/bus-stand.webp',
+    'assets/ui/glow.webp', 'assets/ui/hcb.webp', 'assets/ui/logo.webp', 'assets/ui/tagline.webp', 'assets/ui/heroes.webp', 'assets/ui/ribbon.webp', 'assets/ui/start.webp',
     'assets/textures/cloud-1.webp', 'assets/textures/cloud-2.webp', 'assets/textures/cloud-3.webp', 'assets/textures/cloud-4.webp',
   ];
   for (const f of textures) {
     const buf = await readFile('public/' + f);
-    js = js.replaceAll(f, `data:image/webp;base64,${buf.toString('base64')}`);
+    const uri = `data:image/webp;base64,${buf.toString('base64')}`;
+    js = js.replaceAll(f, uri);
+    body = body.replaceAll(f, uri);
   }
   const data = {
     models: {},
@@ -45,13 +48,14 @@ if (inline) {
       'assets/textures/clouds.json': JSON.parse(await readFile('public/assets/textures/clouds.json', 'utf8')),
       'assets/textures/bushes.json': JSON.parse(await readFile('public/assets/textures/bushes.json', 'utf8')),
       'assets/textures/props.json': JSON.parse(await readFile('public/assets/textures/props.json', 'utf8')),
+      'assets/ui/cover.json': JSON.parse(await readFile('public/assets/ui/cover.json', 'utf8')),
     },
   };
   inlineScript = `<script>window.__DIVA_OFFLINE = true; window.__DIVA_INLINE = ${JSON.stringify(data)};</script>\n`;
 }
 const css = await readFile('public/css/game.css', 'utf8');
 const html = await readFile('public/index.html', 'utf8');
-const body = html.slice(html.indexOf('<body>') + 6, html.indexOf('<script type="module" src="js/main.js">'));
+let body = html.slice(html.indexOf('<body>') + 6, html.indexOf('<script type="module" src="js/main.js">'));
 
 const page = `<title>Diva Fresh Run</title>
 <style>

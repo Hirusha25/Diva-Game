@@ -7,7 +7,7 @@ export class Hud {
     this.distance = this.$('hud-distance');
     this.lives = this.$('hud-lives');
     this.toast = this.$('hud-toast');
-    this.screens = { loading: this.$('screen-loading'), register: this.$('screen-register'), otp: this.$('screen-otp'), lobby: this.$('screen-lobby'), over: this.$('screen-over') };
+    this.screens = { loading: this.$('screen-loading'), cover: this.$('screen-cover'), register: this.$('screen-register'), otp: this.$('screen-otp'), over: this.$('screen-over') };
     this.loadBar = this.$('load-bar');
     this.loadText = this.$('load-text');
     this._toastTimer = 0;
@@ -19,8 +19,21 @@ export class Hud {
   }
 
   show(name) {
-    for (const [k, el] of Object.entries(this.screens)) el.classList.toggle('hidden', k !== name);
+    // Register / OTP are sheets that sit on top of the cover.
+    const sheet = name === 'register' || name === 'otp';
+    for (const [k, el] of Object.entries(this.screens)) el.classList.toggle('hidden', !(k === name || (sheet && k === 'cover')));
     this.hud.classList.toggle('hidden', name !== null);
+  }
+
+  /** Position the poster layers from cover.json (fractions of the poster frame). */
+  layoutCover(meta, images) {
+    for (const el of this.screens.cover.querySelectorAll('[data-layer]')) {
+      const key = el.dataset.layer; const m = meta[key]; if (!m) continue;
+      el.style.left = `${m.x * 100}%`; el.style.top = `${m.y * 100}%`;
+      el.style.width = `${m.w * 100}%`; el.style.height = `${m.h * 100}%`;
+      if (el.tagName === 'IMG') el.src = images[key];
+      else el.style.backgroundImage = `url("${images[key]}")`;
+    }
   }
 
   update({ score, distance, lives }) {

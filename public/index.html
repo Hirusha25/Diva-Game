@@ -34,26 +34,46 @@
   <!-- Loading -->
   <div id="screen-loading" class="screen">
     <div class="card">
-      <h1 class="title">Diva Fresh<br><span>Stain Fighter Run</span></h1>
+      <img class="load-logo" src="assets/ui/logo.webp" alt="Diva Fresh Run">
       <div class="bar"><div id="load-bar"></div></div>
       <p id="load-text">Loading world…</p>
     </div>
   </div>
 
-  <!-- Register -->
-  <div id="screen-register" class="screen hidden">
+  <!-- Cover (lobby): the poster rebuilt from its layers, pinned to the same
+       positions on every screen size. Each layer is tappable. -->
+  <div id="screen-cover" class="screen cover hidden">
+    <div class="stage" id="stage">
+      <img class="layer" data-layer="glow" alt="" draggable="false">
+      <a class="layer tap" data-layer="hcb" id="btn-hcb" href="https://www.hemas.com" target="_blank" rel="noopener" aria-label="Hemas Consumer Brands"></a>
+      <button class="layer tap" data-layer="logo" id="btn-logo" aria-label="Diva Fresh Run"></button>
+      <button class="layer tap" data-layer="tagline" id="btn-tagline" aria-label="Tagline"></button>
+      <div class="layer" data-layer="heroes" id="heroes">
+        <button class="hero-hit left" id="btn-boy" aria-label="Play as the boy"></button>
+        <button class="hero-hit right" id="btn-girl" aria-label="Play as the girl"></button>
+        <span class="hero-tag" id="hero-tag"></span>
+      </div>
+      <img class="layer" data-layer="ribbon" alt="" draggable="false">
+      <button class="layer tap start" data-layer="start" id="btn-start" aria-label="Start"></button>
+    </div>
+    <p class="hint cover-greeting" id="lobby-greeting"></p>
+    <button type="button" id="btn-signout" class="link cover-signout hidden">Not you? Change player</button>
+  </div>
+
+  <!-- Register (sheet over the cover) -->
+  <div id="screen-register" class="screen sheet hidden">
     <form class="card form" id="form-register" novalidate>
-      <h1 class="title">Diva Fresh<br><span>Stain Fighter Run</span></h1>
-      <p class="hint">Enter your details to play and win</p>
+      <h2 class="subtitle">Enter your details to play and win</h2>
       <label class="field"><span>Your name</span><input id="reg-name" name="name" type="text" maxlength="40" autocomplete="name" required></label>
       <label class="field"><span>Mobile number</span><input id="reg-phone" name="phone" type="tel" inputmode="numeric" placeholder="07X XXX XXXX" autocomplete="tel" required></label>
       <p class="error" id="reg-error"></p>
       <button type="submit" id="btn-register" class="btn btn-start">SEND CODE</button>
+      <div class="row"><button type="button" id="btn-back-cover" class="link">Back</button></div>
     </form>
   </div>
 
-  <!-- OTP -->
-  <div id="screen-otp" class="screen hidden">
+  <!-- OTP (sheet) -->
+  <div id="screen-otp" class="screen sheet hidden">
     <form class="card form" id="form-otp" novalidate>
       <h2 class="subtitle">Enter the code</h2>
       <p class="hint">We sent an SMS to <strong id="otp-phone"></strong></p>
@@ -67,16 +87,6 @@
     </form>
   </div>
 
-  <!-- Lobby -->
-  <div id="screen-lobby" class="screen hidden">
-    <div class="card">
-      <h1 class="title">Diva Fresh<br><span>Stain Fighter Run</span></h1>
-      <p class="hint" id="lobby-greeting">Swipe left / right to change lane · swipe up to jump</p>
-      <button id="btn-start" class="btn btn-start">START</button>
-      <div class="row"><button type="button" id="btn-signout" class="link">Not you? Change player</button></div>
-    </div>
-  </div>
-
   <!-- Game over -->
   <div id="screen-over" class="screen hidden">
     <div class="card">
@@ -87,6 +97,7 @@
       <p class="hint" id="final-rank"></p>
       <ol class="board" id="board"></ol>
       <button id="btn-retry" class="btn btn-start">RUN AGAIN</button>
+      <div class="row"><button type="button" id="btn-home" class="link">Home</button></div>
     </div>
   </div>
 

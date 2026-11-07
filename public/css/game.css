@@ -85,3 +85,55 @@ html, body {
 .board .pts { font-variant-numeric: tabular-nums; }
 .board:empty { display: none; }
 .screen .card { max-height: calc(100% - 20px); overflow-y: auto; }
+
+/* ---------- Cover page (poster layers) ---------- */
+.screen.cover { align-items: center; justify-content: center; padding: 0; overflow: hidden; background: none; }
+.stage {
+  /* Fill the screen top to bottom like the poster; on tall phones the sides
+     crop a little (the poster's own margins), on wide screens it letterboxes. */
+  position: relative; flex: none; aspect-ratio: 2048 / 3126;
+  height: min(100%, calc(100vw * 3126 / 2048)); width: auto;
+}
+.layer { position: absolute; display: block; padding: 0; margin: 0; border: 0; background: center / 100% 100% no-repeat; }
+img.layer { width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
+.layer.tap { cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .12s; }
+.layer.tap:active { transform: scale(.94); }
+.layer.tap:focus-visible { outline: 3px solid var(--diva-yellow); outline-offset: 4px; border-radius: 12px; }
+.pop { animation: pop .35s ease-out; }
+@keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
+
+[data-layer="glow"] { pointer-events: none; mix-blend-mode: screen; animation: glow 6s ease-in-out infinite; }
+@keyframes glow { 0%,100% { opacity: .85; } 50% { opacity: 1; } }
+[data-layer="logo"] { animation: floaty 4s ease-in-out infinite; }
+[data-layer="tagline"] { animation: floaty 4s ease-in-out .6s infinite; }
+@keyframes floaty { 0%,100% { translate: 0 0; } 50% { translate: 0 -1.2%; } }
+[data-layer="heroes"] { animation: bob .9s ease-in-out infinite; }
+@keyframes bob { 0%,100% { translate: 0 0; } 50% { translate: 0 -1%; } }
+.hero-hit { position: absolute; top: 0; bottom: 0; width: 50%; background: none; border: 0; cursor: pointer; border-radius: 40%; }
+.hero-hit.left { left: 0; } .hero-hit.right { right: 0; }
+.hero-hit.selected { background: radial-gradient(ellipse 60% 14% at 50% 93%, rgba(255,212,0,.75), rgba(255,212,0,0) 70%); }
+.hero-tag { position: absolute; left: 50%; top: -7%; transform: translateX(-50%); white-space: nowrap; color: #fff; font-weight: 900; font-size: clamp(12px, 3.6vw, 18px); text-shadow: 0 2px 4px rgba(0,0,0,.6); pointer-events: none; }
+
+/* START: pulse + shine sweep */
+.layer.start { overflow: hidden; border-radius: 999px; animation: pulse 1.6s ease-in-out infinite; }
+.layer.start::after {
+  content: ""; position: absolute; top: -20%; bottom: -20%; left: -40%; width: 30%;
+  background: linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.55) 50%, rgba(255,255,255,0) 100%);
+  transform: skewX(-20deg); animation: shine 2.4s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100% { transform: scale(1); filter: drop-shadow(0 6px 10px rgba(0,0,0,.35)); } 50% { transform: scale(1.06); filter: drop-shadow(0 10px 18px rgba(0,0,0,.4)) brightness(1.08); } }
+@keyframes shine { 0% { left: -40%; } 45%,100% { left: 130%; } }
+.layer.start:active { animation: none; transform: scale(.94); }
+
+.cover-greeting { position: absolute; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 8px); margin: 0; text-align: center; font-size: 13px; }
+.cover-signout { position: absolute; right: 12px; top: calc(env(safe-area-inset-top) + 8px); font-size: 12px; }
+.load-logo { width: min(70vw, 320px); display: block; margin: 0 auto 18px; }
+
+/* Register / OTP as bottom sheets over the cover */
+.screen.sheet { background: rgba(5, 30, 80, .45); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+.screen.sheet .card { background: rgba(10, 79, 181, .92); border: 2px solid #fff; border-radius: 22px; padding: 18px 16px; box-shadow: 0 12px 30px rgba(0,0,0,.4); animation: sheet .3s ease-out; }
+@keyframes sheet { from { transform: translateY(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .layer, .layer.start, .layer.start::after, [data-layer="heroes"], [data-layer="logo"], [data-layer="tagline"], [data-layer="glow"] { animation: none !important; }
+}

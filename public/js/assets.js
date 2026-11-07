@@ -46,6 +46,11 @@ export async function loadAssets(onProgress = () => {}) {
     ? Promise.resolve(inline.json[url])
     : fetch(url).then((r) => r.json());
 
+  const coverMeta = await loadJson('assets/ui/cover.json');
+  const coverImages = {
+    glow: 'assets/ui/glow.webp', hcb: 'assets/ui/hcb.webp', logo: 'assets/ui/logo.webp',
+    tagline: 'assets/ui/tagline.webp', heroes: 'assets/ui/heroes.webp', ribbon: 'assets/ui/ribbon.webp', start: 'assets/ui/start.webp',
+  };
   const treeMeta = await loadJson('assets/textures/trees.json');
   const cloudMeta = await loadJson('assets/textures/clouds.json');
   const bushMeta = await loadJson('assets/textures/bushes.json');
@@ -96,5 +101,6 @@ export async function loadAssets(onProgress = () => {}) {
     clouds,
     trees,
     bushes,
+    cover: { meta: coverMeta, images: coverImages },
   };
 }

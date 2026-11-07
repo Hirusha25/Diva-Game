@@ -76,12 +76,27 @@ const controls = new Controls(canvas, (action) => {
 // ----------------------------------------------------------------- screens
 function showLobby() {
   state.mode = 'lobby';
-  $('lobby-greeting').textContent = me
-    ? `Hi ${me.name}! Best: ${me.best}. Swipe left / right to change lane · swipe up to jump`
-    : 'Swipe left / right to change lane · swipe up to jump';
-  $('btn-signout').classList.toggle('hidden', api.offline);
-  hud.show('lobby');
+  $('lobby-greeting').textContent = me ? `Hi ${me.name}! Best: ${me.best}` : '';
+  $('btn-signout').classList.toggle('hidden', api.offline || !me);
+  hud.show('cover');
 }
+
+// ---- hero choice (boy / girl); the runner model swaps in when the characters arrive
+const HERO_KEY = 'diva.hero';
+function setHero(h, animate = true) {
+  try { localStorage.setItem(HERO_KEY, h); } catch { /* private mode */ }
+  $('btn-boy').classList.toggle('selected', h === 'boy');
+  $('btn-girl').classList.toggle('selected', h === 'girl');
+  $('hero-tag').textContent = h === 'boy' ? 'Boy selected' : 'Girl selected';
+  if (animate) pop($('heroes'));
+}
+function pop(el) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+$('btn-boy').addEventListener('click', () => setHero('boy'));
+$('btn-girl').addEventListener('click', () => setHero('girl'));
+$('btn-logo').addEventListener('click', () => pop($('btn-logo')));
+$('btn-tagline').addEventListener('click', () => pop($('btn-tagline')));
+$('btn-back-cover').addEventListener('click', showLobby);
+$('btn-home').addEventListener('click', showLobby);
 
 function showRegister() {
   state.mode = 'register';
@@ -125,7 +140,7 @@ $('form-register').addEventListener('submit', async (e) => {
   hud.busy('btn-register', true, 'SENDING…');
   try {
     const r = await api.register(name, phone);
-    if (r.offline) { me = { name, best: 0 }; return showLobby(); }
+    if (r.offline) { me = { name, best: 0 }; return startRun(); }
     showOtp(r.phone, r.resend_in);
   } catch (err) {
     hud.error('reg-error', err.message);
@@ -142,7 +157,7 @@ $('form-otp').addEventListener('submit', async (e) => {
   try {
     const r = await api.verify(pendingPhone, code);
     me = r.player;
-    showLobby();
+    startRun();
   } catch (err) {
     hud.error('otp-error', err.message);
     hud.busy('btn-verify', false, 'VERIFY');
@@ -162,7 +177,8 @@ $('btn-resend').addEventListener('click', async () => {
 
 $('btn-change').addEventListener('click', showRegister);
 $('btn-signout').addEventListener('click', () => { api.signOut(); me = null; showRegister(); });
-$('btn-start').addEventListener('click', startRun);
+// START: signed in → run; otherwise register first, then run straight after the code.
+$('btn-start').addEventListener('click', () => { if (me) startRun(); else showRegister(); });
 $('btn-retry').addEventListener('click', startRun);
 
 // ------------------------------------------------------------------- game
@@ -206,10 +222,13 @@ try {
   world = new World(scene, assets);
   player = new Player(scene);
   spawner = new Spawner(scene);
+  hud.layoutCover(assets.cover.meta, assets.cover.images);
+  let hero = 'boy'; try { hero = localStorage.getItem(HERO_KEY) || 'boy'; } catch { /* private mode */ }
+  setHero(hero, false);
   hud.setProgress(0.95, 'Signing in…');
   me = await api.me();
   hud.setProgress(1, 'Ready');
-  if (me) showLobby(); else showRegister();
+  showLobby();
   window.__gameReady = true;       // hook for automated screenshots
   window.__game = { state, startRun, endRun, player, world, showLobby, showRegister, api };
 } catch (err) {
