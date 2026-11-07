@@ -38,5 +38,8 @@ for (const [key, n, width, role] of LAYERS) {
   };
   console.log(key.padEnd(8), role.padEnd(32), `${(meta[key].x * 100).toFixed(1)}%,${(meta[key].y * 100).toFixed(1)}%  ${(meta[key].w * 100).toFixed(1)}x${(meta[key].h * 100).toFixed(1)}%`, await kb(out));
 }
+// Poster background (road scene) — the cover's static backdrop.
+await sharp('assets/raw/new/1.png').resize({ width: 1242 }).webp({ quality: 80 }).toFile(`${OUT}/cover-bg.webp`);
+console.log('bg       poster background'.padEnd(42), await kb(`${OUT}/cover-bg.webp`));
 meta.frame = { aspect: 2048 / 3126 };
 await writeFile(`${OUT}/cover.json`, JSON.stringify(meta, null, 2));

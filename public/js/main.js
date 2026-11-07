@@ -7,7 +7,7 @@ import { Controls } from './controls.js';
 import { Hud } from './hud.js';
 import { Spawner } from './spawner.js';
 import { api } from './api.js';
-import { SPEED, LIVES, SCORE_PICKUP, SCORE_PER_METRE, INVULNERABLE_TIME, COLORS } from './config.js';
+import { SPEED, LIVES, SCORE_PICKUP, SCORE_PER_METRE, INVULNERABLE_TIME, COLORS, REQUIRE_REGISTRATION } from './config.js';
 
 const canvas = document.getElementById('game');
 const hud = new Hud();
@@ -76,8 +76,9 @@ const controls = new Controls(canvas, (action) => {
 // ----------------------------------------------------------------- screens
 function showLobby() {
   state.mode = 'lobby';
-  $('lobby-greeting').textContent = me ? `Hi ${me.name}! Best: ${me.best}` : '';
-  $('btn-signout').classList.toggle('hidden', api.offline || !me);
+  $('lobby-greeting').textContent = REQUIRE_REGISTRATION && me ? `Hi ${me.name}! Best: ${me.best}` : '';
+  $('btn-signout').classList.toggle('hidden', !REQUIRE_REGISTRATION || api.offline || !me);
+  hud.screens.cover.classList.remove('leaving');
   hud.show('cover');
 }
 
@@ -178,11 +179,17 @@ $('btn-resend').addEventListener('click', async () => {
 $('btn-change').addEventListener('click', showRegister);
 $('btn-signout').addEventListener('click', () => { api.signOut(); me = null; showRegister(); });
 // START: signed in → run; otherwise register first, then run straight after the code.
-$('btn-start').addEventListener('click', () => { if (me) startRun(); else showRegister(); });
+$('btn-start').addEventListener('click', () => { if (!REQUIRE_REGISTRATION || me) startRun(); else showRegister(); });
 $('btn-retry').addEventListener('click', startRun);
 
 // ------------------------------------------------------------------- game
 function startRun() {
+  // Fade the poster out over the live 3D world.
+  const cover = hud.screens.cover;
+  if (!cover.classList.contains('hidden')) {
+    cover.classList.add('leaving');
+    setTimeout(() => { cover.classList.remove('leaving'); cover.classList.add('hidden'); }, 320);
+  }
   state.mode = 'running';
   state.speed = SPEED.start;
   state.distance = 0;
@@ -193,7 +200,8 @@ function startRun() {
   player.reset();
   spawner.reset();
   player.group.visible = true;
-  hud.show(null);
+  for (const [k, el] of Object.entries(hud.screens)) if (k !== 'cover') el.classList.add('hidden');
+  hud.hud.classList.remove('hidden');
   hud.update(state);
 }
 
@@ -225,8 +233,8 @@ try {
   hud.layoutCover(assets.cover.meta, assets.cover.images);
   let hero = 'boy'; try { hero = localStorage.getItem(HERO_KEY) || 'boy'; } catch { /* private mode */ }
   setHero(hero, false);
-  hud.setProgress(0.95, 'Signing in…');
-  me = await api.me();
+  hud.setProgress(0.95, REQUIRE_REGISTRATION ? 'Signing in…' : 'Ready');
+  me = REQUIRE_REGISTRATION ? await api.me() : null;
   hud.setProgress(1, 'Ready');
   showLobby();
   window.__gameReady = true;       // hook for automated screenshots
@@ -245,6 +253,7 @@ function frame() {
   requestAnimationFrame(frame);
   const dt = Math.min(clock.getDelta(), 0.05);
   if (!world) return;
+  if (state.mode === 'lobby' || state.mode === 'register' || state.mode === 'otp') return;   // static poster: no 3D work, saves battery
 
   if (state.mode === 'running') {
     state.speed = Math.min(SPEED.max, state.speed + SPEED.ramp * dt);

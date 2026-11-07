@@ -27,6 +27,8 @@ export class Hud {
 
   /** Position the poster layers from cover.json (fractions of the poster frame). */
   layoutCover(meta, images) {
+    this.$('stage').style.backgroundImage = `url("${images.bg}")`;
+    this.screens.cover.style.backgroundImage = `url("${images.bg}")`;   // blurred fill behind the letterbox
     for (const el of this.screens.cover.querySelectorAll('[data-layer]')) {
       const key = el.dataset.layer; const m = meta[key]; if (!m) continue;
       el.style.left = `${m.x * 100}%`; el.style.top = `${m.y * 100}%`;

@@ -92,8 +92,13 @@ html, body {
   /* Fill the screen top to bottom like the poster; on tall phones the sides
      crop a little (the poster's own margins), on wide screens it letterboxes. */
   position: relative; flex: none; aspect-ratio: 2048 / 3126;
-  height: min(100%, calc(100vw * 3126 / 2048)); width: auto;
+  height: 100%; width: auto;   /* fills the height; tall phones crop the poster's side margins, wide screens letterbox */
+  background: #6fb6ef center / 100% 100% no-repeat;   /* the poster's own road scene */
 }
+.screen.cover { background: #1b6fe3 center / cover no-repeat; transition: opacity .3s ease; }
+.screen.cover::before { content: ""; position: absolute; inset: -40px; background: inherit; filter: blur(18px) brightness(.75); z-index: 0; }
+.screen.cover > * { position: relative; z-index: 1; }
+.screen.cover.leaving { opacity: 0; pointer-events: none; }
 .layer { position: absolute; display: block; padding: 0; margin: 0; border: 0; background: center / 100% 100% no-repeat; }
 img.layer { width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
 .layer.tap { cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .12s; }

@@ -48,6 +48,7 @@ export async function loadAssets(onProgress = () => {}) {
 
   const coverMeta = await loadJson('assets/ui/cover.json');
   const coverImages = {
+    bg: 'assets/ui/cover-bg.webp',
     glow: 'assets/ui/glow.webp', hcb: 'assets/ui/hcb.webp', logo: 'assets/ui/logo.webp',
     tagline: 'assets/ui/tagline.webp', heroes: 'assets/ui/heroes.webp', ribbon: 'assets/ui/ribbon.webp', start: 'assets/ui/start.webp',
   };
