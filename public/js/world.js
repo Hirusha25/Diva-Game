@@ -468,9 +468,10 @@ export class World {
         along.scale.set(w * flip, h, 1);
         along.position.x = s < 0 ? (flip < 0 ? w : 0) : (flip < 0 ? 0 : -w);
         bush.userData.billboard = true;
-        bush.userData.clamp = s < 0 ? { centre: Math.PI / 2, min: -0.5, max: 0 } : { centre: -Math.PI / 2, min: 0, max: 0.5 };
+        // Hedge: swing AWAY from the road (never over the wall), and only a little.
+        bush.userData.clamp = s < 0 ? { centre: Math.PI / 2, min: 0, max: 0.35 } : { centre: -Math.PI / 2, min: -0.35, max: 0 };
         bush.userData.shadow.visible = false;
-        bush.position.set(s * (WALL.outer + 0.1), 0, z + w / 2);
+        bush.position.set(s * (WALL.outer + 0.25), 0, z + w / 2);
         bush.visible = rng() < 0.8;
       }
     });
