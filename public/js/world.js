@@ -9,6 +9,8 @@ import { pavingTexture, grassTexture, wallGridTexture, soilTexture } from './tex
 const TREES_PER_CHUNK = 40;   // 20 per side: 12 in a near row + 8 in a far row filling the gaps
 const BUSHES_FRONT_PER_CHUNK = 20;  // 10 per side, every ~6 m along the wall base
 const BUSHES_BACK_PER_CHUNK = 16;   // 8 per side: flowering hedge rising above the wall, between the trees
+const BUSH_LEAF_CARDS = 70;         // leaf patches per bush (3x for the big hedge clumps)
+const BUSH_FLOWER_CARDS = 14;
 
 /**
  * The running world: an endless street built from CHUNK_COUNT identical
@@ -44,6 +46,14 @@ export class World {
     };
     this.busStandMaterial = new THREE.MeshBasicMaterial({ map: assets.busStand.map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false });
     this.busStandAspect = assets.busStand.aspect;
+    // Foliage cards for the volumetric bushes (lit, double-sided, alpha-cut).
+    const card = (map) => new THREE.MeshLambertMaterial({ map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, emissive: 0x2b4a12, emissiveIntensity: 0.55, emissiveMap: map });
+    this.cardMaterials = {
+      leaf: [card(assets.cards.leaf1), card(assets.cards.leaf2), card(assets.cards.leaf3)],
+      white: card(assets.cards.white),
+      pink: card(assets.cards.pink),
+    };
+    this.cardGeometry = new THREE.PlaneGeometry(1, 1);
     this.treeGeometry = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
 
     this.chunks = [];
@@ -276,12 +286,26 @@ export class World {
     };
     chunk.add(chunk.userData.shelters.left, chunk.userData.shelters.right);
 
+    // Volumetric bushes: one instanced mesh per card material per chunk.
+    const CARDS = BUSH_LEAF_CARDS * (BUSHES_FRONT_PER_CHUNK + BUSHES_BACK_PER_CHUNK * 3);
+    const FLOWERS = BUSH_FLOWER_CARDS * (BUSHES_FRONT_PER_CHUNK + BUSHES_BACK_PER_CHUNK * 3);
+    chunk.userData.foliage = {
+      leaf: this.cardMaterials.leaf.map((m) => new THREE.InstancedMesh(this.cardGeometry, m, Math.ceil(CARDS / 3) + 8)),
+      white: new THREE.InstancedMesh(this.cardGeometry, this.cardMaterials.white, FLOWERS),
+      pink: new THREE.InstancedMesh(this.cardGeometry, this.cardMaterials.pink, FLOWERS),
+    };
+    for (const im of [...chunk.userData.foliage.leaf, chunk.userData.foliage.white, chunk.userData.foliage.pink]) { im.frustumCulled = false; chunk.add(im); }
+    // Solid dark-green core so the wall never shows through the leaf cards.
+    if (!this._coreGeo) { this._coreGeo = new THREE.SphereGeometry(1, 12, 9); this._coreMat = new THREE.MeshLambertMaterial({ color: 0x3f8a2a }); }
+    chunk.userData.bushCores = new THREE.InstancedMesh(this._coreGeo, this._coreMat, BUSHES_FRONT_PER_CHUNK + BUSHES_BACK_PER_CHUNK);
+    chunk.add(chunk.userData.bushCores);
+    chunk.userData.bushShadows = new THREE.InstancedMesh(
+      new THREE.CircleGeometry(0.5, 14).rotateX(-Math.PI / 2),
+      new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.25, depthWrite: false }),
+      BUSHES_FRONT_PER_CHUNK,
+    );
+    chunk.add(chunk.userData.bushShadows);
     chunk.userData.bushes = [];
-    for (let i = 0; i < BUSHES_FRONT_PER_CHUNK + BUSHES_BACK_PER_CHUNK; i++) {
-      const bush = this._makeBush(this.bushMaterials[0].material);
-      chunk.userData.bushes.push(bush);
-      chunk.add(bush);
-    }
 
     chunk.userData.trees = [];
     for (let i = 0; i < TREES_PER_CHUNK; i++) {
@@ -306,19 +330,21 @@ export class World {
   }
 
   _makeBush(material) {
-    // One plane turned toward the camera every frame (the art carries its own
-    // 3/4 perspective), plus a soft blob shadow on the soil underneath.
+    // Two planes that share the wall-side edge: one lies along the wall, the
+    // other swings out ~40° so the clump still reads from down the road.
+    // Geometry origin is at the wall-side edge (x = 0 .. 1), base at y = 0.
+    if (!this._bushGeo) this._bushGeo = new THREE.PlaneGeometry(1, 1).translate(0.5, 0.5, 0);
     const group = new THREE.Group();
-    const front = new THREE.Mesh(this.treeGeometry, material);
-    group.add(front);
+    const along = new THREE.Mesh(this._bushGeo, material);
+    const angled = new THREE.Mesh(this._bushGeo, material);
+    group.add(along, angled);
     if (!this._bushShadowGeo) {
       this._bushShadowGeo = new THREE.CircleGeometry(0.5, 16).rotateX(-Math.PI / 2);
       this._bushShadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.28, depthWrite: false });
     }
     const shadow = new THREE.Mesh(this._bushShadowGeo, this._bushShadowMat);
-    shadow.position.y = 0.075;
     group.add(shadow);
-    group.userData = { front, shadow };
+    group.userData = { front: along, planes: [along, angled], shadow };
     return group;
   }
 
@@ -366,55 +392,82 @@ export class World {
     // Bushes. Front row: on the pavement at the wall base (gap at the shelter).
     // Back row: a tall dense hedge behind the wall whose tops peek over the
     // cap and hide the open ground between wall and trees.
-    const { bushes } = chunk.userData;
-    const perSide = BUSHES_FRONT_PER_CHUNK / 2;
-    const backPerSide = BUSHES_BACK_PER_CHUNK / 2;
-    let lastKind = { [-1]: -1, [1]: -1 };
-    const pickKind = (s) => {
-      const set = s < 0 ? this.bushSets.left : this.bushSets.right;
-      let pick = set[Math.floor(rng() * set.length)];
-      if (pick.i === lastKind[s]) pick = set[(set.indexOf(pick) + 1) % set.length];
-      lastKind[s] = pick.i;
-      return pick;
+    // ---- Volumetric bushes --------------------------------------------
+    const F = chunk.userData.foliage;
+    const counters = { leaf: [0, 0, 0], white: 0, pink: 0 };
+    const M = new THREE.Matrix4(), P = new THREE.Vector3(), Q = new THREE.Quaternion(), SC = new THREE.Vector3();
+    const N = new THREE.Vector3(), UP = new THREE.Vector3(0, 1, 0), TMP = new THREE.Matrix4();
+    const place = (im, idx, pos, normal, size, roll) => {
+      // orient the card so its face points along `normal`, then roll it a little
+      TMP.lookAt(new THREE.Vector3(0, 0, 0), normal, UP); Q.setFromRotationMatrix(TMP);
+      Q.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), roll));
+      SC.setScalar(size); M.compose(pos, Q, SC); im.setMatrixAt(idx, M);
     };
-    bushes.forEach((bush, i) => {
-      const s = i % 2 === 0 ? -1 : 1;
-      const pick = pickKind(s);
-      const kind = pick.kind;
-      bush.userData.front.material = kind.material;
-      const isRow = kind.aspect > 2.2;
-      if (i < BUSHES_FRONT_PER_CHUNK) {
-        // Border clumps: every one hugs the wall at the same distance, sits ON
-        // the soil bed, and is turned slightly toward the road so the near ones
-        // show their face instead of a thin edge. The long low "row" sprite is
-        // kept for the hedge only (at the base it read as a fallen bush).
-        if (isRow) { bush.visible = false; return; }
-        const slot = Math.floor(i / 2);
-        const z = -CHUNK_LENGTH / 2 + (slot + 0.25 + rng() * 0.5) * (CHUNK_LENGTH / perSide);
-        const blocked = s === shelterSide && Math.abs(z - shelterZ) < 7.5;
-        const h = 1.05 + rng() * 0.2;
-        const w = Math.min(h * kind.aspect, 1.6);
-        bush.userData.front.scale.set(w * (pick.mirror ? -1 : 1), h, 1);
-        bush.userData.shadow.visible = true;
-        bush.userData.shadow.scale.set(w * 0.9, 1, h * 0.4);
-        bush.rotation.y = -s * 0.45;
-        bush.position.set(s * (WALL.inner - 0.1 - (w / 2) * Math.cos(0.45)), PAVEMENT.height + 0.03, z);
-        bush.userData.shadow.position.y = 0.005;
-        bush.visible = !blocked && rng() < 0.85;
-      } else {
-        // Hedge behind the wall: sits fully behind it, flowering top above the coping.
-        const j = i - BUSHES_FRONT_PER_CHUNK;
-        const slot = Math.floor(j / 2);
-        const z = -CHUNK_LENGTH / 2 + (slot + 0.2 + rng() * 0.6) * (CHUNK_LENGTH / backPerSide);
-        bush.rotation.y = 0;
-        const h = isRow ? 2.1 + rng() * 0.3 : 2.7 + rng() * 0.4;
-        const w = h * kind.aspect;
-        bush.userData.front.scale.set(w * (pick.mirror ? -1 : 1), h, 1);
-        bush.userData.shadow.visible = false;
-        bush.position.set(s * (WALL.outer + 0.3 + w / 2), 0, z);
-        bush.visible = rng() < 0.8;
+    /** A dome of leaf cards (rx, ry, rz radii) at centre c, flowers on the crown. */
+    let coreIdx = 0;
+    const dome = (c, rx, ry, rz, flowerColour, leafCount, flowerCount) => {
+      // solid core
+      P.copy(c); Q.identity(); SC.set(rx * 0.85, ry * 0.85, rz * 0.85); M.compose(P, Q, SC);
+      chunk.userData.bushCores.setMatrixAt(coreIdx++, M);
+      for (let k = 0; k < leafCount; k++) {
+        // points on the upper ~75 % of an ellipsoid, in two shells for depth
+        const u = rng(), v = rng();
+        const phi = Math.acos(1 - 1.35 * u);              // 0 (top) .. ~110°
+        const th = v * Math.PI * 2;
+        const shell = k % 3 === 0 ? 0.72 : 0.95 + rng() * 0.12;
+        N.set(Math.sin(phi) * Math.cos(th), Math.cos(phi), Math.sin(phi) * Math.sin(th));
+        P.set(c.x + N.x * rx * shell, c.y + N.y * ry * shell, c.z + N.z * rz * shell);
+        const li = Math.floor(rng() * 3);
+        place(F.leaf[li], counters.leaf[li]++, P, N.clone().normalize(), (0.6 + rng() * 0.3) * Math.max(rx, ry), (rng() - 0.5) * 1.4);
       }
-    });
+      for (let k = 0; k < flowerCount; k++) {
+        const u = rng(), v = rng();
+        const phi = Math.acos(1 - 0.75 * u);               // crown only
+        const th = v * Math.PI * 2;
+        N.set(Math.sin(phi) * Math.cos(th), Math.cos(phi), Math.sin(phi) * Math.sin(th));
+        P.set(c.x + N.x * rx * 1.02, c.y + N.y * ry * 1.02, c.z + N.z * rz * 1.02);
+        const im = flowerColour === 'pink' ? F.pink : F.white;
+        place(im, counters[flowerColour]++, P, N.clone().normalize(), (0.26 + rng() * 0.12) * Math.max(rx, ry), rng() * 6.28);
+      }
+    };
+    const perSide = BUSHES_FRONT_PER_CHUNK / 2, backPerSide = BUSHES_BACK_PER_CHUNK / 2;
+    let shadowIdx = 0;
+    let lastColour = { [-1]: '', [1]: '' };
+    for (let i = 0; i < BUSHES_FRONT_PER_CHUNK; i++) {
+      const s = i % 2 === 0 ? -1 : 1;
+      const slot = Math.floor(i / 2);
+      const z = -CHUNK_LENGTH / 2 + (slot + 0.25 + rng() * 0.5) * (CHUNK_LENGTH / perSide);
+      const blocked = s === shelterSide && Math.abs(z - shelterZ) < 7.5;
+      if (blocked || rng() > 0.85) continue;
+      // border clump: ~1.1 m tall, 1.6 m along the wall, 0.9 m deep, back against the wall
+      const big = rng() < 0.35;
+      const ry = (big ? 0.72 : 0.58) + rng() * 0.14, rz = (big ? 1.05 : 0.85) + rng() * 0.25, rx = (big ? 0.55 : 0.48) + rng() * 0.08;
+      const colour = lastColour[s] === 'pink' ? 'white' : (rng() < 0.45 ? 'pink' : 'white');
+      lastColour[s] = colour;
+      const c = new THREE.Vector3(s * (WALL.inner - 0.05 - rx), PAVEMENT.height + 0.03 + ry * 0.9, z);
+      dome(c, rx, ry, rz, colour, BUSH_LEAF_CARDS, BUSH_FLOWER_CARDS);
+      P.set(c.x, PAVEMENT.height + 0.035, c.z); Q.identity(); SC.set(rx * 2.2, 1, rz * 2.1); M.compose(P, Q, SC);
+      chunk.userData.bushShadows.setMatrixAt(shadowIdx++, M);
+    }
+    for (let i = 0; i < BUSHES_BACK_PER_CHUNK; i++) {
+      const s = i % 2 === 0 ? -1 : 1;
+      const slot = Math.floor(i / 2);
+      const z = -CHUNK_LENGTH / 2 + (slot + 0.2 + rng() * 0.6) * (CHUNK_LENGTH / backPerSide);
+      if (rng() > 0.8) continue;
+      // hedge clump behind the wall: big, top ~0.8 m above the coping
+      const ry = 1.4 + rng() * 0.3, rz = 1.6 + rng() * 0.5, rx = 1.0 + rng() * 0.3;
+      const colour = rng() < 0.5 ? 'pink' : 'white';
+      const c = new THREE.Vector3(s * (WALL.outer + 0.2 + rx), WALL.height + 0.22 + 0.8 - ry, z);
+      dome(c, rx, ry, rz, colour, BUSH_LEAF_CARDS * 3, BUSH_FLOWER_CARDS * 3);
+    }
+    // hide unused instances
+    SC.setScalar(0); P.set(0, -10, 0); Q.identity(); M.compose(P, Q, SC);
+    F.leaf.forEach((im, li) => { for (let k = counters.leaf[li]; k < im.count; k++) im.setMatrixAt(k, M); im.instanceMatrix.needsUpdate = true; });
+    for (const col of ['white', 'pink']) { for (let k = counters[col]; k < F[col].count; k++) F[col].setMatrixAt(k, M); F[col].instanceMatrix.needsUpdate = true; }
+    for (let k = shadowIdx; k < chunk.userData.bushShadows.count; k++) chunk.userData.bushShadows.setMatrixAt(k, M);
+    for (let k = coreIdx; k < chunk.userData.bushCores.count; k++) chunk.userData.bushCores.setMatrixAt(k, M);
+    chunk.userData.bushCores.instanceMatrix.needsUpdate = true;
+    chunk.userData.bushShadows.instanceMatrix.needsUpdate = true;
   }
 }
 

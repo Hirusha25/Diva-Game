@@ -81,6 +81,15 @@ export async function loadAssets(onProgress = () => {}) {
     ['cloud-3', 'assets/textures/cloud-3.webp'],
     ['cloud-4', 'assets/textures/cloud-4.webp'],
   ];
+  const cardFiles = [
+    ['leaf1', 'assets/textures/card-leaf-1.webp'],
+    ['leaf2', 'assets/textures/card-leaf-2.webp'],
+    ['leaf3', 'assets/textures/card-leaf-3.webp'],
+    ['white', 'assets/textures/card-flower-white.webp'],
+    ['pink', 'assets/textures/card-flower-pink.webp'],
+  ];
+  const cards = {};
+  for (const [key, url] of cardFiles) cards[key] = await loadTex(url);
   const bushFiles = [
     ['bush-1', 'assets/textures/bush-1.webp'],
     ['bush-2', 'assets/textures/bush-2.webp'],
@@ -105,6 +114,7 @@ export async function loadAssets(onProgress = () => {}) {
     clouds,
     trees,
     bushes,
+    cards,
     cover: { meta: coverMeta, images: coverImages },
   };
 }
