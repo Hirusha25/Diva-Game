@@ -101,8 +101,8 @@ export class World {
       wallCapTop: new THREE.MeshBasicMaterial({ color: COLORS.wallCapTop, toneMapped: false }),
       ground: new THREE.MeshStandardMaterial({ map: grass, roughness: 1 }),
       dirt: new THREE.MeshStandardMaterial({ color: COLORS.dirt, roughness: 1 }),
-      bed: new THREE.MeshBasicMaterial({ color: 0x925f16, toneMapped: false }),       // warm amber soil strip, row-averaged from the reference
-      bedEdge: new THREE.MeshBasicMaterial({ color: 0x7f7e86, toneMapped: false }),   // blue-grey stone edging, row-averaged
+      bed: new THREE.MeshBasicMaterial({ color: 0xc48f48, toneMapped: false }),       // warm tan strip, sampled from the pavement crop
+      bedEdge: new THREE.MeshBasicMaterial({ color: 0xb78244, toneMapped: false }),   // slightly darker edge, sampled
       dapple: new THREE.MeshBasicMaterial({ map: shadows, transparent: true, depthWrite: false, opacity: 0.7, polygonOffset: true, polygonOffsetFactor: -2 }),
       wallShade: new THREE.MeshBasicMaterial({ map: shadows, transparent: true, depthWrite: false, opacity: 0.3, polygonOffset: true, polygonOffsetFactor: -2 }),
     };
