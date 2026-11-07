@@ -21,3 +21,5 @@ Rules distilled from feedback:
 `approved-world-view.webp` is the in-game view the client signed off on
 (2026-11-05). Camera height/angle, tree spacing, bush density, cloud count and
 sky gradient are frozen here: do not change these without asking.
+
+Planter bed: option D3 (deeper brown, soft texture) approved 2026-11-07. See planter-bed-options.png.

@@ -128,29 +128,30 @@ function bakeDepth(ctx, w, h) {
 }
 
 /** Garden soil: warm earth with fine grain, darker clods and a few pale pebbles. */
-export function soilTexture() {
+export function soilTexture(baseHex = '#c48f48', strength = 1) {
   return canvasTexture(256, 1024, (ctx, w, h) => {
-    ctx.fillStyle = '#c48f48';
+    ctx.fillStyle = baseHex;
+    ctx.globalAlpha = 1;
     ctx.fillRect(0, 0, w, h);
     // broad tonal variation
     for (let i = 0; i < 90; i++) {
       const x = Math.random() * w, y = Math.random() * h, r = 20 + Math.random() * 60;
       const g = ctx.createRadialGradient(x, y, 0, x, y, r);
       const dark = Math.random() < 0.55;
-      g.addColorStop(0, dark ? 'rgba(110,70,30,0.45)' : 'rgba(225,180,110,0.35)');
+      g.addColorStop(0, dark ? `rgba(110,70,30,${0.45 * strength})` : `rgba(225,180,110,${0.35 * strength})`);
       g.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
     }
     // fine grain
     for (let i = 0; i < 14000; i++) {
-      ctx.fillStyle = Math.random() < 0.5 ? `rgba(80,45,15,${0.15 + Math.random() * 0.3})` : `rgba(240,205,150,${0.1 + Math.random() * 0.25})`;
+      ctx.fillStyle = Math.random() < 0.5 ? `rgba(80,45,15,${(0.15 + Math.random() * 0.3) * strength})` : `rgba(240,205,150,${(0.1 + Math.random() * 0.25) * strength})`;
       ctx.fillRect(Math.random() * w, Math.random() * h, 1 + Math.random() * 2, 1 + Math.random() * 2);
     }
     // clods and pebbles
     for (let i = 0; i < 260; i++) {
       const x = Math.random() * w, y = Math.random() * h, r = 1.5 + Math.random() * 3.5;
       const pebble = Math.random() < 0.3;
-      ctx.fillStyle = pebble ? 'rgba(215,200,180,0.8)' : 'rgba(95,58,22,0.7)';
+      ctx.fillStyle = pebble ? `rgba(215,200,180,${0.8 * strength})` : `rgba(95,58,22,${0.7 * strength})`;
       ctx.beginPath(); ctx.ellipse(x, y, r * 1.3, r, Math.random() * Math.PI, 0, Math.PI * 2); ctx.fill();
       if (pebble) { ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(x + r * 0.5, y + r * 0.6, r * 1.1, r * 0.6, 0, 0, Math.PI * 2); ctx.fill(); }
     }

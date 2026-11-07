@@ -91,7 +91,11 @@ export class World {
     const bedGrass = grassTexture();
     bedGrass.repeat.set(1, CHUNK_LENGTH / 2);
     // Planter-bed style: 'none' | 'plinth' | 'soil' | 'grass'  (see docs/reference)
-    this.bedStyle = globalThis.__DIVA_BED || 'soil';
+    this.bedStyle = globalThis.__DIVA_BED || 'brown3';   // approved: option D3, deeper brown soft-textured strip
+    // Subtle brown variants of the turf-strip shape (D): soft texture, mid tones.
+    const brownHex = { brown1: '#c9a46c', brown2: '#b0864f', brown3: '#92683f' }[this.bedStyle];
+    const brown = brownHex ? soilTexture(brownHex, 0.55) : null;
+    if (brown) brown.repeat.set(1, CHUNK_LENGTH / 2);
     const grass = grassTexture();
     grass.repeat.set(26, CHUNK_LENGTH / 3);
     const shadows = this.assets.shadows;
@@ -112,12 +116,18 @@ export class World {
         plinth: new THREE.MeshStandardMaterial({ color: 0xd4cec6, roughness: 0.95 }),        // pale concrete plinth
         soil: new THREE.MeshStandardMaterial({ map: soil, roughness: 1 }),                    // textured garden soil
         grass: new THREE.MeshStandardMaterial({ map: bedGrass, roughness: 1 }),               // turf strip
+        brown1: brown && new THREE.MeshStandardMaterial({ map: brown, roughness: 1 }),
+        brown2: brown && new THREE.MeshStandardMaterial({ map: brown, roughness: 1 }),
+        brown3: brown && new THREE.MeshStandardMaterial({ map: brown, roughness: 1 }),
       })[this.bedStyle],
       bedEdge: ({
         none: null,
         plinth: new THREE.MeshStandardMaterial({ color: 0xb9b3ab, roughness: 1 }),
         soil: new THREE.MeshStandardMaterial({ color: 0x9e7a4a, roughness: 1 }),
         grass: new THREE.MeshStandardMaterial({ color: 0xb9b3ab, roughness: 1 }),
+        brown1: new THREE.MeshStandardMaterial({ color: 0xb9b3ab, roughness: 1 }),
+        brown2: new THREE.MeshStandardMaterial({ color: 0xb9b3ab, roughness: 1 }),
+        brown3: new THREE.MeshStandardMaterial({ color: 0xb9b3ab, roughness: 1 }),
       })[this.bedStyle],
       dapple: new THREE.MeshBasicMaterial({ map: shadows, transparent: true, depthWrite: false, opacity: 0.7, polygonOffset: true, polygonOffsetFactor: -2 }),
       wallShade: new THREE.MeshBasicMaterial({ map: shadows, transparent: true, depthWrite: false, opacity: 0.3, polygonOffset: true, polygonOffsetFactor: -2 }),
