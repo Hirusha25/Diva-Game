@@ -8,7 +8,7 @@ import { pavingTexture, grassTexture, wallGridTexture, soilTexture } from './tex
 
 const TREES_PER_CHUNK = 40;   // 20 per side: 12 in a near row + 8 in a far row filling the gaps
 const BUSHES_FRONT_PER_CHUNK = 20;  // 10 per side, every ~6 m along the wall base
-const BUSHES_BACK_PER_CHUNK = 28;   // 14 per side: tall flowering hedge rising above the wall, in front of the trees
+const BUSHES_BACK_PER_CHUNK = 16;   // 8 per side: flowering hedge rising above the wall, between the trees
 
 /**
  * The running world: an endless street built from CHUNK_COUNT identical
@@ -289,7 +289,7 @@ export class World {
       chunk.userData.trees.push(tree);
       chunk.add(tree);
     }
-    chunk.userData.billboards = [...chunk.userData.trees, ...chunk.userData.bushes];
+    chunk.userData.billboards = [...chunk.userData.trees];   // bushes keep a fixed facing (see _dressChunk)
     return chunk;
   }
 
@@ -383,27 +383,32 @@ export class World {
       const kind = pick.kind;
       bush.userData.front.material = kind.material;
       const isRow = kind.aspect > 2.2;
+      bush.rotation.y = 0;   // face down the road, like every other roadside sprite
       if (i < BUSHES_FRONT_PER_CHUNK) {
-        // Front border: big lush clumps at the wall base, spilling onto the pavement edge.
+        // Border clumps at the wall base. The whole sprite stays on the pavement
+        // in front of the wall (never intersecting it), about half the wall height.
         const slot = Math.floor(i / 2);
-        const z = -CHUNK_LENGTH / 2 + (slot + 0.2 + rng() * 0.6) * (CHUNK_LENGTH / perSide);
+        const z = -CHUNK_LENGTH / 2 + (slot + 0.25 + rng() * 0.5) * (CHUNK_LENGTH / perSide);
         const blocked = s === shelterSide && Math.abs(z - shelterZ) < 7.5;
-        const h = isRow ? 1.0 + rng() * 0.2 : 1.35 + rng() * 0.35;     // ~60-75 % of the 2.2 m wall
-        bush.userData.front.scale.set(h * kind.aspect * (pick.mirror ? -1 : 1), h, 1);
-        bush.userData.shadow.scale.set(h * kind.aspect * 0.95, 1, h * 0.5);
+        const h = isRow ? 0.75 + rng() * 0.15 : 1.05 + rng() * 0.25;
+        const w = Math.min(h * kind.aspect, PAVEMENT.outer - PAVEMENT.inner - 0.3);
+        bush.userData.front.scale.set(w * (pick.mirror ? -1 : 1), h, 1);
+        bush.userData.shadow.visible = true;
+        bush.userData.shadow.scale.set(w * 0.95, 1, h * 0.45);
         bush.userData.shadow.position.y = 0.075 - (PAVEMENT.height - 0.07);
-        bush.position.set(s * (WALL.inner - 0.6), PAVEMENT.height - 0.07, z);
-        bush.visible = !blocked && rng() < 0.9;
+        bush.position.set(s * (WALL.inner - 0.12 - w / 2), PAVEMENT.height - 0.07, z);
+        bush.visible = !blocked && rng() < 0.85;
       } else {
-        // Hedge behind the wall: tall clumps whose flowering tops rise above the coping.
+        // Hedge behind the wall: sits fully behind it, flowering top above the coping.
         const j = i - BUSHES_FRONT_PER_CHUNK;
         const slot = Math.floor(j / 2);
-        const z = -CHUNK_LENGTH / 2 + (slot + 0.15 + rng() * 0.7) * (CHUNK_LENGTH / backPerSide);
-        const h = isRow ? 2.2 + rng() * 0.3 : 2.9 + rng() * 0.5;      // base hidden, top 0.7-1.2 m above the wall
-        bush.userData.front.scale.set(h * kind.aspect * (pick.mirror ? -1 : 1), h, 1);
+        const z = -CHUNK_LENGTH / 2 + (slot + 0.2 + rng() * 0.6) * (CHUNK_LENGTH / backPerSide);
+        const h = isRow ? 2.1 + rng() * 0.3 : 2.7 + rng() * 0.4;
+        const w = h * kind.aspect;
+        bush.userData.front.scale.set(w * (pick.mirror ? -1 : 1), h, 1);
         bush.userData.shadow.visible = false;
-        bush.position.set(s * (WALL.outer + 0.9 + rng() * 0.6), 0, z);
-        bush.visible = rng() < 0.9;
+        bush.position.set(s * (WALL.outer + 0.3 + w / 2), 0, z);
+        bush.visible = rng() < 0.8;
       }
     });
   }
