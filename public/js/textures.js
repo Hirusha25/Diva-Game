@@ -22,7 +22,7 @@ export function pavingTexture() {
     const n = 4, s = w / n;
     for (let y = 0; y < n; y++) {
       for (let x = 0; x < n; x++) {
-        const l = 212 + Math.floor(Math.random() * 16) - 8;
+        const l = 205 + Math.floor(Math.random() * 14) - 7;
         ctx.fillStyle = `rgb(${l + 6},${l + 2},${l - 6})`;
         ctx.fillRect(x * s, y * s, s, s);
         // subtle speckle
@@ -32,8 +32,8 @@ export function pavingTexture() {
         }
       }
     }
-    ctx.strokeStyle = 'rgba(90,85,75,0.75)';
-    ctx.lineWidth = 4;
+    ctx.strokeStyle = 'rgba(110,105,100,0.6)';
+    ctx.lineWidth = 5;
     for (let i = 0; i <= n; i++) {
       ctx.beginPath(); ctx.moveTo(i * s, 0); ctx.lineTo(i * s, h); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(0, i * s); ctx.lineTo(w, i * s); ctx.stroke();

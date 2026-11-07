@@ -25,21 +25,21 @@ export const INVULNERABLE_TIME = 1.6;
 
 export const COLORS = {
   // Sampled from the reference concept art, zenith to horizon.
-  skyTop: 0x0167f2,
-  skyMid: 0x0c93fe,
-  skyLow: 0x3bb8fe,
-  skyLow2: 0x9fe7fc,
-  skyHorizon: 0xdaf3f8,
-  fog: 0xdaf3f8,
-  asphaltTint: 0xe6e6e6,
+  skyTop: 0x4fb0f0,      // hazy day, sampled from the street master reference
+  skyMid: 0x8dd3f8,
+  skyLow: 0xb9e6fb,
+  skyLow2: 0xcdf1fe,
+  skyHorizon: 0xd8f2fd,
+  fog: 0xd4eefc,
+  asphaltTint: 0xb0b6c0,  // blue-grey road (reads ~#585e6a after the texture, as sampled)
   laneLine: 0xf6f6f2,
-  kerbWhite: 0xf3f3ee,
-  kerbBlack: 0x262626,
+  kerbWhite: 0xdbd5d0,
+  kerbBlack: 0x3f4a5c,    // dark blue-grey, sampled
   pavement: 0xffffff,      // tinted by the paving texture
   wall: 0xfcdc65,        // sampled from the reference (sunlit face)
   wallShade: 0xe0b848,   // faces turned away from the sun
-  wallCap: 0x7a5d4e,     // dark brown stone coping, sampled
-  wallCapTop: 0xb9866a,  // sunlit top edge of the coping
+  wallCap: 0x826659,     // grey-brown stone coping, sampled
+  wallCapTop: 0x9d8275,  // sunlit top of the coping
   ground: 0x5a9a2e,
   dirt: 0x8d7a4e,
   shrub: 0x3f9a2f,
