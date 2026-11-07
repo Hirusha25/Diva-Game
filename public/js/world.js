@@ -35,6 +35,8 @@ export class World {
     }));
     this.bushMaterials = assets.bushes.map((b) => ({
       material: new THREE.MeshBasicMaterial({ map: b.map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false }),
+      // depth layers: back (in shade), middle, front (full brightness)
+      layers: [0x8fa07a, 0xcfd8c0, 0xffffff].map((tint) => new THREE.MeshBasicMaterial({ map: b.map, color: tint, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false })),
       aspect: b.aspect,
       side: b.side,
     }));
@@ -338,19 +340,20 @@ export class World {
   }
 
   _makeBush(material) {
-    // Two crossed planes of the same bush image (centre pivot, base at y = 0).
-    if (!this._bushGeo) this._bushGeo = new THREE.PlaneGeometry(1, 1).translate(0.5, 0.5, 0);   // pivot at the x = 0 edge
+    // Three copies of the bush image stacked front-to-back (pivot at the
+    // x = 0 edge, base at y = 0). Parallax between the layers as the bush
+    // passes gives it thickness; the back layer is darker and a little taller.
+    if (!this._bushGeo) this._bushGeo = new THREE.PlaneGeometry(1, 1).translate(0.5, 0.5, 0);
     const group = new THREE.Group();
-    const along = new THREE.Mesh(this._bushGeo, material);
-    const across = new THREE.Mesh(this._bushGeo, material);
-    group.add(along, across);
+    const planes = [0, 1, 2].map(() => new THREE.Mesh(this._bushGeo, material));
+    group.add(...planes);
     if (!this._bushShadowGeo) {
       this._bushShadowGeo = new THREE.CircleGeometry(0.5, 16).rotateX(-Math.PI / 2);
       this._bushShadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.28, depthWrite: false });
     }
     const shadow = new THREE.Mesh(this._bushShadowGeo, this._bushShadowMat);
     group.add(shadow);
-    group.userData = { front: along, planes: [along, across], shadow };
+    group.userData = { front: planes[2], planes, shadow };
     return group;
   }
 
@@ -424,8 +427,8 @@ export class World {
       const pick = pickKind(s);
       const kind = pick.kind;
       const isRow = kind.aspect > 2.2;
-      const [along, across] = bush.userData.planes;
-      for (const pl of bush.userData.planes) pl.material = kind.material;
+      const planes = bush.userData.planes;
+      planes.forEach((pl, k) => { pl.material = kind.layers[k]; });
       if (i < BUSHES_FRONT_PER_CHUNK) {
         if (isRow) { bush.visible = false; return; }
         const slot = Math.floor(i / 2);
@@ -442,16 +445,19 @@ export class World {
         // The image is pinned to the wall at the end nearest the player and
         // turns toward the camera around that end, so the far end swings out
         // toward the road by at most ~35°. It can never cut into the wall.
-        across.visible = false;
-        along.rotation.y = 0;
-        // span: left wall [0,w] (pivot = near end), right wall [-w,0]
+        // One full-face copy of the image, centre pivot, turned toward the
+        // player but only within ±32° of facing the road. With the centre
+        // 0.3 w off the wall, the far edge can never reach the wall.
         const flip = pick.mirror ? -1 : 1;
-        along.scale.set(w * flip, h, 1);
-        along.position.x = s < 0 ? (flip < 0 ? w : 0) : (flip < 0 ? 0 : -w);
+        planes.forEach((pl, k) => {
+          pl.visible = k === 2; pl.rotation.y = 0;
+          pl.scale.set(w * flip, h, 1);
+          pl.position.set(flip < 0 ? w / 2 : -w / 2, 0, 0);
+        });
         bush.userData.billboard = true;
-        bush.userData.clamp = s < 0 ? { centre: Math.PI / 2, min: -0.45, max: 0 } : { centre: -Math.PI / 2, min: 0, max: 0.45 };
+        bush.userData.clamp = { centre: s < 0 ? Math.PI / 2 : -Math.PI / 2, min: -0.56, max: 0.56 };
         bush.position.set(s * (WALL.inner - 0.04), PAVEMENT.height + 0.03, z + w / 2);
-        SP.set(s * (WALL.inner - 0.38), PAVEMENT.height + 0.035, z); SQ.identity(); SS.set(0.8, 1, w * 0.9); SM.compose(SP, SQ, SS);
+        SP.set(s * (WALL.inner - 0.3 * w), PAVEMENT.height + 0.035, z); SQ.identity(); SS.set(w * 0.75, 1, w * 0.5); SM.compose(SP, SQ, SS);
         chunk.userData.bushShadows.setMatrixAt(shadowIdx++, SM);
         bush.userData.shadow.visible = false;
         bush.visible = !blocked && rng() < 0.85;
@@ -462,16 +468,16 @@ export class World {
         const h = isRow ? 2.1 + rng() * 0.3 : 2.7 + rng() * 0.4;
         const w = h * kind.aspect;
         for (const pl of bush.userData.planes) { pl.position.set(0, 0, 0); }
-        across.visible = false;
-        along.rotation.y = 0;
         const flip = pick.mirror ? -1 : 1;
-        along.scale.set(w * flip, h, 1);
-        along.position.x = s < 0 ? (flip < 0 ? w : 0) : (flip < 0 ? 0 : -w);
+        planes.forEach((pl, k) => {
+          pl.visible = k === 2; pl.rotation.y = 0;
+          pl.scale.set(w * flip, h, 1);
+          pl.position.set(flip < 0 ? w / 2 : -w / 2, 0, 0);
+        });
         bush.userData.billboard = true;
-        // Hedge: swing AWAY from the road (never over the wall), and only a little.
-        bush.userData.clamp = s < 0 ? { centre: Math.PI / 2, min: 0, max: 0.35 } : { centre: -Math.PI / 2, min: -0.35, max: 0 };
+        bush.userData.clamp = { centre: s < 0 ? Math.PI / 2 : -Math.PI / 2, min: -0.4, max: 0.4 };
         bush.userData.shadow.visible = false;
-        bush.position.set(s * (WALL.outer + 0.25), 0, z + w / 2);
+        bush.position.set(s * (WALL.outer + 0.2 + 0.35 * w), 0, z);
         bush.visible = rng() < 0.8;
       }
     });
