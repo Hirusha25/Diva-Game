@@ -8,7 +8,7 @@ import { pavingTexture, grassTexture, wallGridTexture, soilTexture } from './tex
 
 const TREES_PER_CHUNK = 40;   // 20 per side: 12 in a near row + 8 in a far row filling the gaps
 const BUSHES_FRONT_PER_CHUNK = 20;  // 10 per side, every ~6 m along the wall base
-const BUSHES_BACK_PER_CHUNK = 16;   // 8 per side: flowering hedge rising above the wall, between the trees
+const BUSHES_BACK_PER_CHUNK = 24;   // 12 per side: flowering bushes planted along the top of the wall
 const BUSH_LEAF_CARDS = 70;         // leaf patches per bush (3x for the big hedge clumps)
 const BUSH_FLOWER_CARDS = 14;
 
@@ -467,7 +467,10 @@ export class World {
         const j = i - BUSHES_FRONT_PER_CHUNK;
         const slot = Math.floor(j / 2);
         const z = -CHUNK_LENGTH / 2 + (slot + 0.2 + rng() * 0.6) * (CHUNK_LENGTH / backPerSide);
-        const h = isRow ? 2.1 + rng() * 0.3 : 2.7 + rng() * 0.4;
+        // Planted along the top of the wall (reference: flowering clumps
+        // sitting on the coping, in front of the tree trunks). The base is
+        // sunk a little into the coping slab so each clump looks rooted there.
+        const h = isRow ? 1.05 + rng() * 0.2 : 1.45 + rng() * 0.35;
         const w = h * kind.aspect;
         for (const pl of bush.userData.planes) { pl.position.set(0, 0, 0); }
         const flip = pick.mirror ? -1 : 1;
@@ -477,10 +480,10 @@ export class World {
           pl.position.set(flip < 0 ? w / 2 : -w / 2, 0, 0);
         });
         bush.userData.billboard = true;
-        bush.userData.clamp = { centre: s < 0 ? Math.PI / 2 : -Math.PI / 2, min: -0.4, max: 0.4 };
+        bush.userData.clamp = { centre: s < 0 ? Math.PI / 2 : -Math.PI / 2, min: -0.25, max: 0.25 };
         bush.userData.shadow.visible = false;
-        bush.position.set(s * (WALL.outer + 0.1 + 0.5 * w), 0, z);
-        bush.visible = rng() < 0.8;
+        bush.position.set(s * (WALL.outer + 0.1), WALL.height + 0.22 - 0.2, z);
+        bush.visible = rng() < 0.85;
       }
     });
     SS.setScalar(0); SP.set(0, -10, 0); SQ.identity(); SM.compose(SP, SQ, SS);

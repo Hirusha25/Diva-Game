@@ -15,7 +15,7 @@ exports everything to Excel.
 | Admin | PHP session login, live polling, dependency-free `.xlsx` export |
 
 Live preview of the world (offline build, no registration):
-<https://claude.ai/artifact/3y742C6APyV6TYjLFzo4eQ>
+<https://claude.ai/artifact/1ptrUfNNBq85rRDCmYAcQ4>
 
 ## Repository layout
 
