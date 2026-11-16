@@ -8,7 +8,9 @@ import { pavingTexture, grassTexture, wallGridTexture, soilTexture } from './tex
 
 const TREES_PER_CHUNK = 40;   // 20 per side: 12 in a near row + 8 in a far row filling the gaps
 const BUSHES_FRONT_PER_CHUNK = 20;  // 10 per side, every ~6 m along the wall base
-const BUSHES_BACK_PER_CHUNK = 40;   // 20 per side (one every 3 m): flowering bushes along the top of the wall
+const BUSHES_BACK_PER_CHUNK = 0;    // no loose clumps on the wall top: the hedge strip below covers it
+const HEDGE_TILES = 6;              // hedge-strip repeats per chunk (whole number so chunks join seamlessly)
+const HEDGE_HEIGHT = 1.1;           // metres above the coping
 const BUSH_LEAF_CARDS = 70;         // leaf patches per bush (3x for the big hedge clumps)
 const BUSH_FLOWER_CARDS = 14;
 
@@ -42,9 +44,12 @@ export class World {
     }));
     // Which art goes on which wall (art drawn receding to the right suits the
     // left wall; the others are mirrored where needed so the perspective reads).
+    // Wall base: the compact clumps only (the long row art is too wide there).
+    const all = this.bushMaterials.map((k, i) => ({ kind: k, i }));
+    const base = all.filter((b) => b.kind.aspect <= 2.2);
     this.bushSets = {
-      left: this.bushMaterials.map((k, i) => ({ kind: k, i, mirror: k.side === 'right' })),
-      right: this.bushMaterials.map((k, i) => ({ kind: k, i, mirror: k.side === 'left' })),
+      left: base.map((b) => ({ ...b, mirror: b.kind.side === 'right' })),
+      right: base.map((b) => ({ ...b, mirror: b.kind.side === 'left' })),
     };
     this.busStandMaterial = new THREE.MeshBasicMaterial({ map: assets.busStand.map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false });
     this.busStandAspect = assets.busStand.aspect;
@@ -151,6 +156,8 @@ export class World {
         brown2: new THREE.MeshStandardMaterial({ color: 0xb9b3ab, roughness: 1 }),
         brown3: new THREE.MeshStandardMaterial({ color: 0xb9b3ab, roughness: 1 }),
       })[this.bedStyle],
+      hedgeFront: new THREE.MeshBasicMaterial({ map: this.assets.hedge.map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false }),
+      hedgeBack: new THREE.MeshBasicMaterial({ map: this.assets.hedge.white, color: 0xdfe8d6, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false }),
       dapple: new THREE.MeshBasicMaterial({ map: shadows, transparent: true, depthWrite: false, opacity: 0.7, polygonOffset: true, polygonOffsetFactor: -2 }),
       wallShade: new THREE.MeshBasicMaterial({ map: shadows, transparent: true, depthWrite: false, opacity: 0.3, polygonOffset: true, polygonOffsetFactor: -2 }),
     };
@@ -257,7 +264,31 @@ export class World {
       return g;
     });
 
-    return { road, laneLines, kerbWhite, kerbBlack, pavement, wall, wallCap, wallCapTop, ground, dirt, dapple, bed, bedEdge, wallShade };
+    // Hedge along the wall top: front-view art stood upright along the wall
+    // like a fence (the camera gives it its perspective). The art is stretched
+    // along the wall because the runner sees it at a shallow angle, which
+    // squeezes it back to natural proportions.
+    // Front row: the mixed strip, continuous. Back row: separate white mounds,
+    // taller, rising behind it between the tree trunks.
+    const capTop = WALL.height + CAP_T;
+    const upright = (s, x, h, z0, z1, u0, u1) => {
+      const g = new THREE.PlaneGeometry(z1 - z0, h);
+      g.rotateY(s < 0 ? Math.PI / 2 : -Math.PI / 2);
+      g.translate(s * x, capTop - 0.05 + h / 2, (z0 + z1) / 2);
+      const pos = g.attributes.position, uv = g.attributes.uv;
+      for (let i = 0; i < pos.count; i++) uv.setX(i, u0 + ((pos.getZ(i) - z0) / (z1 - z0)) * (u1 - u0));
+      return g;
+    };
+    const hedgeFront = mergeGeometries([1, -1].map((s) =>
+      upright(s, WALL.inner + 0.04, HEDGE_HEIGHT, -L / 2, L / 2, s > 0 ? 0.27 : 0, HEDGE_TILES + (s > 0 ? 0.27 : 0))));
+    const mounds = [];
+    for (const s of [1, -1]) for (let k = 0; k < 5; k++) {
+      const z0 = -L / 2 + k * 12 + (s > 0 ? 1.5 : 6.5);          // 7 m mound every 12 m, staggered left/right
+      mounds.push(upright(s, WALL.outer + 0.06, HEDGE_HEIGHT * 1.35, z0, z0 + 7, 0, 1));
+    }
+    const hedgeBack = mergeGeometries(mounds);
+
+    return { road, laneLines, kerbWhite, kerbBlack, pavement, wall, wallCap, wallCapTop, ground, dirt, dapple, bed, bedEdge, wallShade, hedgeFront, hedgeBack };
   }
 
   _buildChunk() {
@@ -283,6 +314,8 @@ export class World {
     if (m.bedEdge) add(g.bedEdge, m.bedEdge);
     add(g.dapple, m.dapple);
     add(g.wallShade, m.wallShade);
+    add(g.hedgeBack, m.hedgeBack);
+    add(g.hedgeFront, m.hedgeFront);
 
     // Dynamic dressing: one shelter per side (toggled), bushes and trees.
     chunk.userData.shelters = {
@@ -475,7 +508,7 @@ export class World {
         // Planted along the top of the wall (reference: flowering clumps
         // sitting on the coping, in front of the tree trunks). The base is
         // sunk a little into the coping slab so each clump looks rooted there.
-        const h = isRow ? 0.95 + rng() * 0.2 : 1.15 + rng() * 0.3;
+        const h = isRow ? 0.85 + rng() * 0.15 : 1.1 + rng() * 0.25;
         const w = h * kind.aspect;
         for (const pl of bush.userData.planes) { pl.position.set(0, 0, 0); }
         const flip = pick.mirror ? -1 : 1;
@@ -489,8 +522,8 @@ export class World {
         bush.userData.fixed = true;
         bush.rotation.y = 0;
         bush.userData.shadow.visible = false;
-        bush.position.set(s * (WALL.inner + 0.45), WALL.height + 0.22 - 0.18, z);
-        bush.visible = rng() < 0.7;
+        bush.position.set(s * (WALL.inner + 0.3), WALL.height + 0.22 - 0.12, z);
+        bush.visible = rng() < 0.6;
       }
     });
     SS.setScalar(0); SP.set(0, -10, 0); SQ.identity(); SM.compose(SP, SQ, SS);

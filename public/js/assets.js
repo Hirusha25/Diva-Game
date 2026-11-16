@@ -56,6 +56,7 @@ export async function loadAssets(onProgress = () => {}) {
   const cloudMeta = await loadJson('assets/textures/clouds.json');
   const bushMeta = await loadJson('assets/textures/bushes.json');
   const propMeta = await loadJson('assets/textures/props.json');
+  const hedgeMeta = await loadJson('assets/textures/hedges.json');
 
   const [asphalt, shadows, leaf, busStandMap] = await Promise.all([
     loadTex('assets/textures/asphalt.webp', { repeat: true }),
@@ -96,6 +97,10 @@ export async function loadAssets(onProgress = () => {}) {
     ['bush-3', 'assets/textures/bush-3.webp'],
     ['bush-4', 'assets/textures/bush-4.webp'],
   ];
+  const hedgeWhite = await loadTex('assets/textures/bush-5.webp');   // front-view white hedge mound
+  // Front-view hedge strip that repeats along the wall top like a fence.
+  const hedgeStrip = await loadTex('assets/textures/hedge-strip.webp');
+  hedgeStrip.wrapS = THREE.RepeatWrapping;
   const bushes = await Promise.all(bushFiles.map(async ([key, url]) => ({
     map: await loadTex(url),
     aspect: bushMeta[key].aspect,
@@ -114,6 +119,7 @@ export async function loadAssets(onProgress = () => {}) {
     clouds,
     trees,
     bushes,
+    hedge: { map: hedgeStrip, aspect: hedgeMeta.strip.aspect, white: hedgeWhite, whiteAspect: hedgeMeta['bush-5'].aspect },
     cards,
     cover: { meta: coverMeta, images: coverImages },
   };
