@@ -8,7 +8,7 @@ import { pavingTexture, grassTexture, wallGridTexture, soilTexture } from './tex
 
 const TREES_PER_CHUNK = 40;   // 20 per side: 12 in a near row + 8 in a far row filling the gaps
 const BUSHES_FRONT_PER_CHUNK = 20;  // 10 per side, every ~6 m along the wall base
-const BUSHES_BACK_PER_CHUNK = 24;   // 12 per side: flowering bushes planted along the top of the wall
+const BUSHES_BACK_PER_CHUNK = 40;   // 20 per side (one every 3 m): flowering bushes along the top of the wall
 const BUSH_LEAF_CARDS = 70;         // leaf patches per bush (3x for the big hedge clumps)
 const BUSH_FLOWER_CARDS = 14;
 
@@ -83,7 +83,7 @@ export class World {
       }
       if (cameraPos) {
         for (const tree of chunk.userData.billboards) {
-          if (!tree.visible) continue;
+          if (!tree.visible || tree.userData.fixed) continue;
           const dz = cameraPos.z - (chunk.position.z + tree.position.z);
           const dx = cameraPos.x - tree.position.x;
           let yaw = Math.atan2(dx, dz);                 // cylindrical billboard
@@ -442,7 +442,7 @@ export class World {
         const slot = Math.floor(i / 2);
         const z = -CHUNK_LENGTH / 2 + (slot + 0.25 + rng() * 0.5) * (CHUNK_LENGTH / perSide);
         const blocked = s === shelterSide && Math.abs(z - shelterZ) < 7.5;
-        const h = 1.05 + rng() * 0.25;
+        const h = 0.9 + rng() * 0.3;
         const w = h * kind.aspect;
         // Pivot at the clump's centre; 'along' lies parallel to the wall, 'across'
         // One full-face copy of the image, centred on the group origin, turned
@@ -455,9 +455,13 @@ export class World {
           pl.scale.set(w * flip, h, 1);
           pl.position.set(flip < 0 ? w / 2 : -w / 2, 0, 0);
         });
-        bush.userData.billboard = true;
-        bush.userData.clamp = { centre: s < 0 ? Math.PI / 2 : -Math.PI / 2, min: -0.56, max: 0.56 };
-        const cx = s * (WALL.inner - 0.5 * w - 0.08);
+        // Face straight down the road toward the runner (not sideways toward
+        // the road), so the whole picture is seen instead of a thin sliver.
+        // Centred on the soil bed; whatever reaches past the wall face is
+        // simply hidden by the wall.
+        bush.userData.fixed = true;
+        bush.rotation.y = 0;
+        const cx = s * (WALL.inner - 0.375);
         bush.position.set(cx, PAVEMENT.height + 0.03, z);
         SP.set(cx, PAVEMENT.height + 0.035, z); SQ.identity(); SS.set(w * 0.75, 1, w * 0.5); SM.compose(SP, SQ, SS);
         chunk.userData.bushShadows.setMatrixAt(shadowIdx++, SM);
@@ -466,11 +470,11 @@ export class World {
       } else {
         const j = i - BUSHES_FRONT_PER_CHUNK;
         const slot = Math.floor(j / 2);
-        const z = -CHUNK_LENGTH / 2 + (slot + 0.2 + rng() * 0.6) * (CHUNK_LENGTH / backPerSide);
+        const z = -CHUNK_LENGTH / 2 + (slot + 0.3 + rng() * 0.4) * (CHUNK_LENGTH / backPerSide);
         // Planted along the top of the wall (reference: flowering clumps
         // sitting on the coping, in front of the tree trunks). The base is
         // sunk a little into the coping slab so each clump looks rooted there.
-        const h = isRow ? 1.05 + rng() * 0.2 : 1.45 + rng() * 0.35;
+        const h = isRow ? 0.95 + rng() * 0.2 : 1.15 + rng() * 0.3;
         const w = h * kind.aspect;
         for (const pl of bush.userData.planes) { pl.position.set(0, 0, 0); }
         const flip = pick.mirror ? -1 : 1;
@@ -479,11 +483,13 @@ export class World {
           pl.scale.set(w * flip, h, 1);
           pl.position.set(flip < 0 ? w / 2 : -w / 2, 0, 0);
         });
-        bush.userData.billboard = true;
-        bush.userData.clamp = { centre: s < 0 ? Math.PI / 2 : -Math.PI / 2, min: -0.25, max: 0.25 };
+        // Same facing as the base row: straight toward the runner, spilling
+        // a little over the coping.
+        bush.userData.fixed = true;
+        bush.rotation.y = 0;
         bush.userData.shadow.visible = false;
-        bush.position.set(s * (WALL.outer + 0.1), WALL.height + 0.22 - 0.2, z);
-        bush.visible = rng() < 0.85;
+        bush.position.set(s * (WALL.inner + 0.45), WALL.height + 0.22 - 0.18, z);
+        bush.visible = rng() < 0.7;
       }
     });
     SS.setScalar(0); SP.set(0, -10, 0); SQ.identity(); SM.compose(SP, SQ, SS);
