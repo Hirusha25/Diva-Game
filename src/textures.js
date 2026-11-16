@@ -1,7 +1,7 @@
 // Procedural textures for the flat surfaces (road, kerb, pavement, wall).
 // Everything that is a "thing" (trees, bushes, bus stops, clouds) is artwork
 // from assets/sprites instead.
-import * as THREE from 'three';
+import * as THREE from '../vendor/three.module.min.js';
 
 function rng(seed) {
   return () => {

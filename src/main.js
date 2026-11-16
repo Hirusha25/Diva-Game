@@ -6,7 +6,7 @@
 // (x = distance from the road centre, y = height of its base, z = distance
 // ahead). The camera's perspective then does the layout work: things further
 // away get smaller and move toward the vanishing point on their own.
-import * as THREE from 'three';
+import * as THREE from '../vendor/three.module.min.js';
 import * as T from './textures.js';
 
 // ---- layout, in metres (x measured from the centre of the road) ----------
