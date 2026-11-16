@@ -225,7 +225,7 @@ try {
   hud.setProgress(1, 'Ready');
   showLobby();
   window.__gameReady = true;       // hook for automated screenshots
-  window.__game = { state, startRun, endRun, player, world, showLobby, showRegister, api };
+  window.__game = { state, startRun, endRun, player, world, camera, showLobby, showRegister, api };
 } catch (err) {
   hud.setProgress(1, 'Failed to load: ' + err.message);
   console.error(err);

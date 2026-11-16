@@ -179,7 +179,7 @@ const kb = async (f) => ((await stat(f)).size / 1024).toFixed(0) + ' KB';
   // Crop the art's own pavement slab + kerb off the bottom (keep the post feet)
   // so the stand sits on the game's pavement instead of floating on its own.
   const trimmed = await sharp(src).trim().toBuffer({ resolveWithObject: true });
-  const keepH = Math.round(trimmed.info.height * 0.87);
+  const keepH = Math.round(trimmed.info.height * (Number(process.env.BUS_KEEP) || 1));   // 1 = keep the art's own platform
   await sharp(trimmed.data).extract({ left: 0, top: 0, width: trimmed.info.width, height: keepH })
     .resize({ width: 768 }).webp({ quality: 86, alphaQuality: 92 }).toFile(out);
   const final = await sharp(out).metadata();

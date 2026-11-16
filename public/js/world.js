@@ -331,11 +331,18 @@ export class World {
     // Illustrated bus stand on the pavement. It is NOT camera-facing: the art
     // is a 3/4 view, so it stays angled toward the road like a real stand.
     // Never mirrored (the Diva lettering would read backwards).
+    // The picture is wider than the footpath, so it is angled: the end
+    // nearest the player touches the wall, the far end reaches the kerb, and
+    // the face turns toward the road. Nothing of it is ever inside the wall.
     const shelter = this._makeBillboard(this.busStandMaterial);
     const h = 3.6;
-    shelter.scale.set(h * this.busStandAspect, h, 1);
-    shelter.rotation.y = side < 0 ? 0.45 : -0.45;
-    shelter.position.set(side * ((PAVEMENT.inner + PAVEMENT.outer) / 2 + 0.3), PAVEMENT.height, 0);
+    const w = h * this.busStandAspect;
+    const span = (PAVEMENT.outer - PAVEMENT.inner) - 0.15;          // usable footpath width
+    const theta = Math.acos(Math.min(1, span / w));
+    shelter.scale.set(w, h, 1);
+    shelter.rotation.y = side < 0 ? theta : -theta;
+    const cx = side * (WALL.inner - 0.05 - (w / 2) * Math.cos(theta));
+    shelter.position.set(cx, PAVEMENT.height, 0);
     return shelter;
   }
 
@@ -369,14 +376,15 @@ export class World {
   /** Randomise a chunk's shelter side and tree placement. */
   _dressChunk(chunk, serial) {
     const { shelters, trees } = chunk.userData;
-    const side = serial % 2 === 0 ? 'left' : 'right';
-    shelters.left.visible = side === 'left';
-    shelters.right.visible = side === 'right';
+    // Bus stop on the LEFT side only, every other block (~120 m apart).
+    const side = 'left';
+    shelters.left.visible = serial % 2 === 0;
+    shelters.right.visible = false;
     shelters[side].position.z = (Math.random() - 0.5) * (CHUNK_LENGTH - 16);
 
     const rng = mulberry32(serial * 7919 + 17);
     const shelterZ = shelters[side].position.z;
-    const shelterSide = side === 'left' ? -1 : 1;
+    const shelterSide = shelters.left.visible ? -1 : 0;   // 0 = no stop in this block
 
     // Trees: a dense row just behind the wall on both sides, alternating left/right.
     // Continuous tree line: a near row (canopies overlapping) plus a far row
