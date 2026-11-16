@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a4fb5">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Diva Fresh Run</title>
+  <link rel="stylesheet" href="css/game.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three/build/three.module.js",
+        "three/addons/": "./vendor/three/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <!-- Heads-up display -->
+  <div id="hud" class="hud hidden">
+    <div class="hud-top">
+      <div class="pill"><span class="label">Score</span><span id="hud-score">0</span></div>
+      <div class="pill"><span class="label">Distance</span><span id="hud-distance">0 m</span></div>
+      <div class="pill lives" id="hud-lives"></div>
+    </div>
+    <div id="hud-toast" class="toast"></div>
+  </div>
+
+  <!-- Loading -->
+  <div id="screen-loading" class="screen">
+    <div class="card">
+      <img class="load-logo" src="assets/ui/logo.webp" alt="Diva Fresh Run">
+      <div class="bar"><div id="load-bar"></div></div>
+      <p id="load-text">Loading world…</p>
+    </div>
+  </div>
+
+  <!-- Cover (lobby): the poster rebuilt from its layers, pinned to the same
+       positions on every screen size. Each layer is tappable. -->
+  <div id="screen-cover" class="screen cover hidden">
+    <div class="stage" id="stage">
+      <img class="layer" data-layer="glow" alt="" draggable="false">
+      <a class="layer tap" data-layer="hcb" id="btn-hcb" href="https://www.hemas.com" target="_blank" rel="noopener" aria-label="Hemas Consumer Brands"></a>
+      <button class="layer tap" data-layer="logo" id="btn-logo" aria-label="Diva Fresh Run"></button>
+      <button class="layer tap" data-layer="tagline" id="btn-tagline" aria-label="Tagline"></button>
+      <img class="layer" data-layer="heroes" id="heroes" alt="" draggable="false">
+      <img class="layer" data-layer="ribbon" alt="" draggable="false">
+      <button class="layer tap start" data-layer="start" id="btn-start" aria-label="Start"></button>
+    </div>
+    <p class="hint cover-greeting" id="lobby-greeting"></p>
+    <button type="button" id="btn-signout" class="link cover-signout hidden">Not you? Change player</button>
+  </div>
+
+  <!-- Register (sheet over the cover) -->
+  <div id="screen-register" class="screen sheet hidden">
+    <form class="card form" id="form-register" novalidate>
+      <h2 class="subtitle">Enter your details to play and win</h2>
+      <label class="field"><span>Your name</span><input id="reg-name" name="name" type="text" maxlength="40" autocomplete="name" required></label>
+      <label class="field"><span>Mobile number</span><input id="reg-phone" name="phone" type="tel" inputmode="numeric" placeholder="07X XXX XXXX" autocomplete="tel" required></label>
+      <p class="error" id="reg-error"></p>
+      <button type="submit" id="btn-register" class="btn btn-start">SEND CODE</button>
+      <div class="row"><button type="button" id="btn-back-cover" class="link">Back</button></div>
+    </form>
+  </div>
+
+  <!-- OTP (sheet) -->
+  <div id="screen-otp" class="screen sheet hidden">
+    <form class="card form" id="form-otp" novalidate>
+      <h2 class="subtitle">Enter the code</h2>
+      <p class="hint">We sent an SMS to <strong id="otp-phone"></strong></p>
+      <label class="field"><span>4-digit code</span><input id="otp-code" name="code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" required></label>
+      <p class="error" id="otp-error"></p>
+      <button type="submit" id="btn-verify" class="btn btn-start">VERIFY</button>
+      <div class="row">
+        <button type="button" id="btn-resend" class="link">Resend code</button>
+        <button type="button" id="btn-change" class="link">Change number</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Game over -->
+  <div id="screen-over" class="screen hidden">
+    <div class="card">
+      <h2 class="subtitle">Run over!</h2>
+      <div class="final"><span class="label">Score</span><span id="final-score">0</span></div>
+      <div class="final"><span class="label">Distance</span><span id="final-distance">0 m</span></div>
+      <div class="final"><span class="label">Your best</span><span id="final-best">0</span></div>
+      <p class="hint" id="final-rank"></p>
+      <ol class="board" id="board"></ol>
+      <button id="btn-retry" class="btn btn-start">RUN AGAIN</button>
+      <div class="row"><button type="button" id="btn-home" class="link">Home</button></div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

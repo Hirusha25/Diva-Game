@@ -1,0 +1,2 @@
+# Apache: nothing to do, PHP files run directly. Deny listing.
+Options -Indexes
