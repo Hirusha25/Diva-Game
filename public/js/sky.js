@@ -44,6 +44,10 @@ export function createSky() {
  * near clouds move faster than far ones (motion parallax). Clouds that pass
  * behind the camera respawn far ahead.
  */
+// Clouds never come closer than this (metres ahead). Any nearer and a cloud
+// tens of metres wide fills the phone screen as it rolls overhead.
+const NEAREST = -260;
+
 export class CloudField {
   constructor(clouds, count = 18) {
     this.group = new THREE.Group();
@@ -57,7 +61,7 @@ export class CloudField {
       const mat = new THREE.SpriteMaterial({ map: c.map, transparent: true, depthWrite: false, fog: false, toneMapped: false });
       const sprite = new THREE.Sprite(mat);
       const item = { sprite, aspect: c.aspect, phase: Math.random() * Math.PI * 2 };
-      this._spawn(item, -120 - (i / count) * 440);       // stagger along the depth
+      this._spawn(item, NEAREST - 10 - (i / count) * 320);  // stagger along the depth
       this.group.add(sprite);
       this.items.push(item);
     }
@@ -75,9 +79,9 @@ export class CloudField {
     const high = Math.random() < 0.35;
     item.x = high ? (Math.random() - 0.5) * 90 : side * (25 + Math.random() * 80) * (0.7 + depth * 0.5);
     item.baseY = 32 + Math.random() * 75 + depth * 25;
-    item.width = 40 + Math.random() * 55;
+    item.width = (30 + Math.random() * 30) * (item.aspect < 2 ? 0.6 : 1);   // the tall puff art is drawn narrower
     item.wind = (0.8 + Math.random() * 1.4) * side;      // drifts outward
-    item.parallax = 0.18 + (1 - depth) * 0.22;           // near clouds scroll faster
+    item.parallax = 0.05 + (1 - depth) * 0.07;           // slow drift toward the player; nearer ones a little faster
     item.sprite.scale.set(item.width, item.width / item.aspect, 1);
   }
 
@@ -87,7 +91,7 @@ export class CloudField {
     for (const it of this.items) {
       it.z += step * it.parallax;
       it.x += it.wind * dt;
-      if (it.z > 40) this._spawn(it, -520 - Math.random() * 60);
+      if (it.z > NEAREST) this._spawn(it, -560 - Math.random() * 60);
       const depth = THREE.MathUtils.clamp((-it.z) / 500, 0, 1);
       const y = it.baseY + Math.sin(this.time * 0.35 + it.phase) * 1.8;
       it.sprite.position.set(it.x, y, it.z);
