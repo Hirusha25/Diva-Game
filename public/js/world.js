@@ -442,7 +442,8 @@ export class World {
         const slot = Math.floor(i / 2);
         const z = -CHUNK_LENGTH / 2 + (slot + 0.25 + rng() * 0.5) * (CHUNK_LENGTH / perSide);
         const blocked = s === shelterSide && Math.abs(z - shelterZ) < 7.5;
-        const h = 0.9 + rng() * 0.3;
+        // Keep each clump at most 1.3 m wide so it fits between wall and footpath.
+        const h = Math.min(0.9 + rng() * 0.3, 1.3 / kind.aspect);
         const w = h * kind.aspect;
         // Pivot at the clump's centre; 'along' lies parallel to the wall, 'across'
         // One full-face copy of the image, centred on the group origin, turned
@@ -457,11 +458,11 @@ export class World {
         });
         // Face straight down the road toward the runner (not sideways toward
         // the road), so the whole picture is seen instead of a thin sliver.
-        // Centred on the soil bed; whatever reaches past the wall face is
-        // simply hidden by the wall.
+        // The whole picture stands in front of the wall face: its wall-side
+        // edge just touches the wall, so no part is cut off by it.
         bush.userData.fixed = true;
         bush.rotation.y = 0;
-        const cx = s * (WALL.inner - 0.375);
+        const cx = s * (WALL.inner - 0.5 * w - 0.03);
         bush.position.set(cx, PAVEMENT.height + 0.03, z);
         SP.set(cx, PAVEMENT.height + 0.035, z); SQ.identity(); SS.set(w * 0.75, 1, w * 0.5); SM.compose(SP, SQ, SS);
         chunk.userData.bushShadows.setMatrixAt(shadowIdx++, SM);
