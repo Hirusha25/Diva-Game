@@ -86,6 +86,9 @@ export class Player {
       'upperarm_L', 'forearm_L', 'hand_L', 'thigh_L', 'shin_L', 'foot_L',
       'upperarm_R', 'forearm_R', 'hand_R', 'thigh_R', 'shin_R', 'foot_R']) this.bones[n] = b(n);
     this.hipsRestY = this.bones.hips.position.y;
+    // pelvis: tilt, roll, then yaw; thighs: undo yaw, undo roll, then swing
+    this.bones.hips.rotation.order = 'XZY';
+    this.bones.thigh_L.rotation.order = 'YZX'; this.bones.thigh_R.rotation.order = 'YZX';
     // heel and toe of each foot, in the foot bone's space (model units)
     const pts = () => [new THREE.Vector3(0, -0.12, -0.05), new THREE.Vector3(0, -0.12, 0.2)];
     this.footPts = [[this.bones.foot_L, pts()], [this.bones.foot_R, pts()]];
@@ -169,14 +172,17 @@ export class Player {
 
     // pelvis twists with the legs; shoulders counter-twist (very visible from behind)
     B.hips.position.y = this.hipsRestY;
-    B.hips.rotation.set(tilt, 0.2 * s * run, roll);
+    const yaw = 0.08 * s * run;
+    B.hips.rotation.set(tilt, yaw, roll);
     B.spine.rotation.set(0.14 * run + 0.1 * air - 0.25 * hit, -0.12 * s * run, -0.03 * c * run);
     B.chest.rotation.set(0.1 * run, -0.2 * s * run, -0.03 * c * run);
     B.neck.rotation.set(-0.12 * run, 0.12 * s * run, 0);
     B.head.rotation.set(-0.16 * run + 0.2 * hit, 0.1 * s * run, 0.03 * c * run);
 
-    B.thigh_L.rotation.set(run * tL + air * -1.0, 0, 0.04);
-    B.thigh_R.rotation.set(run * tR + air * -0.55, 0, -0.04);
+    // thighs undo the pelvis yaw and roll, so each leg swings straight
+    // forward and back (no sideways swing of the feet)
+    B.thigh_L.rotation.set(run * tL + air * -1.0, -yaw, -roll);
+    B.thigh_R.rotation.set(run * tR + air * -0.55, -yaw, -roll);
     B.shin_L.rotation.set(run * kL + air * 1.5, 0, 0);
     B.shin_R.rotation.set(run * kR + air * 0.9, 0, 0);
     B.foot_L.rotation.set(run * fL + air * 0.3, 0, 0);
