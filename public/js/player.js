@@ -146,6 +146,17 @@ export class Player {
     this.mud.burst(new THREE.Vector3(0, RUNNER_SCALE * 0.9, 0.3), 16, 0x5a3212, 2.4, 0.5);   // mud splashes up onto him
   }
 
+  /** ran through bus smoke: some dust settles on the shirt */
+  dust(amount = 0.4) {
+    this.dirt = Math.min(1, this.dirt + amount); this.shine = 0;
+    this.dust3 = this.dust3 || new Sparkles(this.group, 18, true);
+    this.dust3.keepColor = true; for (const it of this.dust3.items) it.s.material.color.set(0x8a7d6c);
+    this.dust3.burst(new THREE.Vector3(0, RUNNER_SCALE * 1.2, 0.3), 14, 0x8a7d6c, 1.4, 0.6);
+  }
+
+  /** 0 = muddy … 1 = spotless, as shown on screen (for the shirt meter) */
+  get cleanliness() { return 1 - this.dirtShown; }
+
   _updateShirt(dt) {
     this.dirtShown += (this.dirt - this.dirtShown) * Math.min(1, dt * (this.dirt > this.dirtShown ? 14 : 5));
     this.shine = Math.max(0, this.shine - dt * 2.2);
@@ -155,7 +166,7 @@ export class Player {
     this.aura.material.opacity += (auraT + this.shine * 0.45 - this.aura.material.opacity) * Math.min(1, dt * 8);
     if (spotless) { this.twinkleT -= dt; if (this.twinkleT <= 0) { this.twinkleT = 0.18 + Math.random() * 0.25;
       this.sparkles.twinkle(new THREE.Vector3((Math.random() - 0.5) * RUNNER_SCALE * 0.6, RUNNER_SCALE * (0.95 + Math.random() * 0.55), 0.25), 0.32 + Math.random() * 0.2); } }
-    this.sparkles.update(dt); this.mud.update(dt);
+    this.sparkles.update(dt); this.mud.update(dt); if (this.dust3) this.dust3.update(dt);
     this.shirtU.uDirt.value = this.dirtShown;
     this.shirtU.uShine.value = this.shine * 0.55 + (spotless ? 0.08 : 0);
   }

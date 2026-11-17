@@ -644,6 +644,7 @@ export class World {
   /** Randomise a chunk's shelter side and tree placement. */
   _dressChunk(chunk, serial) {
     const { shelters, trees } = chunk.userData;
+    chunk.userData.busDone = false;   // a bus parks at this block's right-side stop (spawner.js)
     // One bus stop per block, alternating left / right (~60 m apart).
     const side = serial % 2 === 0 ? 'left' : 'right';
     shelters.left.visible = side === 'left';

@@ -7,7 +7,7 @@ export class Hud {
     this.distance = this.$('hud-distance');
     this.lives = this.$('hud-lives');
     this.toast = this.$('hud-toast');
-    this.screens = { loading: this.$('screen-loading'), cover: this.$('screen-cover'), consent: this.$('screen-consent'), otp: this.$('screen-otp'), over: this.$('screen-over') };
+    this.screens = { loading: this.$('screen-loading'), cover: this.$('screen-cover'), consent: this.$('screen-consent'), otp: this.$('screen-otp'), over: this.$('screen-over'), pause: this.$('screen-pause') };
     this.loadBar = this.$('load-bar');
     this.loadText = this.$('load-text');
     this._toastTimer = 0;
@@ -49,8 +49,12 @@ export class Hud {
     }
   }
 
-  update({ score, distance, lives }) {
+  update({ score, distance, lives, packs = 0, clean = 0 }) {
     this.score.textContent = Math.floor(score);
+    const pk = this.$('hud-packs');
+    if (pk.textContent !== String(packs)) { pk.textContent = packs; const pill = pk.parentElement; pill.classList.remove('bump'); void pill.offsetWidth; pill.classList.add('bump'); }
+    this.$('sm-fill').style.height = `${Math.round(clean * 100)}%`;
+    this.$('shirt-meter').classList.toggle('full', clean > 0.97);
     this.distance.textContent = `${Math.floor(distance)} m`;
     if (this.lives.childElementCount !== lives) {
       this.lives.textContent = '';

@@ -285,3 +285,34 @@ img.layer { width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
    the same top line as the back button / player card (in the run it stays
    lower, clear of the score pills) */
 body:has(#screen-cover:not(.hidden)) .sound-btn, body:has(#screen-loading:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px) + 10px); }
+
+/* ---------- HUD: Diva pack counter, shirt meter, pause ---------- */
+.hud-top .pill { align-items: center; }
+.pill.packs { gap: 6px; padding: 3px 14px 3px 5px; font: 400 21px/1 "Lilita One", "Trebuchet MS", sans-serif; }
+.pill.packs img { width: 32px; height: 32px; display: block; }
+.pill.packs.bump { animation: pk-bump .3s ease-out; }
+@keyframes pk-bump { 40% { transform: scale(1.18); } }
+.pause-btn { pointer-events: auto; position: relative; flex: none; width: 46px; height: 46px; padding: 0; border-radius: 14px; cursor: pointer;
+  border: 3px solid #ffe08a; background: linear-gradient(#ffb21e, #ff7a00); box-shadow: 0 3px 0 #b44a00, 0 4px 10px rgba(0,0,0,.25); }
+.pause-btn span { position: absolute; top: 11px; bottom: 11px; width: 7px; border-radius: 3px; background: #fff; box-shadow: 0 0 0 2px #e3262e inset; }
+.pause-btn span:first-child { left: 13px; } .pause-btn span:last-child { right: 13px; }
+.pause-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #b44a00; }
+.hud .sound-btn { display: none; }
+/* the sound button sits under the pause button during a run */
+body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px) + 66px); }
+.shirt-meter { position: absolute; left: calc(10px + env(safe-area-inset-left, 0px)); top: calc(env(safe-area-inset-top, 0px) + 70px);
+  width: 46px; display: flex; flex-direction: column; align-items: center; }
+.sm-icon { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; border: 3px solid #fff; box-shadow: 0 3px 8px rgba(0,0,0,.3); z-index: 1; }
+.sm-icon svg { width: 32px; height: 32px; }
+.sm-clean { background: radial-gradient(circle at 40% 35%, #7fd3ff, #1677e8); box-shadow: 0 0 12px rgba(80,190,255,.9), 0 3px 8px rgba(0,0,0,.3); }
+.sm-dirty { background: radial-gradient(circle at 40% 35%, #8a5a3a, #4b2a17); }
+.sm-tube { position: relative; width: 20px; height: 150px; margin: -6px 0; border-radius: 10px; border: 3px solid #fff; overflow: hidden;
+  background: linear-gradient(rgba(255,255,255,.62), rgba(255,255,255,.62)), linear-gradient(to top, #e3262e, #ff8a1e 27%, #ffd400 50%, #47d16b 73%, #2fb4ff); box-shadow: 0 2px 8px rgba(0,0,0,.25), inset 0 0 0 2px rgba(10,79,181,.35); }
+.sm-fill { position: absolute; left: 0; right: 0; bottom: 0; height: 0%;
+  background: linear-gradient(to top, #e3262e 0px, #ff8a1e 40px, #ffd400 75px, #47d16b 110px, #2fb4ff 150px); background-size: 100% 150px; background-position: bottom;
+  transition: height .25s ease-out; }
+.sm-tube i { position: absolute; left: 0; right: 0; height: 2px; background: rgba(255,255,255,.75); }
+.sm-tube i:nth-of-type(1) { top: 20%; } .sm-tube i:nth-of-type(2) { top: 40%; } .sm-tube i:nth-of-type(3) { top: 60%; } .sm-tube i:nth-of-type(4) { top: 80%; }
+.shirt-meter.full .sm-clean { animation: sm-glow 1s ease-in-out infinite alternate; }
+@keyframes sm-glow { to { box-shadow: 0 0 22px rgba(160,230,255,1), 0 3px 8px rgba(0,0,0,.3); transform: scale(1.08); } }
+.screen.pause { align-items: center; background: rgba(5, 30, 80, .55); }

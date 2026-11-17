@@ -71,6 +71,9 @@ const state = {
   score: 0,
   lives: LIVES,
   invulnerable: 0,
+  packs: 0,
+  clean: 0,
+  paused: false,
   runStart: 0,
 };
 let world, player, spawner, cloudField;
@@ -108,6 +111,17 @@ function showPlayerCard(open) {
 }
 $('pc-avatar').addEventListener('click', (e) => { e.stopPropagation(); sound.tap(); showPlayerCard($('player-card').classList.contains('hidden')); });
 document.addEventListener('pointerdown', (e) => { if (!e.target.closest('#player-card, #pc-avatar')) showPlayerCard(false); });
+
+// pause during a run
+function setPaused(p) {
+  if (state.mode !== 'running') return;
+  state.paused = p; hud.screens.pause.classList.toggle('hidden', !p);
+  if (p) sound.stopMusic(); else { sound.startMusic(); clock.getDelta(); }
+}
+$('btn-pause').addEventListener('click', () => { sound.tap(); setPaused(true); });
+$('btn-resume').addEventListener('click', () => { sound.tap(); setPaused(false); });
+$('btn-pause-home').addEventListener('click', () => { sound.tap(); state.paused = false; hud.screens.pause.classList.add('hidden'); sound.stopMusic(); showLobby(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden && state.mode === 'running') setPaused(true); });
 
 function pop(el) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
 $('btn-logo').addEventListener('click', () => { pop($('btn-logo')); sound.tap(); });
@@ -234,6 +248,7 @@ function startRun() {
   state.distance = 0;
   state.score = 0;
   state.lives = LIVES;
+  state.packs = 0; state.paused = false;
   state.invulnerable = 0;
   state.runStart = performance.now();
   player.reset();
@@ -270,7 +285,7 @@ try {
   scene.add(cloudField.group);
   world = new World(scene, assets);
   player = new Player(scene, assets.runner, assets.runnerClean);
-  spawner = new Spawner(scene, assets.packs, assets.stains);
+  spawner = new Spawner(scene, assets.packs, assets.stains, assets.roadProps, world);
   hud.layoutCover(assets.cover.meta, assets.cover.images);
   hud.setProgress(0.95, REQUIRE_REGISTRATION ? 'Signing in…' : 'Ready');
   me = REQUIRE_REGISTRATION ? await api.me() : null;
@@ -293,6 +308,7 @@ function frame() {
   const dt = Math.min(clock.getDelta(), 0.05);
   if (!world) return;
   if (state.mode === 'lobby' || state.mode === 'register' || state.mode === 'otp') return;   // static poster: no 3D work, saves battery
+  if (state.paused) return;
 
   if (state.mode === 'running') {
     state.speed = Math.min(SPEED.max, state.speed + SPEED.ramp * dt);
@@ -310,19 +326,22 @@ function frame() {
     state.distance += step;
     state.score += step * SCORE_PER_METRE;
     const ev = spawner.update(dt, step, player);
-    if (ev.pickups) { state.score += ev.pickups * SCORE_PICKUP; hud.flash(`+${ev.pickups * SCORE_PICKUP}`); sound.pickup(); player.clean(0.25 * ev.pickups); }
+    if (ev.pickups) { state.score += ev.pickups * SCORE_PICKUP; hud.flash(`+${ev.pickups * SCORE_PICKUP}`); sound.pickup(); player.clean(0.25 * ev.pickups); state.packs += ev.pickups; }
+    if (ev.dust) { player.dust(0.4); hud.flash('Dusty!', 600); sound.lane(1); }
     sound.setIntensity((state.speed - SPEED.start) / (SPEED.max - SPEED.start));
     if (state.invulnerable > 0) state.invulnerable -= dt;
-    else if (ev.hits) {
+    else if (ev.hits || ev.bus) {
+      if (ev.bus) { player.lane = 1; }   // bounced off the bus back into the middle lane
       state.lives -= 1;
       state.invulnerable = INVULNERABLE_TIME;
       sound.hit();
       player.flinch();
       player.stain();
-      hud.flash('Stained!', 600);
+      hud.flash(ev.bus ? 'Bus!' : 'Stained!', 600);
       if (state.lives <= 0) endRun();
     }
     player.body.visible = state.invulnerable <= 0 || Math.floor(state.invulnerable * 10) % 2 === 0;
+    state.clean = player.cleanliness;
     hud.update(state);
   }
 

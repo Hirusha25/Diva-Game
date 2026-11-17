@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { LANE_WIDTH, LANE_COUNT } from './config.js';
 import { glowTexture, starTexture, additive, Sparkles } from './fx.js';
+import { buildBus, updateBus, BUS } from './bus.js';
 
 const SPAWN_Z = -140;
 const DESPAWN_Z = 12;
@@ -15,7 +16,8 @@ const DESPAWN_Z = 12;
 const PACK_H = 1.25, PACK_Y = 1.45;
 const PACK_GLOW = { 'pack-rose': 0xff3fa4, 'pack-gardenia': 0x3fd6f0, 'pack-lotus': 0xb35cf0, 'pack-sepalika': 0xff7a2a, 'pack-jasmine': 0x55e06a };
 export class Spawner {
-  constructor(scene, packs = [], stains = []) {
+  constructor(scene, packs = [], stains = [], props = {}, world = null) {
+    this.world = world; this.props = props; this.buses = [];
     this.group = new THREE.Group();
     scene.add(this.group);
     this.items = [];
@@ -52,6 +54,9 @@ export class Spawner {
   }
 
   reset() {
+    for (const b of this.buses) this.group.remove(b.mesh);
+    this.buses = [];
+    if (this.world) for (const c of this.world.chunks) c.userData.busDone = true;   // stops already in view keep no bus
     for (const it of this.items) this.group.remove(it.mesh);
     for (const sp of this.sparkles.items) sp.s.visible = false;
     this.items = [];
@@ -78,7 +83,24 @@ export class Spawner {
     }
   }
 
+  /** in a bus zone (from just behind the rear to its front): no stains, and nothing in the bus's lane */
+  _spawnBus(z) {
+    const mesh = buildBus(this.props.bus, this.props.smoke);
+    mesh.position.z = z;
+    this.group.add(mesh);
+    this.buses.push({ mesh, hit: false, dusted: false });
+    // clear what was already spawned in its zone
+    this.items = this.items.filter((it) => { if (this._blockedByBus(it.kind, it.lane, it.mesh.position.z)) { this.group.remove(it.mesh); return false; } return true; });
+  }
+
+  _blockedByBus(kind, lane, z) {
+    for (const b of this.buses) { const rear = b.mesh.position.z;
+      if (z < rear + 6 && z > rear - BUS.length - 4 && (kind === 'stain' || lane === 2)) return true; }
+    return false;
+  }
+
   _spawn(kind, lane, z) {
+    if (this._blockedByBus(kind, lane, z)) return;
     let mesh;
     if (kind === 'pack') {
       const k = this.kinds[Math.floor(Math.random() * this.kinds.length)];
@@ -117,7 +139,22 @@ export class Spawner {
       this._spawnPattern();
       this.nextSpawnIn = 16 + Math.random() * 14;
     }
-    const events = { pickups: 0, hits: 0 };
+    const events = { pickups: 0, hits: 0, dust: 0, bus: 0 };
+    // a bus parks at each bus stop on the right as it comes into range
+    if (this.world && this.props.bus) for (const c of this.world.chunks) {
+      const sh = c.userData.shelters; if (!sh || !sh.right.visible || c.userData.busDone) continue;
+      const z = c.position.z + sh.right.position.z;
+      if (z < -95 && z > -170) { c.userData.busDone = true; this._spawnBus(z + 2.8); }
+    }
+    for (const b of this.buses) {
+      b.mesh.position.z += distance; updateBus(b.mesh, dt);
+      const rear = b.mesh.position.z;
+      // running into the bus (its lane, along its length)
+      if (!b.hit && player.x > BUS.laneX - BUS.rearW / 2 - 0.35 && rear > -0.3 && rear - BUS.length < 0.3) { b.hit = true; events.bus++; }
+      // through the smoke over the middle lane, just behind the rear
+      if (!b.dusted && !player.isAirborne && Math.abs(player.x) < 1.6 && rear > -2.5 && rear < 3.5) { b.dusted = true; events.dust++; }
+    }
+    this.buses = this.buses.filter((b) => { if (b.mesh.position.z - BUS.length > DESPAWN_Z) { this.group.remove(b.mesh); return false; } return true; });
     for (const it of this.items) {
       it.mesh.position.z += distance;
       if (it.kind === 'pack') {

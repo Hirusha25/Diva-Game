@@ -53,6 +53,7 @@ export async function loadAssets(onProgress = () => {}) {
     'pack-lotus': 'assets/textures/packs/pack-lotus.webp', 'pack-rose': 'assets/textures/packs/pack-rose.webp', 'pack-sepalika': 'assets/textures/packs/pack-sepalika.webp' };
   const packs = await Promise.all(Object.entries(packUrls).map(async ([name, url]) => ({ name, map: await loadTex(url), aspect: packMeta[name].aspect })));
   const runnerClean = await loadTex('assets/textures/runner-clean.webp');
+  const [busMap, smokeMap] = await Promise.all([loadTex('assets/textures/props2/bus.webp'), loadTex('assets/textures/props2/smoke.webp')]);
   const stainMeta = await loadJson('assets/textures/stains/stains.json');
   const stainUrls = { 'mud-1': ['assets/textures/stains/mud-1.webp', 2.4, 3.2], 'mud-2': ['assets/textures/stains/mud-2.webp', 2.3, 3.0], 'sand-1': ['assets/textures/stains/sand-1.webp', 2.3, 2.9] };   // width and length on the road, metres
   const stains = await Promise.all(Object.entries(stainUrls).map(async ([name, [url, width, length]]) => ({ name, width, length, map: await loadTex(url), aspect: stainMeta[name].aspect })));
@@ -160,6 +161,7 @@ export async function loadAssets(onProgress = () => {}) {
     busStopArt: { poster: bsPoster, sign: bsSign, roof: bsRoof },
     packs,
     stains,
+    roadProps: { bus: busMap, smoke: smokeMap },
     runnerClean,
     bushLong,
     bushLongs,
