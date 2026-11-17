@@ -48,7 +48,8 @@ export async function loadAssets(onProgress = () => {}) {
 
   const runnerGltf = await loadGltf('assets/models/runner.glb');
   // sharp artwork pasted onto the bus stop's panels (scripts/build-busstop-art.mjs)
-  const [bsPoster, bsSign, bsRoof] = await Promise.all(['poster', 'sign', 'roof'].map((k) => loadTex(`assets/textures/busstop/${k}.webp`)));
+  // (full literal paths: the single-file build inlines textures by path)
+  const [bsPoster, bsSign, bsRoof] = await Promise.all(['assets/textures/busstop/poster.webp', 'assets/textures/busstop/sign.webp', 'assets/textures/busstop/roof.webp'].map((u) => loadTex(u)));
   const coverMeta = { ...(await loadJson('assets/ui/cover.json')), ...(await loadJson('assets/ui/reg/register.json')) };
   const coverImages = {
     bg: 'assets/ui/cover-bg.webp',

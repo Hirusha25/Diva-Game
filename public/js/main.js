@@ -318,7 +318,8 @@ function frame() {
   // Camera: chase from behind, easing toward the player's lane.
   const lead = state.mode === 'running' ? player.x * 0.55 : 0;
   camPos.x += (lead - camPos.x) * Math.min(1, dt * 6);
-  camPos.y = 3.6 + player.height * 0.3;
+  // the camera rides the runner's bounce a little: the run reads as moving forward
+  camPos.y = 3.6 + player.height * 0.3 + (state.mode === 'running' && player.body ? player.body.position.y * 0.35 : 0);
   camera.position.copy(camPos);
   camTarget.set(lead * 0.6, 1.3, -9);
   camera.lookAt(camTarget);

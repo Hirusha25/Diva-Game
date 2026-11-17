@@ -644,10 +644,10 @@ export class World {
   /** Randomise a chunk's shelter side and tree placement. */
   _dressChunk(chunk, serial) {
     const { shelters, trees } = chunk.userData;
-    // Bus stop on the LEFT side only, every other block (~120 m apart).
-    const side = 'left';
-    shelters.left.visible = serial % 2 === 0;
-    shelters.right.visible = false;
+    // One bus stop per block, alternating left / right (~60 m apart).
+    const side = serial % 2 === 0 ? 'left' : 'right';
+    shelters.left.visible = side === 'left';
+    shelters.right.visible = side === 'right';
     shelters[side].position.z = (Math.random() - 0.5) * (CHUNK_LENGTH - 16);
 
     const rng = mulberry32(serial * 7919 + 17);
@@ -783,6 +783,11 @@ export class World {
     this._placeLongBushes(chunk, rng);
     this._placeBunches(chunk, rng);
     this._placeLeftPlanting(chunk, rng, shelters.left.visible ? shelterZ : null);
+    // right-side stop: keep the right wall's bushes and bunches clear of it
+    if (shelters.right.visible) {
+      for (const b of chunk.userData.longBushes || []) if (b.visible && b.position.x > 0 && Math.abs(b.position.z - shelterZ) < 4.6) b.visible = false;
+      for (const b of chunk.userData.bunches || []) if (b.visible && b.position.x > 0 && Math.abs(b.position.z - shelterZ) < 2.8) b.visible = false;
+    }
     SS.setScalar(0); SP.set(0, -10, 0); SQ.identity(); SM.compose(SP, SQ, SS);
     for (let k = shadowIdx; k < chunk.userData.bushShadows.count; k++) chunk.userData.bushShadows.setMatrixAt(k, SM);
     chunk.userData.bushShadows.instanceMatrix.needsUpdate = true;

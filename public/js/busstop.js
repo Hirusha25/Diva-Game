@@ -23,8 +23,7 @@ export function buildBusStop({ poster, sign, roof, flowers = [] }) {
   const steel = new THREE.MeshStandardMaterial({ color: 0xdfe4ea, metalness: 0.25, roughness: 0.25 });
   const wood = new THREE.MeshStandardMaterial({ map: woodTexture(), color: 0xffffff, roughness: 0.55 });
   const tiles = new THREE.MeshStandardMaterial({ map: tileTexture(), roughness: 0.35, metalness: 0.05 });
-  const kerbW = new THREE.MeshStandardMaterial({ color: 0xe9e7e2, roughness: 0.6 });
-  const kerbB = new THREE.MeshStandardMaterial({ color: 0x2d2f33, roughness: 0.6 });
+  const kerb = new THREE.MeshStandardMaterial({ color: 0x9da2aa, roughness: 0.7 });
   const glass = new THREE.MeshStandardMaterial({ map: glassTexture(), transparent: true, roughness: 0.12, metalness: 0.1, side: THREE.DoubleSide, depthWrite: false });
   const roofGlass = new THREE.MeshStandardMaterial({ color: 0x9fe2fa, emissive: 0x2a7da3, emissiveIntensity: 0.6, transparent: true, opacity: 0.9, roughness: 0.2, side: THREE.DoubleSide });
   const art = (map) => new THREE.MeshStandardMaterial({ map, roughness: 0.45, transparent: true, alphaTest: 0.05 });
@@ -42,11 +41,10 @@ export function buildBusStop({ poster, sign, roof, flowers = [] }) {
 
   // ---------------------------------------------------------------- base + kerb
   { const slab = roundSlab(L + 0.2, Z1 - Z0 + 0.1, 0.12, BASE, tiles); slab.rotation.x = -Math.PI / 2; slab.position.set(0, BASE / 2, (Z0 + Z1) / 2); g.add(slab);
-    // striped kerb along the front and both ends
-    const KW = 0.32, KH = BASE + 0.02, KD = 0.14;
-    let i = 0;
-    for (let x = -L / 2 - 0.1 + KW / 2; x < L / 2 + 0.1; x += KW, i++) box(KW - 0.01, KH, KD, i % 2 ? kerbB : kerbW, x, KH / 2, Z1 + 0.05 + KD / 2);
-    for (const sx of [-1, 1]) { i = 0; for (let z = Z1 + 0.05 - KW / 2; z > Z0 - 0.05; z -= KW, i++) box(KD, KH, KW - 0.01, i % 2 ? kerbB : kerbW, sx * (L / 2 + 0.1 + KD / 2), KH / 2, z); } }
+    // grey kerb blocks along the front and both ends (thin joints between blocks)
+    const KW = 0.5, KH = BASE + 0.02, KD = 0.14;
+    for (let x = -L / 2 - 0.1 + KW / 2; x < L / 2 + 0.1; x += KW) box(KW - 0.012, KH, KD, kerb, x, KH / 2, Z1 + 0.05 + KD / 2);
+    for (const sx of [-1, 1]) for (let z = Z1 + 0.05 - KW / 2; z > Z0 - 0.05; z -= KW) box(KD, KH, KW - 0.012, kerb, sx * (L / 2 + 0.1 + KD / 2), KH / 2, z); }
 
   // ---------------------------------------------------------------- back wall
   const WALL_Z = Z0 + 0.1, TOP = 2.32, FLOOR = BASE;
