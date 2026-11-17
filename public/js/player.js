@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { LANE_WIDTH, LANE_COUNT, LANE_SWITCH_SPEED, JUMP } from './config.js';
 
-const MODEL_HEIGHT = (typeof window !== 'undefined' && window.__DIVA_RUNNER_H) || 2.55;   // metres, feet to top of hair (larger than life so he reads well on a phone)
+const MODEL_HEIGHT = (typeof window !== 'undefined' && window.__DIVA_RUNNER_H) || 3.2;   // metres, feet to top of hair (larger than life so he reads well on a phone)
 const RUNNER_SCALE = MODEL_HEIGHT / 2;     // the rigged model is 2 units tall, feet at y = -1
 const SIZE = MODEL_HEIGHT / 1.55;          // relative to the original size (shadow etc.)
 
@@ -242,7 +242,7 @@ export class Player {
 
     // Stride rate follows speed (eased, so speed-ups never make the legs jump),
     // capped so the legs never blur.
-    const rate = THREE.MathUtils.clamp(6.2 + speed * 0.2, 8, 12);
+    const rate = THREE.MathUtils.clamp(8.5 + speed * 0.27, 11, 16);   // ~3.9 steps/s at the start speed, up to ~5 at top speed
     this.strideRate += (rate - this.strideRate) * Math.min(1, dt * 3);
     this.runTime += dt * this.strideRate;
 

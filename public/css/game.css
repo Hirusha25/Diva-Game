@@ -213,13 +213,14 @@ img.layer { width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
 .reg .consent:focus-visible { outline: 3px solid var(--diva-yellow); outline-offset: 2px; border-radius: 2cqh; }
 .reg .tick { position: absolute; background: center / 100% 100% no-repeat; opacity: 0; transition: opacity .12s; pointer-events: none; }
 .reg .consent[aria-checked="true"] .tick { opacity: 1; }
-.reg .consent-text { position: absolute; left: 15.3%; right: 3.5%; top: 9%; bottom: 5%; text-align: left; color: #6b7280; }
-.reg .consent-text h3 { margin: .55cqh 0 0; padding-right: 19%; font: 400 1.22cqh/1.1 "Lilita One", "Trebuchet MS", sans-serif; color: #0b3a9e; text-transform: uppercase; letter-spacing: .02em; }
-.reg .consent-text p { margin: .45cqh 0 0; font: 600 1.05cqh/1.32 "Nunito", "Trebuchet MS", system-ui, sans-serif; }
-.reg .pill { position: absolute; right: 0; top: 0; padding: .32cqh .9cqh .28cqh; border-radius: 99px; background: #1b2a6b; color: #fff;
-  font: 400 1.08cqh/1 "Lilita One", "Trebuchet MS", sans-serif; text-transform: uppercase; letter-spacing: .04em; }
-.reg .consent-link { margin: .5cqh 0 0; padding: 0; border: 0; background: none; cursor: pointer; color: #0b1f5e;
-  font: 400 1.12cqh/1 "Lilita One", "Trebuchet MS", sans-serif; text-transform: uppercase; letter-spacing: .03em; }
+.reg .consent-text { position: absolute; left: 19%; right: 4.5%; top: 10%; bottom: 7%; display: flex; flex-direction: column; text-align: left; color: #6b7280; }
+.reg .consent-head { display: flex; align-items: center; justify-content: space-between; gap: 1.2cqh; min-height: 2.3cqh; }
+.reg .consent-text h3 { margin: 0; font: 400 1.22cqh/1.15 "Lilita One", "Trebuchet MS", sans-serif; color: #0b3a9e; text-transform: uppercase; letter-spacing: .02em; }
+.reg .consent-text p { margin: .75cqh 0 0; font: 600 1.05cqh/1.42 "Nunito", "Trebuchet MS", system-ui, sans-serif; }
+.reg .pill { flex: none; padding: .38cqh 1cqh .32cqh; border-radius: 99px; background: #1b2a6b; color: #fff;
+  font: 400 1.04cqh/1 "Lilita One", "Trebuchet MS", sans-serif; text-transform: uppercase; letter-spacing: .05em; }
+.reg .consent-link { display: inline; margin: 0; padding: 0; border: 0; background: none; cursor: pointer; color: #0b3a9e;
+  font-family: "Nunito", "Trebuchet MS", system-ui, sans-serif; font-weight: 800; font-size: 1em; line-height: inherit; text-decoration: underline; text-underline-offset: .15em; }
 /* errors: a banner at the top of the screen, always visible (also with the keyboard up) */
 .screen.cover > .reg-error { position: fixed; z-index: 6; left: 62px; right: 62px; top: calc(env(safe-area-inset-top) + 10px);
   margin: 0 auto; max-width: 440px; text-align: center; pointer-events: none; font: 700 14px/1.25 "Nunito", system-ui, sans-serif; color: #fff; }
@@ -255,3 +256,8 @@ img.layer { width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
   font: 400 22px/1.1 "Lilita One", "Trebuchet MS", sans-serif;
   -webkit-text-stroke: 5px #0b3a9e; paint-order: stroke fill; text-shadow: 0 3px 0 #0b3a9e, 0 5px 10px rgba(0,0,0,.35); }
 @media (prefers-reduced-motion: reduce) { .load-box #load-bar::after { animation: none; } }
+
+/* on the cover, loading and registration screens the sound button sits on
+   the same top line as the back button / player card (in the run it stays
+   lower, clear of the score pills) */
+body:has(#screen-cover:not(.hidden)) .sound-btn, body:has(#screen-loading:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px) + 10px); }
