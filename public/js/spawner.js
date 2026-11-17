@@ -30,6 +30,11 @@ export class Spawner {
       glow: additive(glowTexture(), PACK_GLOW[p.name] ?? 0xffffff, 0.5),
     }));
     this.starMat = additive(starTexture(), 0xffffff, 0.95);
+    if (props.banana) {   // banana peel: a picture standing on the road (it reads as a 3D object), with a shadow
+      this.bananaMat = new THREE.SpriteMaterial({ map: props.banana, transparent: true, alphaTest: 0.1, depthWrite: true, toneMapped: false });
+      this.bananaShadowGeo = new THREE.CircleGeometry(0.5, 24).rotateX(-Math.PI / 2);
+      this.bananaShadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3 });
+    }
     if (props.bonus) { this.bonusMap = props.bonus;
       this.bonusMat = new THREE.SpriteMaterial({ map: props.bonus, transparent: true, depthWrite: false, toneMapped: false });
       this.bonusGlow = additive(glowTexture(), 0x7fe0ff, 0.55); }
@@ -106,7 +111,8 @@ export class Spawner {
   }
 
   _spawn(kind, lane, z) {
-    if (this._blockedByBus(kind, lane, z)) return;
+    if (kind === 'stain' && this.bananaMat && Math.random() < 0.3) kind = 'banana';   // some obstacles are banana peels
+    if (this._blockedByBus(kind === 'banana' ? 'stain' : kind, lane, z)) return;
     let mesh;
     if (kind === 'pack') {
       const k = this.kinds[Math.floor(Math.random() * this.kinds.length)];
@@ -120,6 +126,13 @@ export class Spawner {
       mesh.add(glow, pouch, ...stars);
       mesh.userData = { pouch, glow, stars, phase: Math.random() * 10, color: k.glow.color.getHex() };
       mesh.position.y = PACK_Y;
+    } else if (kind === 'banana') {
+      mesh = new THREE.Group();
+      const W = 1.5, H = W / 1.9;                                  // the peel is ~1.9× wider than tall
+      const peel = new THREE.Sprite(this.bananaMat); peel.center.set(0.5, 0.04); peel.scale.set(W * (Math.random() < 0.5 ? 1 : -1), H, 1);
+      const shadow = new THREE.Mesh(this.bananaShadowGeo, this.bananaShadowMat); shadow.scale.set(W * 0.95, 1, W * 0.42); shadow.position.y = 0.02;
+      mesh.add(shadow, peel); mesh.userData = { peel };
+      mesh.position.y = 0.01;
     } else if (kind === 'bonus') {
       mesh = new THREE.Group();
       const icon = new THREE.Sprite(this.bonusMat); icon.scale.setScalar(1.15);
@@ -209,6 +222,10 @@ export class Spawner {
           st.scale.setScalar(0.05 + 0.28 * k * k);
         });
       }
+      if (it.kind === 'banana' && it.slipT !== undefined) {   // the peel skids away after the slip
+        it.slipT += dt; const pl = it.mesh.userData.peel; it.mesh.position.x += dt * 3; it.mesh.position.y = 0.01 + Math.max(0, Math.sin(it.slipT * 6)) * 0.4 * Math.max(0, 1 - it.slipT);
+        pl.material.rotation += dt * 9; pl.material.opacity = Math.max(0, 1 - it.slipT * 1.5);
+      }
       if (it.hit) continue;
       const dz = Math.abs(it.mesh.position.z);
       const dx = Math.abs(it.mesh.position.x - player.x);
@@ -219,6 +236,8 @@ export class Spawner {
         } else if (it.kind === 'pack') {
           it.hit = true; it.collectT = 0; events.pickups++;
           this.sparkles.burst(it.mesh.position, 9, it.mesh.userData.color, 2.2, 0.4);
+        } else if (it.kind === 'banana') {
+          if (!player.isAirborne) { it.hit = true; events.slip = (events.slip || 0) + 1; it.mesh.userData.peel.material = it.mesh.userData.peel.material.clone(); it.slipT = 0; }
         } else if (!player.isAirborne) {
           it.hit = true; events.hits++;
         }

@@ -72,6 +72,8 @@ const state = {
   lives: LIVES,
   invulnerable: 0,
   packs: 0,
+  boostT: 0,       // flower-bubble speed boost (s left)
+  slipT: 0,        // banana slip slow-down (s left)
   maxLives: LIVES,
   clean: 0,
   paused: false,
@@ -249,7 +251,7 @@ function startRun() {
   state.distance = 0;
   state.score = 0;
   state.lives = LIVES;
-  state.packs = 0; state.paused = false;
+  state.packs = 0; state.paused = false; state.boostT = 0; state.slipT = 0;
   state.invulnerable = 0;
   state.runStart = performance.now();
   player.reset();
@@ -285,7 +287,7 @@ try {
   cloudField = new CloudField(assets.clouds);
   scene.add(cloudField.group);
   world = new World(scene, assets);
-  player = new Player(scene, assets.runner, assets.runnerClean);
+  player = new Player(scene, assets.runner, assets.runnerClean, assets.runnerOutfit);
   spawner = new Spawner(scene, assets.packs, assets.stains, assets.roadProps, world);
   hud.layoutCover(assets.cover.meta, assets.cover.images);
   hud.setProgress(0.95, REQUIRE_REGISTRATION ? 'Signing in…' : 'Ready');
@@ -316,11 +318,15 @@ function frame() {
   } else {
     state.speed = SPEED.lobby;
   }
-  const step = state.speed * dt;
+  // flower-bubble boost speeds the run up for a few seconds; a banana slip slows it
+  state.boostT = Math.max(0, state.boostT - dt); state.slipT = Math.max(0, state.slipT - dt);
+  const speedMul = state.mode === 'running' ? (state.boostT > 0 ? 1.45 : 1) * (state.slipT > 0 ? 0.55 : 1) : 1;
+  state.speedMul = (state.speedMul ?? 1) + (speedMul - (state.speedMul ?? 1)) * Math.min(1, dt * 4);
+  const step = state.speed * state.speedMul * dt;
 
   world.update(step, camera.position);
   cloudField.update(dt, step);
-  player.update(dt, state.speed);
+  player.update(dt, state.speed * (state.speedMul ?? 1));
   player.group.visible = state.mode === 'running';
 
   if (state.mode === 'running') {
@@ -328,7 +334,8 @@ function frame() {
     state.score += step * SCORE_PER_METRE;
     const ev = spawner.update(dt, step, player);
     if (ev.pickups) { state.score += ev.pickups * SCORE_PICKUP; hud.flash(`+${ev.pickups * SCORE_PICKUP}`, 600, 'pack'); sound.pickup(); player.clean(0.25 * ev.pickups); state.packs += ev.pickups; }
-    if (ev.bonus) { state.score += 50 * ev.bonus; player.dirt = 0; player.clean(0); hud.flash('BONUS +50', 900, 'bonus'); sound.pickup(); sound.pickup(); }
+    if (ev.bonus) { state.score += 50 * ev.bonus; player.dirt = 0; player.clean(0); state.boostT = 4; state.slipT = 0; hud.flash('SPEED UP! +50', 1000, 'bonus'); sound.pickup(); sound.pickup(); }
+    if (ev.slip) { state.slipT = 2.5; state.boostT = 0; state.invulnerable = Math.max(state.invulnerable, 2.5); player.flinch(); hud.flash('Slipped!', 800, 'slip'); sound.hit(); }
     if (ev.dust) { player.dust(0.3); hud.flash('Dusty!', 700, 'dust'); sound.lane(1); }
     if (ev.bus) {   // running into the bus ends the run
       sound.hit(); player.flinch(); player.stain(); hud.flash('Bus!', 1200, 'bus');

@@ -16,6 +16,7 @@ for (const [name, out, width] of [
   ['flower-bubble', 'public/assets/ui/flower-bubble.webp', 160],
   ['shirt-clean', 'public/assets/ui/shirt-clean.webp', 120],
   ['shirt-dirty', 'public/assets/ui/shirt-dirty.webp', 120],
+  ['banana', 'public/assets/textures/props2/banana.webp', 512],
 ]) {
   const t = await sharp(`${RAW}/${name}.webp`).ensureAlpha().trim({ threshold: 2 }).toBuffer({ resolveWithObject: true });
   await sharp(t.data).resize({ width }).webp({ quality: 88, alphaQuality: 90 }).toFile(out);

@@ -39,6 +39,7 @@ html, body {
 .toast.t-pack { color: var(--diva-yellow); }
 .toast.t-bonus { color: #7fe0ff; font-size: 46px; }
 .toast.t-stain { color: #ff8a4a; -webkit-text-stroke-color: #6b2a0c; text-shadow: 0 4px 0 #6b2a0c, 0 7px 14px rgba(0,0,0,.35); }
+.toast.t-slip { color: #ffe14a; -webkit-text-stroke-color: #8a5a00; text-shadow: 0 4px 0 #8a5a00, 0 7px 14px rgba(0,0,0,.35); }
 .toast.t-dust { color: #e9e2d6; -webkit-text-stroke-color: #5a5248; text-shadow: 0 4px 0 #5a5248, 0 7px 14px rgba(0,0,0,.35); }
 .toast.t-bus { color: #fff; -webkit-text-stroke-color: #c0141c; text-shadow: 0 4px 0 #c0141c, 0 7px 14px rgba(0,0,0,.35); font-size: 46px; }
 

@@ -80,6 +80,22 @@ const shirt = new Uint8Array(n);
     const f = pix.filter(fabricOrMud).length / pix.length;
     if (f > 0.6) for (const i of pix) shirt[i] = 1;
   } }
+// outfit mask (t-shirt + shorts), for the bus-dust film: triangles of the
+// torso / hip / thigh bones, minus skin; written to runner-outfit.webp
+const outfit = new Uint8Array(n);
+{ const UV = prim.getAttribute('TEXCOORD_0'), JT = prim.getAttribute('JOINTS_0'), ix = prim.getIndices().getArray(); const t = [0, 0], q = [0, 0, 0, 0];
+  const bones = new Set(['hips', 'spine', 'chest', 'neck', 'upperarm_L', 'upperarm_R', 'thigh_L', 'thigh_R']);
+  const isSkin = (i) => { const [r, g, b] = at(i); return r > 190 && g > 105 && g < 205 && b > 55 && b < 170 && r - g > 30 && r - b > 70; };
+  for (let k = 0; k < ix.length; k += 3) {
+    const vs = [ix[k], ix[k + 1], ix[k + 2]];
+    if (!vs.every((v) => bones.has(jointNames[JT.getElement(v, q)[0]]))) continue;
+    const P = vs.map((v) => { UV.getElement(v, t); return [t[0] * N, t[1] * N]; });
+    const x0 = Math.max(0, Math.floor(Math.min(P[0][0], P[1][0], P[2][0]))), x1 = Math.min(N - 1, Math.ceil(Math.max(P[0][0], P[1][0], P[2][0])));
+    const y0 = Math.max(0, Math.floor(Math.min(P[0][1], P[1][1], P[2][1]))), y1 = Math.min(N - 1, Math.ceil(Math.max(P[0][1], P[1][1], P[2][1])));
+    const area = (P[1][0] - P[0][0]) * (P[2][1] - P[0][1]) - (P[2][0] - P[0][0]) * (P[1][1] - P[0][1]); if (Math.abs(area) < 1e-9) continue;
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const px = x + 0.5, py = y + 0.5;
+      const w0 = ((P[1][0] - px) * (P[2][1] - py) - (P[2][0] - px) * (P[1][1] - py)) / area, w1 = ((P[2][0] - px) * (P[0][1] - py) - (P[0][0] - px) * (P[2][1] - py)) / area;
+      if (w0 >= -0.05 && w1 >= -0.05 && 1 - w0 - w1 >= -0.05) { const i = y * N + x; if (!isSkin(i)) outfit[i] = 1; } } } }
 const keep = new Uint8Array(n);
 let kept = 0;
 for (let i = 0; i < n; i++) { if (!body[i]) continue; const [r, g, b] = at(i); const mx = Math.max(r, g, b), mn = Math.min(r, g, b), mean = (r + g + b) / 3;
@@ -127,4 +143,12 @@ for (let i = 0; i < n; i++) { const w = bl[i * 4 + 3] / 255; const [r, g, b] = a
   src.copy(out); }
 const file = 'public/assets/textures/runner-clean.webp';
 await sharp(out, { raw: { width: N, height: N, channels: 4 } }).webp({ quality: 85, alphaQuality: 80 }).toFile(file);
+{ // outfit mask, gutters padded from the nearest piece like the clean map
+  const filled = Uint8Array.from(used); let m = Buffer.from(outfit.map((v) => v * 255));
+  for (let it = 0; it < 4; it++) { const nx = Buffer.from(m); const nf = Uint8Array.from(filled);
+    for (let y = 1; y < N - 1; y++) for (let x = 1; x < N - 1; x++) { const i = y * N + x; if (filled[i]) continue;
+      for (const j of [i - 1, i + 1, i - N, i + N]) if (filled[j]) { nx[i] = m[j]; nf[i] = 1; break; } }
+    m = nx; filled.set(nf); }
+  await sharp(m, { raw: { width: N, height: N, channels: 1 } }).blur(0.8).webp({ quality: 80 }).toFile('public/assets/textures/runner-outfit.webp');
+  console.log('outfit mask → public/assets/textures/runner-outfit.webp'); }
 console.log('mud pixels found:', kept, '→', file, ((await stat(file)).size / 1024).toFixed(0) + ' KB');

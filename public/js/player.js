@@ -45,7 +45,7 @@ function stanceWeight(ph) {
  *  on a forearm/shin, it bends the elbow forward / the knee backward.
  */
 export class Player {
-  constructor(scene, model = null, cleanMap = null) {
+  constructor(scene, model = null, cleanMap = null, outfitMap = null) {
     this.group = new THREE.Group();
     scene.add(this.group);
 
@@ -62,7 +62,8 @@ export class Player {
     // shirt dirt: 1 = muddy (as modelled), 0 = clean. Diva packs wash it,
     // stains bring it back (see clean() / stain()).
     this.dirt = 1; this.dirtShown = 1; this.shine = 0; this.twinkleT = 0;
-    this.shirtU = { uDirt: { value: 1 }, uShine: { value: 0 }, uDull: { value: 0 }, uCleanMap: { value: cleanMap } };
+    this.shirtU = { uDirt: { value: 1 }, uShine: { value: 0 }, uDull: { value: 0 }, uCleanMap: { value: cleanMap }, uOutfitMap: { value: outfitMap } };
+    if (outfitMap) { outfitMap.flipY = false; outfitMap.colorSpace = THREE.NoColorSpace; }
     this.dull = 0;
     this.body = model ? this._rigged(model) : this._placeholderBody();
     this.group.add(this.body);
@@ -89,7 +90,7 @@ export class Player {
     model.scale.setScalar(RUNNER_SCALE);
     model.position.y = RUNNER_SCALE;           // feet on the ground
     model.traverse((o) => {
-      if (o.isMesh) { o.frustumCulled = false; if (o.material) { o.material.side = THREE.FrontSide; if (this.shirtU.uCleanMap.value) this._washable(o.material); } }
+      if (o.isMesh) { o.frustumCulled = false; if (o.material) { o.material.side = THREE.FrontSide; if (this.shirtU.uCleanMap.value && this.shirtU.uOutfitMap.value) this._washable(o.material); } }
     });
     turn.add(model); holder.add(turn);
     const b = (n) => model.getObjectByName(n);
@@ -120,13 +121,14 @@ export class Player {
     U.uCleanMap.value.flipY = false;          // glTF texture convention
     mat.onBeforeCompile = (sh) => {
       Object.assign(sh.uniforms, U);
-      sh.fragmentShader = 'uniform sampler2D uCleanMap; uniform float uDirt; uniform float uShine; uniform float uDull;\n' + sh.fragmentShader
+      sh.fragmentShader = 'uniform sampler2D uCleanMap; uniform sampler2D uOutfitMap; uniform float uDirt; uniform float uShine; uniform float uDull;\n' + sh.fragmentShader
         .replace('#include <map_fragment>', `#include <map_fragment>
           vec4 cleanTx = texture2D(uCleanMap, vMapUv);
           diffuseColor.rgb = mix(diffuseColor.rgb, cleanTx.rgb, cleanTx.a * (1.0 - uDirt));
-          // bus dust: a soft, sandy-grey film over everything (colour drained, a little darker)
+          // bus dust: a soft sandy-grey film over the outfit only (t-shirt + shorts)
           float dl = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11));
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(dl) * vec3(0.92, 0.86, 0.76) * 0.86 + vec3(0.05, 0.045, 0.04), uDull * 0.75);`)
+          float outfitK = texture2D(uOutfitMap, vMapUv).r;
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(dl) * vec3(0.92, 0.86, 0.76) * 0.86 + vec3(0.07, 0.06, 0.05), uDull * 0.62 * outfitK);`)
         .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
           totalEmissiveRadiance += diffuseColor.rgb * uShine;`);
     };
