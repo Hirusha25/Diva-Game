@@ -225,7 +225,7 @@ for (let it = 0; it < ITER; it++) { const N = new Float32Array(nU * nB);
 // each vertex moves away from its bone's axis by the bone's factor (blended
 // by the skin weights, so joints stay smooth). Head, gloves and shoes keep
 // their shape; the rebuilt arms and sleeves are thickened to match below.
-const BULK = Number(process.env.BULK || 1.7);
+const BULK = Number(process.env.BULK || 1.25);
 const bulkOf = { hips: 1.18, spine: 1.18, chest: 1.15, neck: 1.05, thigh_L: 1.2, thigh_R: 1.2, shin_L: 1.12, shin_R: 1.12 };
 const ARM_BULK = 1 + 0.15 * BULK;
 { const disp = new Float32Array(nU * 3);
