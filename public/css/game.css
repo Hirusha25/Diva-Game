@@ -27,7 +27,8 @@ html, body {
   box-shadow: 0 3px 0 rgba(0,0,0,.25);
 }
 .pill .label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; opacity: .85; }
-.pill.lives { margin-left: auto; gap: 3px; padding: 6px 10px; font-size: 16px; }
+.pill.shirts { margin-left: auto; gap: 6px; padding: 4px 14px 4px 8px; font: 400 21px/1 "Lilita One", "Trebuchet MS", sans-serif; }
+.pill.shirts svg { width: 28px; height: 28px; display: block; }
 .toast {
   position: absolute; left: 50%; top: 28%; transform: translate(-50%, -50%) scale(.8);
   font-size: 34px; font-weight: 900; color: var(--diva-yellow); -webkit-text-stroke: 2px var(--ink);

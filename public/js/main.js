@@ -72,6 +72,7 @@ const state = {
   lives: LIVES,
   invulnerable: 0,
   packs: 0,
+  maxLives: LIVES,
   clean: 0,
   paused: false,
   runStart: 0,

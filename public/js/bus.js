@@ -69,8 +69,15 @@ export function buildBus(busMap, smokeMap) {
 
   // exhaust smoke: two puffs cycling, flipped so the plume rises up and away from the pipe
   const smokeMat = () => new THREE.MeshBasicMaterial({ map: smokeMap, transparent: true, depthWrite: false, opacity: 0, toneMapped: false, fog: true });
-  const puffs = [0, 1, 2].map((i) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).translate(-0.5, 0.5, 0), smokeMat()); m.renderOrder = 2; m.userData.phase = i / 3; g.add(m); return m; });
-  g.userData = { puffs, exhaust: new THREE.Vector3(left + 0.05, 0.35, -1.0), t: 0 };
+  // The plume's dark tip is at the picture's top right; flip it so the tip is
+  // the plane's bottom-right corner, placed right on the pipe.
+  const puffGeo = new THREE.PlaneGeometry(1, 1).translate(-0.5, 0.5, 0);
+  { const uv = puffGeo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setY(i, 1 - uv.getY(i)); }
+  const puffs = [0, 1, 2].map((i) => { const m = new THREE.Mesh(puffGeo, smokeMat()); m.renderOrder = 2; m.userData.phase = i / 3; g.add(m); return m; });
+  // exhaust pipe: under the side, just ahead of the rear, sticking out toward the road
+  g.userData = { puffs, exhaust: new THREE.Vector3(left - 0.25, 0.18, -0.8), t: 0 };
+  { const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.45, 12), new THREE.MeshStandardMaterial({ color: 0x9aa0a8, metalness: 0.7, roughness: 0.35 }));
+    pipe.rotation.z = Math.PI / 2; pipe.position.set(left - 0.05, 0.18, -0.8); g.add(pipe); }
   return g;
 }
 
@@ -79,9 +86,10 @@ export function updateBus(bus, dt) {
   const u = bus.userData; u.t += dt;
   for (const p of u.puffs) {
     const k = ((u.t / 2.4) + p.userData.phase) % 1;
-    const w = 2.2 + 4.2 * k, h = w * 0.45;
+    const w = 0.5 + 5.5 * k, h = w * 0.44;
     p.scale.set(w, h, 1);
-    p.position.set(u.exhaust.x + 0.3, u.exhaust.y - 0.15 + 0.6 * k, u.exhaust.z + 0.6 + 2.6 * k);
+    // the tip stays on the pipe; the plume spreads out toward the road, rises a little and drifts back
+    p.position.set(u.exhaust.x + 0.12, u.exhaust.y - 0.04 * w, u.exhaust.z + 0.2 + 2.2 * k);
     p.material.opacity = 0.85 * Math.sin(Math.PI * Math.min(1, k * 1.15)) * (k < 0.08 ? k / 0.08 : 1);
   }
 }

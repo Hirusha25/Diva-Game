@@ -49,21 +49,15 @@ export class Hud {
     }
   }
 
-  update({ score, distance, lives, packs = 0, clean = 0 }) {
+  update({ score, distance, lives, maxLives, packs = 0, clean = 0 }) {
+    this.maxLives = maxLives;
     this.score.textContent = Math.floor(score);
     const pk = this.$('hud-packs');
     if (pk.textContent !== String(packs)) { pk.textContent = packs; const pill = pk.parentElement; pill.classList.remove('bump'); void pill.offsetWidth; pill.classList.add('bump'); }
     this.$('sm-fill').style.height = `${Math.round(clean * 100)}%`;
     this.$('shirt-meter').classList.toggle('full', clean > 0.97);
     this.distance.textContent = `${Math.floor(distance)} m`;
-    if (this.lives.childElementCount !== lives) {
-      this.lives.textContent = '';
-      for (let i = 0; i < lives; i++) {
-        const s = document.createElement('span');
-        s.textContent = '❤';
-        this.lives.appendChild(s);
-      }
-    }
+    this.lives.textContent = `${Math.max(0, lives)}/${this.maxLives || lives}`;
   }
 
   flash(text, ms = 700) {
