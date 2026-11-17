@@ -9,8 +9,8 @@ const SIZE = MODEL_HEIGHT / 1.55;          // relative to the original size (sha
 // 2.4 foot lands ahead · 3.45 foot under the body · 4.55 toe-off ·
 // ~5.9 heel kicked up behind · 1.4 knee driven up in front.
 // Thigh: < 0 forward. Knee: > 0 bent. Foot (swing): > 0 toes down.
-const THIGH = [[2.4, -0.62], [3.45, 0.0], [4.55, 0.6], [5.2, 0.5], [5.9, 0.15], [0.6, -0.5], [1.4, -0.92], [2.0, -0.85]];
-const KNEE = [[2.4, 0.25], [3.45, 0.5], [4.55, 0.4], [5.2, 1.0], [5.9, 1.55], [0.6, 1.6], [1.4, 1.2], [2.0, 0.6]];
+const THIGH = [[2.4, -0.6], [3.45, 0.0], [4.4, 0.62], [5.1, 0.45], [5.9, 0.0], [0.6, -0.75], [1.4, -1.15], [2.0, -0.95]];
+const KNEE = [[2.4, 0.22], [3.45, 0.45], [4.4, 0.3], [5.1, 1.3], [5.9, 2.15], [0.6, 1.9], [1.4, 1.2], [2.0, 0.5]];
 const FOOT_WORLD = [[2.4, -0.25], [3.45, 0.0], [4.2, 0.2], [4.55, 0.6]];          // sole angle on the road (stance)
 const FOOT_SWING = [[5.2, 0.35], [5.9, 0.4], [0.6, 0.25], [1.4, 0.0], [2.0, -0.1]];
 const TAU = Math.PI * 2;
@@ -31,7 +31,7 @@ function loopSpline(keys, ph) {
 function stanceWeight(ph) {
   ph = ((ph % TAU) + TAU) % TAU;
   const e = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
-  return e(2.25, 2.45, ph) * (1 - e(4.45, 4.75, ph));
+  return e(2.25, 2.45, ph) * (1 - e(4.3, 4.6, ph));   // shorter ground contact: a sprint
 }
 
 /**
@@ -177,10 +177,10 @@ export class Player {
     const yaw = 0.08 * s * run;
     B.hips.rotation.set(tilt, yaw, roll);
     const spYaw = -0.06 * s * run, spRoll = -0.02 * c * run, chYaw = -0.1 * s * run, chRoll = -0.02 * c * run;
-    B.spine.rotation.set(0.22 * run + 0.1 * air - 0.25 * hit, spYaw, spRoll);   // leaning into the run
+    B.spine.rotation.set(0.26 * run + 0.1 * air - 0.25 * hit, spYaw, spRoll);   // leaning into the run
     B.chest.rotation.set(0.1 * run, chYaw, chRoll);
-    B.neck.rotation.set(-0.12 * run, 0.12 * s * run, 0);
-    B.head.rotation.set(-0.16 * run + 0.2 * hit, 0.1 * s * run, 0.03 * c * run);
+    B.neck.rotation.set(-0.15 * run, 0.08 * s * run, 0);
+    B.head.rotation.set(-0.18 * run + 0.2 * hit, 0.06 * s * run, 0.02 * c * run);
 
     // thighs undo the pelvis yaw and roll, so each leg swings straight
     // forward and back (no sideways swing of the feet)
@@ -191,17 +191,20 @@ export class Player {
     B.foot_L.rotation.set(run * fL + air * 0.3, 0, 0);
     B.foot_R.rotation.set(run * fR + air * 0.3, 0, 0);
 
-    // arms: a fast runner's swing, straight forward and back, opposite to the
-    // legs: the glove rises to chest height in front and drives back past the
-    // hip. Pure sine curves (no kinks), and the upper arms undo the shoulder
-    // twist and roll so the arms never swing across the body.
-    const aw = Math.sin(phase - 3.0);                 // +1: left arm forward
+    // arms: a sprinter's pump, exactly opposite the legs (left arm forward as
+    // the right knee drives up). Shaped sine: quick through the middle, a
+    // brief hold at each end, so the arms punch rather than float. Front:
+    // glove up by the chin, elbow tight; back: glove past the hip, elbow open.
+    // The upper arms undo the shoulder twist/roll so they never cross the body.
+    const raw = Math.sin(phase - 3.0);                                  // +1: left arm forward
+    const aw = Math.sign(raw) * Math.abs(raw) ** 0.6;
     const shYaw = yaw + spYaw + chYaw, shRoll = roll + spRoll + chRoll;
-    const swingL = 0.08 - 0.55 * aw, swingR = 0.08 + 0.55 * aw;   // calmer than the legs: the hands keep pace with the body
-    B.upperarm_L.rotation.set(run * swingL + air * -1.1 + hit * 0.4, -shYaw * run, 0.2 - shRoll + air * 0.3);
-    B.upperarm_R.rotation.set(run * swingR + air * -1.1 + hit * 0.4, -shYaw * run, -0.2 - shRoll - air * 0.3);
-    B.forearm_L.rotation.set(run * (-1.35 - 0.1 * aw) + air * -1.3, 0, -0.08);
-    B.forearm_R.rotation.set(run * (-1.35 + 0.1 * aw) + air * -1.3, 0, 0.08);
+    const swingL = 0.15 - 1.0 * aw, swingR = 0.15 + 1.0 * aw;          // -0.85 forward … +1.15 back
+    const elbow = (f) => -1.4 - 0.35 * Math.max(0, f) + 0.45 * Math.max(0, -f);   // f = +1 forward
+    B.upperarm_L.rotation.set(run * swingL + air * -1.1 + hit * 0.4, -shYaw * run, 0.22 - shRoll + air * 0.3);
+    B.upperarm_R.rotation.set(run * swingR + air * -1.1 + hit * 0.4, -shYaw * run, -0.22 - shRoll - air * 0.3);
+    B.forearm_L.rotation.set(run * elbow(aw) + air * -1.3, 0, -0.08);
+    B.forearm_R.rotation.set(run * elbow(-aw) + air * -1.3, 0, 0.08);
     B.hand_L.rotation.set(-0.1, 0, 0);
     B.hand_R.rotation.set(-0.1, 0, 0);
 
@@ -242,7 +245,7 @@ export class Player {
 
     // Stride rate follows speed (eased, so speed-ups never make the legs jump),
     // capped so the legs never blur.
-    const rate = THREE.MathUtils.clamp(8 + speed * 0.25, 11, 15);   // ~3.8 steps/s at the start speed, up to ~4.8 at top speed
+    const rate = THREE.MathUtils.clamp(9.5 + speed * 0.3, 14, 18);   // ~4.6 steps/s at the start speed, up to ~5.7 at top speed (a sprint)
     this.strideRate += (rate - this.strideRate) * Math.min(1, dt * 3);
     this.runTime += dt * this.strideRate;
 
