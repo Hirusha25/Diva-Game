@@ -202,11 +202,16 @@ img.layer { width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
 
 /* gender: the design's radio circles; the chosen one gets a filled dot and a glow */
 .reg .gender { overflow: visible; }
-.reg .gender::after { content: ""; position: absolute; border-radius: 50%; background: #0b3a9e; transform: translate(-50%, -50%) scale(0); transition: transform .15s; }
-.reg .gender[data-gender="male"]::after { left: 15.41%; top: 59.4%; width: 4.6%; aspect-ratio: 1; }      /* centre of the ring (measured) */
-.reg .gender[data-gender="female"]::after { left: 13.45%; top: 59.6%; width: 4.4%; aspect-ratio: 1; }
+/* the selected dot: a real element sized and placed in plain percentages of
+   the button (no aspect-ratio / translate tricks), centred on the white disc
+   of the design's ring, measured from the art (male 15.8% / 59.1%, female
+   13.4% / 59.15%; buttons are 420×173 and 460×158) */
+.reg .gender .dot { position: absolute; display: block; border-radius: 50%; background: #0b3a9e; pointer-events: none;
+  transform: scale(0); transform-origin: 50% 50%; transition: transform .15s; }
+.reg .gender[data-gender="male"] .dot { width: 5.2%; height: 12.62%; left: 13.2%; top: 52.79%; }        /* 5.2% × 420/173 */
+.reg .gender[data-gender="female"] .dot { width: 4.5%; height: 13.1%; left: 11.12%; top: 52.6%; }       /* 4.5% × 460/158 */
 .reg .gender[aria-checked="true"] { filter: drop-shadow(0 0 .7cqh rgba(255, 214, 0, .95)); }
-.reg .gender[aria-checked="true"]::after { transform: translate(-50%, -50%) scale(1); }
+.reg .gender[aria-checked="true"] .dot { transform: scale(1); }
 
 /* consent cards: text over the card art; tapping the card ticks the box */
 .reg .consent { cursor: pointer; -webkit-tap-highlight-color: transparent; }

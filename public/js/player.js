@@ -174,13 +174,15 @@ export class Player {
 
     // pelvis twists with the legs; shoulders counter-twist (very visible from behind)
     B.hips.position.y = this.hipsRestY;
-    const yaw = 0.08 * s * run;
+    const yaw = 0.13 * s * run;                       // hips swing with the legs
     B.hips.rotation.set(tilt, yaw, roll);
-    const spYaw = -0.06 * s * run, spRoll = -0.02 * c * run, chYaw = -0.1 * s * run, chRoll = -0.02 * c * run;
-    B.spine.rotation.set(0.26 * run + 0.1 * air - 0.25 * hit, spYaw, spRoll);   // leaning into the run
+    // shoulders counter-twist against the hips and the torso rocks with each step
+    const spYaw = -0.12 * s * run, spRoll = -0.045 * c * run, chYaw = -0.2 * s * run, chRoll = -0.05 * c * run;
+    const pulse = 0.05 * Math.cos(2 * (phase - 3.45)) * run;   // dips forward as each foot lands
+    B.spine.rotation.set(0.26 * run + pulse + 0.1 * air - 0.25 * hit, spYaw, spRoll);   // leaning into the run
     B.chest.rotation.set(0.1 * run, chYaw, chRoll);
-    B.neck.rotation.set(-0.15 * run, 0.08 * s * run, 0);
-    B.head.rotation.set(-0.18 * run + 0.2 * hit, 0.06 * s * run, 0.02 * c * run);
+    B.neck.rotation.set(-0.15 * run - pulse * 0.6, 0.16 * s * run, 0.03 * c * run);   // head stays facing ahead
+    B.head.rotation.set(-0.18 * run - pulse * 0.4 + 0.2 * hit, 0.14 * s * run, 0.04 * c * run);
 
     // thighs undo the pelvis yaw and roll, so each leg swings straight
     // forward and back (no sideways swing of the feet)
