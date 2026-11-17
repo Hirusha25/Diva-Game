@@ -331,7 +331,6 @@ export class World {
       chunk.add(tree);
     }
     chunk.userData.billboards = [...chunk.userData.trees, ...chunk.userData.bushes];
-    if ((globalThis.__DIVA_HERO || 'B') === 'C') chunk.userData.billboards.push(chunk.userData.heroBush);
     return chunk;
   }
 
@@ -354,31 +353,25 @@ export class World {
     return shelter;
   }
 
-  /** Long bush lying along the left wall, just before the bus stop. */
+  /** Long bush lying along the RIGHT wall, once per block that has a stop. */
   _placeHeroBush(chunk, hasStop, stopZ) {
     const hb = chunk.userData.heroBush;
     hb.visible = hasStop;
     if (!hasStop) return;
-    const mode = globalThis.__DIVA_HERO || 'B';
+    const mode = globalThis.__DIVA_HERO || 'R1';
     const L = 2.8;                                   // length of the planting along the wall
     const h = L / this.bushLongAspect;
-    const stopNearEnd = stopZ + 1.6;                 // end of the bus stop nearest the runner
-    const zc = stopNearEnd + 0.3 + L / 2;            // the bush sits just before the stop (as in the reference)
+    const zc = stopZ + 1.6 + 0.3 + L / 2;            // level with the stop across the road
+    const theta = 0.5;                               // ~29° off the wall line
     hb.scale.set(L, h, 1);
-    if (mode === 'A') {                              // flat along the wall, facing the road
-      hb.rotation.y = Math.PI / 2;
-      hb.position.set(-(WALL.inner - 0.3), PAVEMENT.height + 0.02, zc);
-    } else if (mode === 'B') {                       // angled: far end on the wall, near end toward the path
-      const theta = 0.5;                             // ~29° off the wall line
-      hb.rotation.y = Math.PI / 2 - theta;
-      // keep the far (wall-side) end 0.15 m off the wall
-      const cx = -(WALL.inner - 0.15 - (L / 2) * Math.sin(theta));
-      hb.position.set(cx, PAVEMENT.height + 0.02, zc);
-    } else {                                         // C: faces the camera (set per frame), centred off the wall
-      hb.rotation.y = 0;
-      hb.position.set(-(WALL.inner - 0.2 - L * 0.35), PAVEMENT.height + 0.02, zc);
-      hb.userData.clamp = { centre: Math.PI / 2, min: -0.6, max: 0.6 };
+    hb.userData.clamp = null;
+    if (mode === 'R1') {                             // face toward the road and the runner
+      hb.rotation.y = -(Math.PI / 2 - theta);
+    } else {                                         // R2: face toward the road, angled the other way
+      hb.rotation.y = -(Math.PI / 2 + theta);
     }
+    const cx = WALL.inner - 0.15 - (L / 2) * Math.sin(theta);
+    hb.position.set(cx, PAVEMENT.height + 0.02, zc);
   }
 
   _makeBush(material) {
