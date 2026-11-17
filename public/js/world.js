@@ -375,17 +375,17 @@ export class World {
     // Illustrated bus stand on the pavement. It is NOT camera-facing: the art
     // is a 3/4 view, so it stays angled toward the road like a real stand.
     // Never mirrored (the Diva lettering would read backwards).
-    // The picture is wider than the footpath, so it is angled: the end
-    // nearest the player touches the wall, the far end reaches the kerb, and
-    // the face turns toward the road. Nothing of it is ever inside the wall.
+    // Placed like the flower bushes on the right: it lies at ~29° to the
+    // wall line, the end nearest the player at the wall base and the face
+    // turned toward the road, so it sits against the wall with clear
+    // footpath in front. Nothing of it is ever inside the wall.
     const shelter = this._makeBillboard(this.busStandMaterial);
     const h = 3.6;
     const w = h * this.busStandAspect;
-    const span = (PAVEMENT.outer - PAVEMENT.inner) - 0.15;          // usable footpath width
-    const theta = Math.acos(Math.min(1, span / w));
+    const ry = Math.PI / 2 - 0.5;                     // same angle as the right-side bushes
     shelter.scale.set(w, h, 1);
-    shelter.rotation.y = side < 0 ? theta : -theta;
-    const cx = side * (WALL.inner - 0.05 - (w / 2) * Math.cos(theta));
+    shelter.rotation.y = side < 0 ? ry : -ry;
+    const cx = side * (WALL.inner - 0.1 - (w / 2) * Math.cos(ry));
     shelter.position.set(cx, PAVEMENT.height, 0);
     return shelter;
   }
