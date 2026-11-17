@@ -313,26 +313,33 @@ const palette = {};
       const med = [0, 1, 2].map((ch) => { const a = c.map((x) => x[1][ch]).sort((p, q) => p - q); return a[a.length >> 1]; });
       let bd = Infinity; for (const [t, col] of c) { const d = Math.hypot(col[0] - med[0], col[1] - med[1], col[2] - med[2]); if (d < bd) { bd = d; skinUV = t; } }
       console.log('arm skin colour', med); }
-    const capsule = (a, b, ra, rb, bone, segs = 16, cap = 6) => {
+    const capsule = (a, b, ra, rb, bone, segs = 16, cap = 6, look = { uv: null, col: [1, 1, 1] }, hem = 0) => {
       const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]]; const L = Math.hypot(...d); const ax = d.map((x) => x / L);
       const t0 = Math.abs(ax[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0];
       const u1 = [ax[1] * t0[2] - ax[2] * t0[1], ax[2] * t0[0] - ax[0] * t0[2], ax[0] * t0[1] - ax[1] * t0[0]]; const ul = Math.hypot(...u1); for (let k = 0; k < 3; k++) u1[k] /= ul;
       const v1 = [ax[1] * u1[2] - ax[2] * u1[1], ax[2] * u1[0] - ax[0] * u1[2], ax[0] * u1[1] - ax[1] * u1[0]];
       const prof = [];   // [axial offset, radius, normal axial, normal radial]
       for (let k = 0; k <= cap; k++) { const ph = -Math.PI / 2 + (k / cap) * Math.PI / 2; prof.push([ra * Math.sin(ph), ra * Math.cos(ph), Math.sin(ph), Math.cos(ph)]); }
-      for (let k = 0; k <= cap; k++) { const ph = (k / cap) * Math.PI / 2; prof.push([L + rb * Math.sin(ph), rb * Math.cos(ph), Math.sin(ph), Math.cos(ph)]); }
+      if (hem) { prof.push([L, rb, 0, 1], [L + 0.004, rb * 0.97, 0.6, 0.8], [L + 0.006, hem, 1, 0]); }   // sleeve: rolled hem, then a flat lip in to the arm
+      else for (let k = 0; k <= cap; k++) { const ph = (k / cap) * Math.PI / 2; prof.push([L + rb * Math.sin(ph), rb * Math.cos(ph), Math.sin(ph), Math.cos(ph)]); }
       const base = next;
       for (const [o, r, na, nr] of prof) for (let j = 0; j < segs; j++) { const th = (j / segs) * Math.PI * 2; const cs = Math.cos(th), sn = Math.sin(th);
         const rad = [u1[0] * cs + v1[0] * sn, u1[1] * cs + v1[1] * sn, u1[2] * cs + v1[2] * sn];
         nP.push(a[0] + ax[0] * o + rad[0] * r, a[1] + ax[1] * o + rad[1] * r, a[2] + ax[2] * o + rad[2] * r);
         const nn = [ax[0] * na + rad[0] * nr, ax[1] * na + rad[1] * nr, ax[2] * na + rad[2] * nr]; const nl = Math.hypot(...nn) || 1; nN.push(nn[0] / nl, nn[1] / nl, nn[2] / nl);
-        nT2.push(...skinUV); nCol.push(1, 1, 1); nJ.push(bone, 0, 0, 0); nW.push(1, 0, 0, 0); next++; }
+        nT2.push(...(look.uv || skinUV)); nCol.push(...look.col); nJ.push(bone, 0, 0, 0); nW.push(1, 0, 0, 0); next++; }
       for (let k = 0; k < prof.length - 1; k++) for (let j = 0; j < segs; j++) { const j2 = (j + 1) % segs;
         const p00 = base + k * segs + j, p01 = base + k * segs + j2, p10 = base + (k + 1) * segs + j, p11 = base + (k + 1) * segs + j2;
         newTri.push(p00, p01, p11, p00, p11, p10); } };
     for (const [sd, side] of [[1, 'L'], [-1, 'R']]) {
       const sh = [sd * 0.2, 0.3, 0.0], el = J[`forearm_${side}`].p, wr = [sd * 0.252, 0.0, 0.055];
       capsule(sh, el, 0.042, 0.039, names.indexOf(`upperarm_${side}`));
+      // short sleeve over the shoulder: the mesh's own sleeve is fused to the
+      // torso and comes out ragged once the arm is cut free, so the arm wears
+      // a clean shirt-white sleeve that moves with it
+      { const top = J[`upperarm_${side}`].p; const dir = [el[0] - top[0], el[1] - top[1], el[2] - top[2]]; const dl = Math.hypot(...dir);
+        const hemP = [top[0] + dir[0] / dl * 0.135, top[1] + dir[1] / dl * 0.135, top[2] + dir[2] / dl * 0.135];
+        capsule(top, hemP, 0.066, 0.06, names.indexOf(`upperarm_${side}`), 20, 6, { uv: uvWhite, col: palette.shirt.map((x) => Math.min(1, x / whiteLin[0])) }, 0.04); }
       capsule(el, wr, 0.039, 0.033, names.indexOf(`forearm_${side}`));
     } }
   console.log('openings closed:', patched, 'patch triangles:', newTri.length / 3);

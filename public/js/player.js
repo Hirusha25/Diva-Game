@@ -58,6 +58,10 @@ export class Player {
       'upperarm_L', 'forearm_L', 'hand_L', 'thigh_L', 'shin_L', 'foot_L',
       'upperarm_R', 'forearm_R', 'hand_R', 'thigh_R', 'shin_R', 'foot_R']) this.bones[n] = b(n);
     this.hipsRestY = this.bones.hips.position.y;
+    // heel and toe of each foot, in the foot bone's space (model units)
+    const pts = () => [new THREE.Vector3(0, -0.12, -0.05), new THREE.Vector3(0, -0.12, 0.2)];
+    this.footPts = [[this.bones.foot_L, pts()], [this.bones.foot_R, pts()]];
+    this._v = new THREE.Vector3();
     return holder;
   }
 
@@ -87,42 +91,62 @@ export class Player {
 
   /**
    * Pose the skeleton. phase: stride phase; air: 0..1 jump tuck; hit: 0..1 flinch.
-   * Every curve is a smooth function of the phase (no |x| or max(0, x) kinks),
-   * so the cycle flows without snaps at any frame rate.
+   * A sprint cycle: each leg drives the knee up in front, plants, pushes back,
+   * then kicks the heel up behind as it recovers. Every curve is smooth in the
+   * phase. Afterwards the body is lowered/raised so the lower foot meets the
+   * road, which gives the natural bounce of running (down on each landing, up
+   * through push-off).
    */
   _pose(phase, air, hit) {
     const B = this.bones; if (!B) return;
-    const s = Math.sin(phase), c = Math.cos(phase);
     const run = 1 - air;
-    // knee bend peaks as each leg swings through, eases to nearly straight at push-off
-    const flexL = ((1 + Math.cos(phase - 0.5)) / 2) ** 2, flexR = ((1 - Math.cos(phase - 0.5)) / 2) ** 2;
+    const leg = (ph) => {                 // ph: this leg's phase
+      const sn = Math.sin(ph);
+      const thigh = -0.3 - 0.85 * sn;                                  // -1.15 knee up … +0.55 pushed back
+      const kick = ((1 + Math.cos(ph + 0.35)) / 2) ** 2.2;             // heel kick during recovery
+      const shin = 0.22 + 2.05 * kick;
+      const foot = 0.25 * Math.cos(ph) - 0.35 * kick + 0.12;           // toe-off, then foot tucks
+      return [thigh, shin, foot];
+    };
+    const [tL, kL, fL] = leg(phase), [tR, kR, fR] = leg(phase + Math.PI);
+    const s = Math.sin(phase), c = Math.cos(phase);
 
-    // pelvis: two soft bobs per cycle (one per step), gentle twist
-    B.hips.position.y = this.hipsRestY + run * (0.028 * c * c - 0.01) - air * 0.02;
-    B.hips.rotation.set(0, 0.12 * s * run, 0.03 * c * run);
-    // torso leans into the run, counter-twists the hips, head stays steady
-    B.spine.rotation.set(0.1 * run + 0.1 * air - 0.25 * hit + 0.02 * Math.cos(2 * phase) * run, -0.07 * s * run, 0);
-    B.chest.rotation.set(0.06 * run, -0.08 * s * run, -0.02 * c * run);
-    B.neck.rotation.set(-0.06, 0.06 * s * run, 0);
-    B.head.rotation.set(-0.12 * run + 0.2 * hit - 0.02 * Math.cos(2 * phase) * run, 0.07 * s * run, 0.02 * c * run);
+    // pelvis twists with the legs; shoulders counter-twist (very visible from behind)
+    B.hips.position.y = this.hipsRestY;
+    B.hips.rotation.set(0.05 * run, 0.2 * s * run, 0.05 * c * run);
+    B.spine.rotation.set(0.2 * run + 0.1 * air - 0.25 * hit, -0.14 * s * run, -0.03 * c * run);
+    B.chest.rotation.set(0.1 * run, -0.2 * s * run, -0.03 * c * run);
+    B.neck.rotation.set(-0.12 * run, 0.12 * s * run, 0);
+    B.head.rotation.set(-0.16 * run + 0.2 * hit, 0.1 * s * run, 0.03 * c * run);
 
-    // legs: thigh swing, knee folds through the swing, foot follows
-    B.thigh_L.rotation.set(run * -0.68 * s + air * -1.0, 0, 0.03);
-    B.thigh_R.rotation.set(run * 0.68 * s + air * -0.55, 0, -0.03);
-    B.shin_L.rotation.set(run * (0.18 + 1.15 * flexL) + air * 1.5, 0, 0);
-    B.shin_R.rotation.set(run * (0.18 + 1.15 * flexR) + air * 0.9, 0, 0);
-    B.foot_L.rotation.set(run * (-0.18 * s - 0.2 * flexL + 0.1) + air * 0.3, 0, 0);
-    B.foot_R.rotation.set(run * (0.18 * s - 0.2 * flexR + 0.1) + air * 0.3, 0, 0);
+    B.thigh_L.rotation.set(run * tL + air * -1.0, 0, 0.04);
+    B.thigh_R.rotation.set(run * tR + air * -0.55, 0, -0.04);
+    B.shin_L.rotation.set(run * kL + air * 1.5, 0, 0);
+    B.shin_R.rotation.set(run * kR + air * 0.9, 0, 0);
+    B.foot_L.rotation.set(run * fL + air * 0.3, 0, 0);
+    B.foot_R.rotation.set(run * fR + air * 0.3, 0, 0);
 
-    // arms: boxer's guard swinging opposite the legs, slightly behind the legs'
-    // timing (follow-through); gloves (rigid) stay up in front
-    const guard = -0.55, swing = 0.36, sa = Math.sin(phase - 0.25);
-    B.upperarm_L.rotation.set(guard + run * swing * sa + air * -0.9 + hit * 0.4, 0, 0.16 + air * 0.25);
-    B.upperarm_R.rotation.set(guard - run * swing * sa + air * -0.9 + hit * 0.4, 0, -0.16 - air * 0.25);
-    B.forearm_L.rotation.set(-1.72 + run * 0.12 * sa - air * 0.2, 0, -0.1);
-    B.forearm_R.rotation.set(-1.72 - run * 0.12 * sa - air * 0.2, 0, 0.1);
-    B.hand_L.rotation.set(-0.15 + 0.05 * Math.cos(2 * phase) * run, 0, 0);
-    B.hand_R.rotation.set(-0.15 + 0.05 * Math.cos(2 * phase) * run, 0, 0);
+    // arms: boxer's guard pumping hard, opposite to the legs, slight follow-through
+    const sa = Math.sin(phase - 0.2);
+    B.upperarm_L.rotation.set(-0.5 + run * 0.62 * sa + air * -0.9 + hit * 0.4, 0, 0.2 + air * 0.25);
+    B.upperarm_R.rotation.set(-0.5 - run * 0.62 * sa + air * -0.9 + hit * 0.4, 0, -0.2 - air * 0.25);
+    B.forearm_L.rotation.set(-1.65 - run * 0.3 * Math.max(-0.4, sa) - air * 0.2, 0, -0.12);
+    B.forearm_R.rotation.set(-1.65 - run * 0.3 * Math.max(-0.4, -sa) - air * 0.2, 0, 0.12);
+    B.hand_L.rotation.set(-0.15, 0, 0);
+    B.hand_R.rotation.set(-0.15, 0, 0);
+
+    this._ground(run);
+  }
+
+  /** Raise/lower the body so the lowest heel or toe touches the road (on the ground only). */
+  _ground(run) {
+    if (!this.footPts) return;
+    this.body.position.y = 0;
+    this.group.updateMatrixWorld(true);
+    let min = Infinity;
+    for (const [bone, pts] of this.footPts) for (const p of pts) { this._v.copy(p).applyMatrix4(bone.matrixWorld); min = Math.min(min, this._v.y); }
+    const off = -(min - this.group.position.y);
+    this.body.position.y = off * run;
   }
 
   update(dt, speed) {
@@ -154,7 +178,6 @@ export class Player {
 
     if (this.bones) {
       this._pose(this.runTime, air, hit);
-      this.body.position.y = 0;
       // lean into lane changes, from the sideways velocity, eased
       const leanT = THREE.MathUtils.clamp(-this.vx * 0.022, -0.2, 0.2);
       this.lean += (leanT - this.lean) * Math.min(1, dt * 10);
