@@ -220,6 +220,24 @@ for (let it = 0; it < ITER; it++) { const N = new Float32Array(nU * nB);
     for (let b = 0; b < nB; b++) N[base + b] /= tot; }
   W = N; }
 
+// ------------------------------------------------------------- body weight
+// The model reads thin in the game, so the torso and legs are filled out:
+// each vertex moves away from its bone's axis by the bone's factor (blended
+// by the skin weights, so joints stay smooth). Head, gloves and shoes keep
+// their shape; the rebuilt arms and sleeves are thickened to match below.
+const BULK = Number(process.env.BULK || 1.7);
+const bulkOf = { hips: 1.18, spine: 1.18, chest: 1.15, neck: 1.05, thigh_L: 1.2, thigh_R: 1.2, shin_L: 1.12, shin_R: 1.12 };
+const ARM_BULK = 1 + 0.15 * BULK;
+{ const disp = new Float32Array(nU * 3);
+  for (let u = 0; u < nU; u++) { const q = [upos[u * 3], upos[u * 3 + 1], upos[u * 3 + 2]];
+    for (let b = 0; b < nB; b++) { const w = W[u * nB + b]; const k = bulkOf[names[b]]; if (!w || !k) continue;
+      const c = closest(q, J[names[b]].p, J[names[b]].tail); const f = (k - 1) * BULK * w;
+      disp[u * 3] += (q[0] - c[0]) * f; disp[u * 3 + 2] += (q[2] - c[2]) * f;
+    } }
+  for (let u = 0; u < nU; u++) for (let a = 0; a < 3; a++) upos[u * 3 + a] += disp[u * 3 + a];
+  for (let i = 0; i < nV; i++) { const u = uid[i]; for (let a = 0; a < 3; a++) pos[i * 3 + a] = upos[u * 3 + a]; P.setElement(i, [pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]]); }
+  console.log('body filled out x', BULK); }
+
 // ------------------------------------------------------------- write skin
 const joints = new Uint16Array(nV * 4), weights = new Float32Array(nV * 4);
 for (let i = 0; i < nV; i++) { const u = uid[i]; const arr = []; for (let b = 0; b < nB; b++) if (W[u * nB + b] > 0.01) arr.push([W[u * nB + b], b]);
@@ -333,14 +351,14 @@ const palette = {};
         newTri.push(p00, p01, p11, p00, p11, p10); } };
     for (const [sd, side] of [[1, 'L'], [-1, 'R']]) {
       const sh = [sd * 0.2, 0.3, 0.0], el = J[`forearm_${side}`].p, wr = [sd * 0.252, 0.0, 0.055];
-      capsule(sh, el, 0.042, 0.039, names.indexOf(`upperarm_${side}`));
+      capsule(sh, el, 0.042 * ARM_BULK, 0.039 * ARM_BULK, names.indexOf(`upperarm_${side}`));
       // short sleeve over the shoulder: the mesh's own sleeve is fused to the
       // torso and comes out ragged once the arm is cut free, so the arm wears
       // a clean shirt-white sleeve that moves with it
       { const top = J[`upperarm_${side}`].p; const dir = [el[0] - top[0], el[1] - top[1], el[2] - top[2]]; const dl = Math.hypot(...dir);
         const hemP = [top[0] + dir[0] / dl * 0.135, top[1] + dir[1] / dl * 0.135, top[2] + dir[2] / dl * 0.135];
-        capsule(top, hemP, 0.066, 0.06, names.indexOf(`upperarm_${side}`), 20, 6, { uv: uvWhite, col: palette.shirt.map((x) => Math.min(1, x / whiteLin[0])) }, 0.04); }
-      capsule(el, wr, 0.039, 0.033, names.indexOf(`forearm_${side}`));
+        capsule(top, hemP, 0.066 * ARM_BULK, 0.06 * ARM_BULK, names.indexOf(`upperarm_${side}`), 20, 6, { uv: uvWhite, col: palette.shirt.map((x) => Math.min(1, x / whiteLin[0])) }, 0.04 * ARM_BULK); }
+      capsule(el, wr, 0.039 * ARM_BULK, 0.034 * ARM_BULK, names.indexOf(`forearm_${side}`));
     } }
   console.log('openings closed:', patched, 'patch triangles:', newTri.length / 3);
   const grow = (acc, extra, T) => { const a = acc.getArray(); const o = new T(a.length + extra.length); o.set(a); o.set(extra, a.length); acc.setArray(o); };

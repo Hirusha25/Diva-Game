@@ -18,6 +18,7 @@ const TAU = Math.PI * 2;
 for (const k of [THIGH, KNEE, FOOT_WORLD, FOOT_SWING]) k.sort((a, b) => a[0] - b[0]);
 function loopSpline(keys, ph) {
   ph = ((ph % TAU) + TAU) % TAU;
+  if (ph < keys[0][0]) ph += TAU;          // before the first key: it lies after the last one
   const n = keys.length; let i = n - 1; for (let k = 0; k < n; k++) if (keys[k][0] <= ph) i = k;
   const key = (j) => { const w = Math.floor(j / n); const kk = keys[((j % n) + n) % n]; return [kk[0] + w * TAU, kk[1]]; };
   const p0 = key(i - 1), p1 = key(i), p2 = key(i + 1), p3 = key(i + 2);
@@ -194,8 +195,8 @@ export class Player {
     const aw = Math.sin(phase - 3.0);                 // +1: left arm forward
     const armL = -0.15 - 0.75 * aw, armR = -0.15 + 0.75 * aw;
     const elbow = (sw) => -1.35 - 0.35 * Math.max(0, sw) + 0.15 * Math.max(0, -sw);   // more bent in front
-    B.upperarm_L.rotation.set(run * armL + air * -1.1 + hit * 0.4, 0, 0.14 + air * 0.35);
-    B.upperarm_R.rotation.set(run * armR + air * -1.1 + hit * 0.4, 0, -0.14 - air * 0.35);
+    B.upperarm_L.rotation.set(run * armL + air * -1.1 + hit * 0.4, 0, 0.2 + air * 0.3);
+    B.upperarm_R.rotation.set(run * armR + air * -1.1 + hit * 0.4, 0, -0.2 - air * 0.3);
     B.forearm_L.rotation.set(run * elbow(aw) + air * -1.3, 0, -0.08);
     B.forearm_R.rotation.set(run * elbow(-aw) + air * -1.3, 0, 0.08);
     B.hand_L.rotation.set(-0.1, 0, 0);
