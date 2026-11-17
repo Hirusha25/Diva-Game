@@ -382,10 +382,10 @@ export class World {
     const shelter = this._makeBillboard(this.busStandMaterial);
     const h = 3.6;
     const w = h * this.busStandAspect;
-    const ry = Math.PI / 2 - 0.5;                     // same angle as the right-side bushes
+    const ry = Math.PI / 2 - 0.42;                    // ~24° to the wall line, so it fits between the soil strip and the kerb
     shelter.scale.set(w, h, 1);
     shelter.rotation.y = side < 0 ? ry : -ry;
-    const cx = side * (WALL.inner - 0.65 - (w / 2) * Math.cos(ry));   // ~0.65 m off the wall, outer edge just inside the kerb
+    const cx = side * (WALL.inner - 0.88 - (w / 2) * Math.cos(ry));   // stands on the paving, clear of the 0.75 m soil strip
     shelter.position.set(cx, PAVEMENT.height, 0);
     return shelter;
   }
@@ -649,9 +649,39 @@ export class World {
         bush.visible = rng() < 0.8;
       }
     });
-    // ---- Single-bush test: all other bushes off, one long bush placed after the stop.
+    // ---- Older bushes are off, except the white bush (bush-1) on the LEFT wall,
+    // restored exactly as approved earlier: on the soil strip at the wall base,
+    // full face toward the runner (turn limited to ±32°), never inside the wall.
     for (const b of bushes) b.visible = false;
     shadowIdx = 0;
+    {
+      const white = this.bushMaterials[0];
+      const perSideL = BUSHES_FRONT_PER_CHUNK / 2;
+      for (let i = 0; i < BUSHES_FRONT_PER_CHUNK; i += 2) {             // even = left wall
+        const bush = bushes[i];
+        const slot = i / 2;
+        const z = -CHUNK_LENGTH / 2 + (slot + 0.25 + rng() * 0.5) * (CHUNK_LENGTH / perSideL);
+        const blocked = shelterSide === -1 && Math.abs(z - shelterZ) < 7.5;
+        const h = 0.9 + rng() * 0.15;
+        const w = Math.min(h * white.aspect, 1.5);
+        bush.userData.planes.forEach((pl, k) => {
+          pl.material = white.layers[k];
+          pl.visible = k === 2; pl.rotation.x = 0; pl.rotation.y = 0;
+          pl.scale.set(w, h, 1);
+          pl.position.set(-w / 2, 0, 0);
+        });
+        bush.userData.billboard = true;
+        bush.userData.clamp = { centre: Math.PI / 2, min: -0.56, max: 0.56 };
+        bush.userData.shadow.visible = false;
+        const cx = -(WALL.inner - 0.5 * w - 0.08);
+        bush.position.set(cx, PAVEMENT.height + 0.03, z);
+        bush.visible = !blocked && rng() < 0.85;
+        if (bush.visible) {
+          SP.set(cx, PAVEMENT.height + 0.035, z); SQ.identity(); SS.set(w * 0.75, 1, w * 0.5); SM.compose(SP, SQ, SS);
+          chunk.userData.bushShadows.setMatrixAt(shadowIdx++, SM);
+        }
+      }
+    }
     this._placeLongBushes(chunk, rng);
     this._placeBunches(chunk, rng);
     SS.setScalar(0); SP.set(0, -10, 0); SQ.identity(); SM.compose(SP, SQ, SS);
