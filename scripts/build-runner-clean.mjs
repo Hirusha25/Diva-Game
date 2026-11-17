@@ -45,6 +45,41 @@ const body = new Uint8Array(n);
   for (let k = 0; k < ix.length; k += 3) { const vs = [ix[k], ix[k + 1], ix[k + 2]]; if (!vs.every((v) => jointNames[JT.getElement(v, q)[0]] === 'head')) continue;
     for (const v of vs) { UV.getElement(v, t); const x = Math.min(N - 1, Math.floor(t[0] * N)), y = Math.min(N - 1, Math.floor(t[1] * N)); for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { const xx = x + dx, yy = y + dy; if (xx >= 0 && yy >= 0 && xx < N && yy < N) head[yy * N + xx] = 1; } } }
   for (let i = 0; i < n; i++) if (head[i]) body[i] = 0; }
+// every pixel inside some triangle (anything else is gutter between islands)
+const used = new Uint8Array(n);
+{ const UV = prim.getAttribute('TEXCOORD_0'), ix = prim.getIndices().getArray(); const t = [0, 0];
+  for (let k = 0; k < ix.length; k += 3) { const P = [ix[k], ix[k + 1], ix[k + 2]].map((v) => { UV.getElement(v, t); return [t[0] * N, t[1] * N]; });
+    const x0 = Math.max(0, Math.floor(Math.min(P[0][0], P[1][0], P[2][0]))), x1 = Math.min(N - 1, Math.ceil(Math.max(P[0][0], P[1][0], P[2][0])));
+    const y0 = Math.max(0, Math.floor(Math.min(P[0][1], P[1][1], P[2][1]))), y1 = Math.min(N - 1, Math.ceil(Math.max(P[0][1], P[1][1], P[2][1])));
+    const area = (P[1][0] - P[0][0]) * (P[2][1] - P[0][1]) - (P[2][0] - P[0][0]) * (P[1][1] - P[0][1]); if (Math.abs(area) < 1e-9) continue;
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const px = x + 0.5, py = y + 0.5;
+      const w0 = ((P[1][0] - px) * (P[2][1] - py) - (P[2][0] - px) * (P[1][1] - py)) / area, w1 = ((P[2][0] - px) * (P[0][1] - py) - (P[0][0] - px) * (P[2][1] - py)) / area;
+      if (w0 >= 0 && w1 >= 0 && 1 - w0 - w1 >= 0) used[y * N + x] = 1; } } }
+// shirt pieces: triangles (not on the head) whose texels are almost all white
+// fabric or mud. Everything inside them is washed, whatever its colour.
+const shirt = new Uint8Array(n);
+{ const UV = prim.getAttribute('TEXCOORD_0'), JT = prim.getAttribute('JOINTS_0'), ix = prim.getIndices().getArray(); const t = [0, 0], q = [0, 0, 0, 0];
+  const fabricOrMud = (i) => { const [r, g, b] = at(i);
+    if (b > r + 30 && b > g) return false;                                       // blue
+    if (r > 170 && g < 95 && b < 95) return false;                               // red stripe
+    if (r > 170 && g > 140 && b < 110 && r - b > 90) return false;               // yellow stripe
+    if (r > 200 && g > 115 && g < 200 && b > 60 && b < 160 && r - g > 40 && r - b > 85) return false;   // skin
+    return true; };
+  for (let k = 0; k < ix.length; k += 3) {
+    const vs = [ix[k], ix[k + 1], ix[k + 2]];
+    if (vs.some((v) => jointNames[JT.getElement(v, q)[0]] === 'head')) continue;
+    const P = vs.map((v) => { UV.getElement(v, t); return [t[0] * N, t[1] * N]; });
+    const x0 = Math.max(0, Math.floor(Math.min(P[0][0], P[1][0], P[2][0]))), x1 = Math.min(N - 1, Math.ceil(Math.max(P[0][0], P[1][0], P[2][0])));
+    const y0 = Math.max(0, Math.floor(Math.min(P[0][1], P[1][1], P[2][1]))), y1 = Math.min(N - 1, Math.ceil(Math.max(P[0][1], P[1][1], P[2][1])));
+    const area = (P[1][0] - P[0][0]) * (P[2][1] - P[0][1]) - (P[2][0] - P[0][0]) * (P[1][1] - P[0][1]); if (Math.abs(area) < 1e-9) continue;
+    const pix = [];
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const px = x + 0.5, py = y + 0.5;
+      const w0 = ((P[1][0] - px) * (P[2][1] - py) - (P[2][0] - px) * (P[1][1] - py)) / area, w1 = ((P[2][0] - px) * (P[0][1] - py) - (P[0][0] - px) * (P[2][1] - py)) / area;
+      if (w0 >= -0.05 && w1 >= -0.05 && 1 - w0 - w1 >= -0.05) pix.push(y * N + x); }
+    if (!pix.length) continue;
+    const f = pix.filter(fabricOrMud).length / pix.length;
+    if (f > 0.6) for (const i of pix) shirt[i] = 1;
+  } }
 const keep = new Uint8Array(n);
 let kept = 0;
 for (let i = 0; i < n; i++) { if (!body[i]) continue; const [r, g, b] = at(i); const mx = Math.max(r, g, b), mn = Math.min(r, g, b), mean = (r + g + b) / 3;
@@ -67,21 +102,29 @@ const keepAsIs = (r, g, b) =>
   (b > r + 30 && b > g) ||                                   // blue shorts, gloves, socks' stripes
   (r > 170 && g < 95 && b < 95) ||                           // red stripe
   (r > 170 && g > 140 && b < 110 && r - b > 90) ||          // yellow stripe
-  (r > 200 && g > 115 && g < 205 && b > 65 && b < 175 && r - g > 30 && r - b > 55 && !keep[0]);   // skin
+  (r > 200 && g > 115 && g < 200 && b > 60 && b < 160 && r - g > 40 && r - b > 85);   // skin (more orange than any mud halo)
 const out = Buffer.alloc(n * 4);
 for (let i = 0; i < n; i++) { const w = bl[i * 4 + 3] / 255; const [r, g, b] = at(i);
   const mud = mask[i] > 0.01;
   let c = mud && w > 0.02 ? [bl[i * 4] / w, bl[i * 4 + 1] / w, bl[i * 4 + 2] / w] : [r, g, b];
   let a = Math.min(1, mask[i]);
-  if (body[i] && (mud || !keepAsIs(r, g, b))) {
+  if (shirt[i] || (body[i] && (mud || !keepAsIs(r, g, b)))) {
     // fabric: neutral, bright white keeping a little of its shading
     const lum = 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2];
-    const v = Math.min(250, 236 + (lum - 225) * 0.35);
+    const v = Math.min(250, 240 + (lum - 225) * 0.15);
     c = [v, v, Math.min(255, v + 4)];
     a = 1;
   }
   for (let k = 0; k < 3; k++) out[i * 4 + k] = Math.min(255, Math.max(0, Math.round(c[k])));
   out[i * 4 + 3] = Math.max(1, Math.round(a * 255)); }   // never 0: keeps the encoder from dropping the colour
+// pad the gutters between pieces from the nearest piece (4 px), so texture
+// filtering at a piece's edge only ever sees that piece's own clean colour
+{ const filled = Uint8Array.from(used); let src = out;
+  for (let it = 0; it < 4; it++) { const nx = Buffer.from(src); const nf = Uint8Array.from(filled);
+    for (let y = 1; y < N - 1; y++) for (let x = 1; x < N - 1; x++) { const i = y * N + x; if (filled[i]) continue;
+      for (const j of [i - 1, i + 1, i - N, i + N]) if (filled[j]) { for (let k = 0; k < 4; k++) nx[i * 4 + k] = src[j * 4 + k]; nf[i] = 1; break; } }
+    src = nx; filled.set(nf); }
+  src.copy(out); }
 const file = 'public/assets/textures/runner-clean.webp';
 await sharp(out, { raw: { width: N, height: N, channels: 4 } }).webp({ quality: 85, alphaQuality: 80 }).toFile(file);
 console.log('mud pixels found:', kept, '→', file, ((await stat(file)).size / 1024).toFixed(0) + ' KB');
