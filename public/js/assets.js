@@ -54,8 +54,8 @@ export async function loadAssets(onProgress = () => {}) {
   const packs = await Promise.all(Object.entries(packUrls).map(async ([name, url]) => ({ name, map: await loadTex(url), aspect: packMeta[name].aspect })));
   const runnerClean = await loadTex('assets/textures/runner-clean.webp');
   const stainMeta = await loadJson('assets/textures/stains/stains.json');
-  const stainUrls = { 'mud-1': ['assets/textures/stains/mud-1.webp', 2.7], 'mud-2': ['assets/textures/stains/mud-2.webp', 2.4], 'sand-1': ['assets/textures/stains/sand-1.webp', 2.4] };   // width on the road, metres
-  const stains = await Promise.all(Object.entries(stainUrls).map(async ([name, [url, width]]) => ({ name, width, map: await loadTex(url), aspect: stainMeta[name].aspect })));
+  const stainUrls = { 'mud-1': ['assets/textures/stains/mud-1.webp', 2.4, 3.2], 'mud-2': ['assets/textures/stains/mud-2.webp', 2.3, 3.0], 'sand-1': ['assets/textures/stains/sand-1.webp', 2.3, 2.9] };   // width and length on the road, metres
+  const stains = await Promise.all(Object.entries(stainUrls).map(async ([name, [url, width, length]]) => ({ name, width, length, map: await loadTex(url), aspect: stainMeta[name].aspect })));
   // sharp artwork pasted onto the bus stop's panels (scripts/build-busstop-art.mjs)
   // (full literal paths: the single-file build inlines textures by path)
   const [bsPoster, bsSign, bsRoof] = await Promise.all(['assets/textures/busstop/poster.webp', 'assets/textures/busstop/sign.webp', 'assets/textures/busstop/roof.webp'].map((u) => loadTex(u)));

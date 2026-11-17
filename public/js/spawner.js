@@ -29,10 +29,13 @@ export class Spawner {
     }));
     this.starMat = additive(starTexture(), 0xffffff, 0.95);
     this.sparkles = new Sparkles(this.group, 60);
-    // stains: the mud / sand puddle pictures (scripts/build-stains.mjs), each a
-    // camera-facing picture standing on the road, about a lane wide
-    this.stainKinds = stains.map((st) => ({ aspect: st.aspect, width: st.width,
-      mat: new THREE.SpriteMaterial({ map: st.map, transparent: true, alphaTest: 0.08, depthWrite: false, toneMapped: false }) }));
+    // stains: the mud / sand puddle pictures (scripts/build-stains.mjs) laid
+    // flat on the road. The pictures were shot from a low angle (squashed top
+    // to bottom), so each is stretched back to the puddle's real length.
+    this.stainGeo2 = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+    this.stainKinds = stains.map((st) => ({ width: st.width, length: st.length,
+      mat: new THREE.MeshBasicMaterial({ map: st.map, transparent: true, alphaTest: 0.08, depthWrite: false, toneMapped: false,
+        polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }) }));
     this.stainGeo = new THREE.CircleGeometry(0.75, 18).rotateX(-Math.PI / 2).scale(1.35, 1, 1);
     this.stainMat = new THREE.MeshStandardMaterial({ color: 0x5a3b16, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2 });
     this.time = 0;
@@ -91,10 +94,9 @@ export class Spawner {
       mesh.position.y = PACK_Y;
     } else if (this.stainKinds.length) {
       const k = this.stainKinds[Math.floor(Math.random() * this.stainKinds.length)];
-      mesh = new THREE.Sprite(k.mat);
-      mesh.center.set(0.5, 0.06);                      // the puddle's front edge sits on the road
-      mesh.scale.set(k.width, k.width / k.aspect, 1);
-      mesh.position.y = 0.01;
+      mesh = new THREE.Mesh(this.stainGeo2, k.mat);   // flat on the road, picture's near edge toward the runner
+      mesh.scale.set(k.width * (Math.random() < 0.5 ? 1 : -1), 1, k.length);
+      mesh.position.y = 0.02; mesh.renderOrder = 1;
     } else {
       mesh = new THREE.Mesh(this.stainGeo, this.stainMat);
       mesh.position.y = 0.015;
@@ -144,7 +146,7 @@ export class Spawner {
       if (it.hit) continue;
       const dz = Math.abs(it.mesh.position.z);
       const dx = Math.abs(it.mesh.position.x - player.x);
-      if (dz < 0.9 && dx < LANE_WIDTH * 0.5) {
+      if (dz < (it.kind === 'stain' ? 1.3 : 0.9) && dx < LANE_WIDTH * 0.5) {   // puddles are longer than a pack
         if (it.kind === 'pack') {
           it.hit = true; it.collectT = 0; events.pickups++;
           this.sparkles.burst(it.mesh.position, 9, it.mesh.userData.color, 2.2, 0.4);
