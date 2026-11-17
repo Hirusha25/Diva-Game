@@ -177,7 +177,7 @@ export class Player {
     const yaw = 0.13 * s * run;                       // hips swing with the legs
     B.hips.rotation.set(tilt, yaw, roll);
     // shoulders counter-twist against the hips and the torso rocks with each step
-    const spYaw = -0.12 * s * run, spRoll = -0.045 * c * run, chYaw = -0.2 * s * run, chRoll = -0.05 * c * run;
+    const spYaw = -0.12 * s * run, spRoll = -0.045 * c * run, chYaw = -0.16 * s * run, chRoll = -0.045 * c * run;
     const pulse = 0.05 * Math.cos(2 * (phase - 3.45)) * run;   // dips forward as each foot lands
     B.spine.rotation.set(0.26 * run + pulse + 0.1 * air - 0.25 * hit, spYaw, spRoll);   // leaning into the run
     B.chest.rotation.set(0.1 * run, chYaw, chRoll);
@@ -201,10 +201,12 @@ export class Player {
     const raw = Math.sin(phase - 3.0);                                  // +1: left arm forward
     const aw = Math.sign(raw) * Math.abs(raw) ** 0.6;
     const shYaw = yaw + spYaw + chYaw, shRoll = roll + spRoll + chRoll;
-    const swingL = 0.15 - 1.0 * aw, swingR = 0.15 + 1.0 * aw;          // -0.85 forward … +1.15 back
-    const elbow = (f) => -1.4 - 0.35 * Math.max(0, f) + 0.45 * Math.max(0, -f);   // f = +1 forward
-    B.upperarm_L.rotation.set(run * swingL + air * -1.1 + hit * 0.4, -shYaw * run, 0.22 - shRoll + air * 0.3);
-    B.upperarm_R.rotation.set(run * swingR + air * -1.1 + hit * 0.4, -shYaw * run, -0.22 - shRoll - air * 0.3);
+    const swingL = 0.2 - 0.85 * aw, swingR = 0.2 + 0.85 * aw;          // -0.65 forward … +1.05 back
+    const elbow = (f) => -1.3 - 0.12 * Math.max(0, f) + 0.35 * Math.max(0, -f);   // ~85° in front (glove at chest, not the face), opens behind
+    const out = (f) => 0.1 * Math.max(0, -f);                                       // back swing passes beside the hip, not behind it
+    // the arms go with a quarter of the shoulder turn (they hang from the shoulders) but never swing across the body
+    B.upperarm_L.rotation.set(run * swingL + air * -1.1 + hit * 0.4, -0.75 * shYaw * run, 0.2 + out(aw) - 0.75 * shRoll + air * 0.3);
+    B.upperarm_R.rotation.set(run * swingR + air * -1.1 + hit * 0.4, -0.75 * shYaw * run, -0.2 - out(-aw) - 0.75 * shRoll - air * 0.3);
     B.forearm_L.rotation.set(run * elbow(aw) + air * -1.3, 0, -0.08);
     B.forearm_R.rotation.set(run * elbow(-aw) + air * -1.3, 0, 0.08);
     B.hand_L.rotation.set(-0.1, 0, 0);
