@@ -35,7 +35,7 @@ for (const [key, n, width] of [['panel', 5, 1000], ['header', 6, 800], ['divider
 
 // input fields: paint over the placeholder text with the field's own empty
 // fill, blended across from the clean columns on either side of the text
-for (const [key, n, textEnd] of [['fieldName', 8, 0.46], ['fieldPhone', 7, 0.6]]) {
+for (const [key, n, textEnd] of [['fieldName', 8, 0.93], ['fieldPhone', 7, 0.93]]) {   // to the right end: also evens out the art's lighter band
   const t = await trimmed(n);
   const { data, info } = await sharp(t.data).raw().toBuffer({ resolveWithObject: true });
   const W = info.width, C = info.channels, x0 = Math.round(W * 0.2) - 1, x1 = Math.round(W * textEnd) + 1;

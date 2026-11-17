@@ -26,6 +26,9 @@ export class Controls {
 
     window.addEventListener('keydown', (e) => {
       if (!this.enabled || e.repeat) return;
+      // typing in a form (registration, OTP): leave the keys alone
+      const t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
       const map = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'up', KeyW: 'up', Space: 'up', Enter: 'tap' };
       const action = map[e.code];
       if (action) { e.preventDefault(); onAction(action); }

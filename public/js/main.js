@@ -158,7 +158,7 @@ $('form-register').addEventListener('submit', async (e) => {
   if (name.length < 2) { $('reg-name').focus(); return hud.error('reg-error', 'Please enter your full name'); }
   if (phone.replace(/\D/g, '').length < 9) { $('reg-phone').focus(); return hud.error('reg-error', 'Please enter your contact number'); }
   if (!regChoice.gender) return hud.error('reg-error', 'Please select Male or Female');
-  if (!checked('consent-game')) return hud.error('reg-error', 'Please tick the game management consent to play');
+  if (!checked('consent-game')) return hud.error('reg-error', 'Please tick the required consent');
   const btn = $('btn-register'); btn.disabled = true; sound.tap();
   try {
     const r = await api.register(name, phone, { gender: regChoice.gender, consentGame: true, consentMarketing: checked('consent-marketing') });
