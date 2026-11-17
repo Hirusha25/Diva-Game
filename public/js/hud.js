@@ -60,8 +60,11 @@ export class Hud {
     this.lives.textContent = `${Math.max(0, lives)}/${this.maxLives || lives}`;
   }
 
-  flash(text, ms = 700) {
+  /** kind: pack | bonus | stain | dust | bus (colour of the pop-up) */
+  flash(text, ms = 700, kind = 'pack') {
     this.toast.textContent = text;
+    this.toast.className = `toast t-${kind}`;
+    void this.toast.offsetWidth;
     this.toast.classList.add('show');
     clearTimeout(this._toastTimer);
     this._toastTimer = setTimeout(() => this.toast.classList.remove('show'), ms);

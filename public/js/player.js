@@ -62,7 +62,8 @@ export class Player {
     // shirt dirt: 1 = muddy (as modelled), 0 = clean. Diva packs wash it,
     // stains bring it back (see clean() / stain()).
     this.dirt = 1; this.dirtShown = 1; this.shine = 0; this.twinkleT = 0;
-    this.shirtU = { uDirt: { value: 1 }, uShine: { value: 0 }, uCleanMap: { value: cleanMap } };
+    this.shirtU = { uDirt: { value: 1 }, uShine: { value: 0 }, uDull: { value: 0 }, uCleanMap: { value: cleanMap } };
+    this.dull = 0;
     this.body = model ? this._rigged(model) : this._placeholderBody();
     this.group.add(this.body);
     this.sparkles = new Sparkles(this.group, 36);
@@ -119,10 +120,13 @@ export class Player {
     U.uCleanMap.value.flipY = false;          // glTF texture convention
     mat.onBeforeCompile = (sh) => {
       Object.assign(sh.uniforms, U);
-      sh.fragmentShader = 'uniform sampler2D uCleanMap; uniform float uDirt; uniform float uShine;\n' + sh.fragmentShader
+      sh.fragmentShader = 'uniform sampler2D uCleanMap; uniform float uDirt; uniform float uShine; uniform float uDull;\n' + sh.fragmentShader
         .replace('#include <map_fragment>', `#include <map_fragment>
           vec4 cleanTx = texture2D(uCleanMap, vMapUv);
-          diffuseColor.rgb = mix(diffuseColor.rgb, cleanTx.rgb, cleanTx.a * (1.0 - uDirt));`)
+          diffuseColor.rgb = mix(diffuseColor.rgb, cleanTx.rgb, cleanTx.a * (1.0 - uDirt));
+          // bus dust: a soft, sandy-grey film over everything (colour drained, a little darker)
+          float dl = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11));
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(dl) * vec3(0.92, 0.86, 0.76) * 0.86 + vec3(0.05, 0.045, 0.04), uDull * 0.75);`)
         .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
           totalEmissiveRadiance += diffuseColor.rgb * uShine;`);
     };
@@ -132,7 +136,7 @@ export class Player {
 
   /** a Diva pack: wash part of the dirt away, flash and sparkle */
   clean(amount = 0.25) {
-    this.dirt = Math.max(0, this.dirt - amount);
+    this.dirt = Math.max(0, this.dirt - amount); this.dull = Math.max(0, this.dull - 0.6);
     this.shine = 1;
     const chest = new THREE.Vector3(0, RUNNER_SCALE * 1.25, 0.2);
     this.sparkles.burst(chest, 8, 0xffffff, 1.6, 0.45);
@@ -146,9 +150,9 @@ export class Player {
     this.mud.burst(new THREE.Vector3(0, RUNNER_SCALE * 0.9, 0.3), 16, 0x5a3212, 2.4, 0.5);   // mud splashes up onto him
   }
 
-  /** ran through bus smoke: some dust settles on the shirt */
-  dust(amount = 0.4) {
-    this.dirt = Math.min(1, this.dirt + amount); this.shine = 0;
+  /** ran through bus smoke: he goes dusty and dull (fades as he runs on, or with a pack) */
+  dust(amount = 0.3) {
+    this.dirt = Math.min(1, this.dirt + amount); this.shine = 0; this.dull = 1; this.dustT = 0;
     this.dust3 = this.dust3 || new Sparkles(this.group, 18, true);
     this.dust3.keepColor = true; for (const it of this.dust3.items) it.s.material.color.set(0x8a7d6c);
     this.dust3.burst(new THREE.Vector3(0, RUNNER_SCALE * 1.2, 0.3), 14, 0x8a7d6c, 1.4, 0.6);
@@ -158,6 +162,14 @@ export class Player {
   get cleanliness() { return 1 - this.dirtShown; }
 
   _updateShirt(dt) {
+    // dust film fades over ~6 s; dust keeps drifting off him while it lasts
+    if (this.dull > 0) {
+      this.dull = Math.max(0, this.dull - dt / 6);
+      this.dustT = (this.dustT || 0) - dt;
+      if (this.dustT <= 0 && this.dust3) { this.dustT = 0.12;
+        this.dust3.twinkle(new THREE.Vector3((Math.random() - 0.5) * RUNNER_SCALE * 0.7, RUNNER_SCALE * (0.5 + Math.random() * 1.0), 0.3), 0.35 + 0.35 * this.dull); }
+    }
+    this.shirtU.uDull.value = this.dull;
     this.dirtShown += (this.dirt - this.dirtShown) * Math.min(1, dt * (this.dirt > this.dirtShown ? 14 : 5));
     this.shine = Math.max(0, this.shine - dt * 2.2);
     const spotless = this.dirtShown < 0.05;
@@ -192,7 +204,7 @@ export class Player {
 
   reset() {
     this.lane = 1; this.x = 0; this.vx = 0; this.lean = 0; this.jumpT = -1; this.height = 0; this.hitT = -1;
-    this.dirt = this.dirtShown = 1; this.shine = 0;
+    this.dirt = this.dirtShown = 1; this.shine = 0; this.dull = 0;
     this.group.position.set(0, 0, 0);
   }
 

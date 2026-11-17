@@ -1,5 +1,5 @@
 /**
- * Parked bus, exhaust smoke and the flower-bubble pack icon
+ * Parked bus, exhaust smoke, the flower-bubble icon and the shirt-meter tees
  * (assets/raw/props2, transparent backgrounds): trimmed and resized.
  *   npm run props2      (node scripts/build-props2.mjs)
  * The shirt meter and HUD row pictures in that folder are design references.
@@ -14,6 +14,8 @@ for (const [name, out, width] of [
   ['bus', 'public/assets/textures/props2/bus.webp', 1024],
   ['smoke', 'public/assets/textures/props2/smoke.webp', 768],
   ['flower-bubble', 'public/assets/ui/flower-bubble.webp', 160],
+  ['shirt-clean', 'public/assets/ui/shirt-clean.webp', 120],
+  ['shirt-dirty', 'public/assets/ui/shirt-dirty.webp', 120],
 ]) {
   const t = await sharp(`${RAW}/${name}.webp`).ensureAlpha().trim({ threshold: 2 }).toBuffer({ resolveWithObject: true });
   await sharp(t.data).resize({ width }).webp({ quality: 88, alphaQuality: 90 }).toFile(out);

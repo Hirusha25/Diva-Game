@@ -30,6 +30,9 @@ export class Spawner {
       glow: additive(glowTexture(), PACK_GLOW[p.name] ?? 0xffffff, 0.5),
     }));
     this.starMat = additive(starTexture(), 0xffffff, 0.95);
+    if (props.bonus) { this.bonusMap = props.bonus;
+      this.bonusMat = new THREE.SpriteMaterial({ map: props.bonus, transparent: true, depthWrite: false, toneMapped: false });
+      this.bonusGlow = additive(glowTexture(), 0x7fe0ff, 0.55); }
     this.sparkles = new Sparkles(this.group, 60);
     // stains: the mud / sand puddle pictures (scripts/build-stains.mjs) laid
     // flat on the road. The pictures were shot from a low angle (squashed top
@@ -66,6 +69,8 @@ export class Spawner {
   _spawnPattern() {
     const z = SPAWN_Z;
     const r = Math.random();
+    // rare bonus: the flower bubble, floating a little higher over a lane
+    if (this.bonusMap && Math.random() < 0.09) this._spawn('bonus', Math.floor(Math.random() * LANE_COUNT), z - 12);
     if (r < 0.45) {
       // A line of packs in one lane
       const lane = Math.floor(Math.random() * LANE_COUNT);
@@ -96,6 +101,7 @@ export class Spawner {
   _blockedByBus(kind, lane, z) {
     for (const b of this.buses) { const rear = b.mesh.position.z;
       if (z < rear + 6 && z > rear - BUS.length - 4 && (kind === 'stain' || lane === 2)) return true; }
+    if (kind === 'bonus') return false;
     return false;
   }
 
@@ -114,6 +120,14 @@ export class Spawner {
       mesh.add(glow, pouch, ...stars);
       mesh.userData = { pouch, glow, stars, phase: Math.random() * 10, color: k.glow.color.getHex() };
       mesh.position.y = PACK_Y;
+    } else if (kind === 'bonus') {
+      mesh = new THREE.Group();
+      const icon = new THREE.Sprite(this.bonusMat); icon.scale.setScalar(1.15);
+      const glow = new THREE.Sprite(this.bonusGlow); glow.scale.setScalar(2.4); glow.position.z = -0.5;
+      const stars = [0, 1, 2, 3].map(() => { const st = new THREE.Sprite(this.starMat); st.scale.setScalar(0.001); return st; });
+      mesh.add(glow, icon, ...stars);
+      mesh.userData = { icon, glow, stars, phase: Math.random() * 10, color: 0x7fe0ff, bonus: true };
+      mesh.position.y = PACK_Y + 0.5;
     } else if (this.stainKinds.length) {
       const k = this.stainKinds[Math.floor(Math.random() * this.stainKinds.length)];
       mesh = new THREE.Mesh(this.stainGeo2, k.mat);   // flat on the road, picture's near edge toward the runner
@@ -144,7 +158,12 @@ export class Spawner {
     if (this.world && this.props.bus) for (const c of this.world.chunks) {
       const sh = c.userData.shelters; if (!sh || !sh.right.visible || c.userData.busDone) continue;
       const z = c.position.z + sh.right.position.z;
-      if (z < -95 && z > -170) { c.userData.busDone = true; this._spawnBus(z + 2.8); }
+      if (z < -95 && z > -170) {
+        c.userData.busDone = true;
+        // buses are rare: about one right-side stop in three, never two in a row
+        this.stopsSinceBus = (this.stopsSinceBus ?? 1) + 1;
+        if (this.stopsSinceBus >= 2 && Math.random() < 0.35) { this.stopsSinceBus = 0; this._spawnBus(z + 2.8); }
+      }
     }
     for (const b of this.buses) {
       b.mesh.position.z += distance; updateBus(b.mesh, dt);
@@ -157,7 +176,16 @@ export class Spawner {
     this.buses = this.buses.filter((b) => { if (b.mesh.position.z - BUS.length > DESPAWN_Z) { this.group.remove(b.mesh); return false; } return true; });
     for (const it of this.items) {
       it.mesh.position.z += distance;
-      if (it.kind === 'pack') {
+      if (it.kind === 'bonus' && it.collectT === undefined) {
+        const u = it.mesh.userData, t = this.time + u.phase;
+        it.mesh.position.y = PACK_Y + 0.5 + Math.sin(t * 2.6) * 0.18;
+        u.icon.material.rotation = Math.sin(t * 1.7) * 0.18;
+        u.icon.scale.setScalar(1.15 * (1 + 0.06 * Math.sin(t * 5)));
+        u.glow.material.opacity = 0.45 + 0.15 * Math.sin(t * 4);
+        u.stars.forEach((st, i) => { const a = t * 1.3 + i * 1.57, k = (Math.sin(t * 4.5 + i * 1.9) + 1) / 2;
+          st.position.set(Math.cos(a) * 0.75, Math.sin(a) * 0.75, 0.2); st.scale.setScalar(0.05 + 0.3 * k * k); });
+      }
+      if (it.kind === 'pack' || (it.kind === 'bonus' && it.collectT !== undefined)) {
         const u = it.mesh.userData, t = this.time + u.phase;
         if (it.collectT !== undefined) {
           // sucked into the runner's chest (just in front of him, so it never
@@ -170,6 +198,7 @@ export class Spawner {
           if (k >= 1) it.mesh.visible = false;
           continue;
         }
+        if (!u.pouch) continue;
         u.pouch.rotation.y = t * 2.2;                                   // spin
         it.mesh.position.y = PACK_Y + Math.sin(t * 3.2) * 0.12;          // bob
         u.glow.material.opacity = 0.42 + 0.12 * Math.sin(t * 5);
@@ -184,7 +213,10 @@ export class Spawner {
       const dz = Math.abs(it.mesh.position.z);
       const dx = Math.abs(it.mesh.position.x - player.x);
       if (dz < (it.kind === 'stain' ? 1.3 : 0.9) && dx < LANE_WIDTH * 0.5) {   // puddles are longer than a pack
-        if (it.kind === 'pack') {
+        if (it.kind === 'bonus') {
+          it.hit = true; it.collectT = 0; events.bonus = (events.bonus || 0) + 1;
+          this.sparkles.burst(it.mesh.position, 18, 0x7fe0ff, 3, 0.6);
+        } else if (it.kind === 'pack') {
           it.hit = true; it.collectT = 0; events.pickups++;
           this.sparkles.burst(it.mesh.position, 9, it.mesh.userData.color, 2.2, 0.4);
         } else if (!player.isAirborne) {

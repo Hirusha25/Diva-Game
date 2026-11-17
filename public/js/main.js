@@ -327,18 +327,22 @@ function frame() {
     state.distance += step;
     state.score += step * SCORE_PER_METRE;
     const ev = spawner.update(dt, step, player);
-    if (ev.pickups) { state.score += ev.pickups * SCORE_PICKUP; hud.flash(`+${ev.pickups * SCORE_PICKUP}`); sound.pickup(); player.clean(0.25 * ev.pickups); state.packs += ev.pickups; }
-    if (ev.dust) { player.dust(0.4); hud.flash('Dusty!', 600); sound.lane(1); }
+    if (ev.pickups) { state.score += ev.pickups * SCORE_PICKUP; hud.flash(`+${ev.pickups * SCORE_PICKUP}`, 600, 'pack'); sound.pickup(); player.clean(0.25 * ev.pickups); state.packs += ev.pickups; }
+    if (ev.bonus) { state.score += 50 * ev.bonus; player.dirt = 0; player.clean(0); hud.flash('BONUS +50', 900, 'bonus'); sound.pickup(); sound.pickup(); }
+    if (ev.dust) { player.dust(0.3); hud.flash('Dusty!', 700, 'dust'); sound.lane(1); }
+    if (ev.bus) {   // running into the bus ends the run
+      sound.hit(); player.flinch(); player.stain(); hud.flash('Bus!', 1200, 'bus');
+      state.lives = 0; hud.update(state); endRun(); return;
+    }
     sound.setIntensity((state.speed - SPEED.start) / (SPEED.max - SPEED.start));
     if (state.invulnerable > 0) state.invulnerable -= dt;
-    else if (ev.hits || ev.bus) {
-      if (ev.bus) { player.lane = 1; }   // bounced off the bus back into the middle lane
+    else if (ev.hits) {
       state.lives -= 1;
       state.invulnerable = INVULNERABLE_TIME;
       sound.hit();
       player.flinch();
       player.stain();
-      hud.flash(ev.bus ? 'Bus!' : 'Stained!', 600);
+      hud.flash('Stained!', 700, 'stain');
       if (state.lives <= 0) endRun();
     }
     player.body.visible = state.invulnerable <= 0 || Math.floor(state.invulnerable * 10) % 2 === 0;
