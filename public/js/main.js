@@ -318,7 +318,7 @@ function frame() {
       state.invulnerable = INVULNERABLE_TIME;
       sound.hit();
       player.flinch();
-      player.stain(0.5);
+      player.stain();
       hud.flash('Stained!', 600);
       if (state.lives <= 0) endRun();
     }

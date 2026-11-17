@@ -140,8 +140,9 @@ export class Player {
   }
 
   /** hit a stain: the mud comes back */
-  stain(amount = 0.6) {
-    this.dirt = Math.min(1, this.dirt + amount); this.shine = 0; this.dirtShown = Math.max(this.dirtShown, this.dirt * 0.7);
+  stain() {
+    // all the original mud comes straight back (the model's own stains)
+    this.dirt = 1; this.shine = 0; this.dirtShown = Math.max(this.dirtShown, 0.85);
     this.mud.burst(new THREE.Vector3(0, RUNNER_SCALE * 0.9, 0.3), 16, 0x5a3212, 2.4, 0.5);   // mud splashes up onto him
   }
 

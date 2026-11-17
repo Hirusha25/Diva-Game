@@ -59,13 +59,29 @@ for (let it = 0; it < 4; it++) { const m2 = Float32Array.from(mask); for (let y 
 const prem = Buffer.alloc(n * 4);
 for (let i = 0; i < n; i++) { const w = 1 - Math.min(1, mask[i]); const [r, g, b] = at(i); prem[i * 4] = r * w; prem[i * 4 + 1] = g * w; prem[i * 4 + 2] = b * w; prem[i * 4 + 3] = 255 * w; }
 const bl = await sharp(prem, { raw: { width: N, height: N, channels: 4 } }).blur(9).raw().toBuffer();
+// The clean state: every piece of white fabric on the body (shirt, socks,
+// shoes) is washed to clean white with its shading kept but its tint
+// removed, and the mud is replaced; blue shorts/gloves, the red/yellow
+// stripes and skin are left exactly as they are.
+const keepAsIs = (r, g, b) =>
+  (b > r + 30 && b > g) ||                                   // blue shorts, gloves, socks' stripes
+  (r > 170 && g < 95 && b < 95) ||                           // red stripe
+  (r > 170 && g > 140 && b < 110 && r - b > 90) ||          // yellow stripe
+  (r > 200 && g > 115 && g < 205 && b > 65 && b < 175 && r - g > 30 && r - b > 55 && !keep[0]);   // skin
 const out = Buffer.alloc(n * 4);
 for (let i = 0; i < n; i++) { const w = bl[i * 4 + 3] / 255; const [r, g, b] = at(i);
-  let c = w > 0.02 ? [bl[i * 4] / w, bl[i * 4 + 1] / w, bl[i * 4 + 2] / w] : [r, g, b];
-  // on light, low-colour fabric (the white shirt / socks) wash all the way to clean white
-  { const mx = Math.max(...c), mn = Math.min(...c); if (mx > 140 && (mx - mn) / mx < 0.28) { const k = 0.65; c = c.map((v) => v * (1 - k) + 244 * k); } }
-  for (let k = 0; k < 3; k++) out[i * 4 + k] = Math.min(255, Math.round(c[k]));
-  out[i * 4 + 3] = Math.max(1, Math.round(Math.min(1, mask[i]) * 255)); }   // never 0: keeps the encoder from dropping the colour
+  const mud = mask[i] > 0.01;
+  let c = mud && w > 0.02 ? [bl[i * 4] / w, bl[i * 4 + 1] / w, bl[i * 4 + 2] / w] : [r, g, b];
+  let a = Math.min(1, mask[i]);
+  if (body[i] && (mud || !keepAsIs(r, g, b))) {
+    // fabric: neutral, bright white keeping a little of its shading
+    const lum = 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2];
+    const v = Math.min(250, 236 + (lum - 225) * 0.35);
+    c = [v, v, Math.min(255, v + 4)];
+    a = 1;
+  }
+  for (let k = 0; k < 3; k++) out[i * 4 + k] = Math.min(255, Math.max(0, Math.round(c[k])));
+  out[i * 4 + 3] = Math.max(1, Math.round(a * 255)); }   // never 0: keeps the encoder from dropping the colour
 const file = 'public/assets/textures/runner-clean.webp';
 await sharp(out, { raw: { width: N, height: N, channels: 4 } }).webp({ quality: 85, alphaQuality: 80 }).toFile(file);
 console.log('mud pixels found:', kept, '→', file, ((await stat(file)).size / 1024).toFixed(0) + ' KB');
