@@ -47,6 +47,12 @@ export async function loadAssets(onProgress = () => {}) {
     : fetch(url).then((r) => r.json());
 
   const runnerGltf = await loadGltf('assets/models/runner.glb');
+  // Diva pack collectibles (scripts/build-packs.mjs) and the runner's clean-shirt map
+  const packMeta = await loadJson('assets/textures/packs/packs.json');
+  const packUrls = { 'pack-gardenia': 'assets/textures/packs/pack-gardenia.webp', 'pack-jasmine': 'assets/textures/packs/pack-jasmine.webp',
+    'pack-lotus': 'assets/textures/packs/pack-lotus.webp', 'pack-rose': 'assets/textures/packs/pack-rose.webp', 'pack-sepalika': 'assets/textures/packs/pack-sepalika.webp' };
+  const packs = await Promise.all(Object.entries(packUrls).map(async ([name, url]) => ({ name, map: await loadTex(url), aspect: packMeta[name].aspect })));
+  const runnerClean = await loadTex('assets/textures/runner-clean.webp');
   // sharp artwork pasted onto the bus stop's panels (scripts/build-busstop-art.mjs)
   // (full literal paths: the single-file build inlines textures by path)
   const [bsPoster, bsSign, bsRoof] = await Promise.all(['assets/textures/busstop/poster.webp', 'assets/textures/busstop/sign.webp', 'assets/textures/busstop/roof.webp'].map((u) => loadTex(u)));
@@ -149,6 +155,8 @@ export async function loadAssets(onProgress = () => {}) {
     busStand,
     runner: runnerGltf.scene,
     busStopArt: { poster: bsPoster, sign: bsSign, roof: bsRoof },
+    packs,
+    runnerClean,
     bushLong,
     bushLongs,
     bunches,

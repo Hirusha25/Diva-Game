@@ -269,15 +269,15 @@ try {
   cloudField = new CloudField(assets.clouds);
   scene.add(cloudField.group);
   world = new World(scene, assets);
-  player = new Player(scene, assets.runner);
-  spawner = new Spawner(scene);
+  player = new Player(scene, assets.runner, assets.runnerClean);
+  spawner = new Spawner(scene, assets.packs);
   hud.layoutCover(assets.cover.meta, assets.cover.images);
   hud.setProgress(0.95, REQUIRE_REGISTRATION ? 'Signing in…' : 'Ready');
   me = REQUIRE_REGISTRATION ? await api.me() : null;
   hud.setProgress(1, 'Ready');
   showLobby();
   window.__gameReady = true;       // hook for automated screenshots
-  window.__game = { state, startRun, endRun, player, world, camera, showLobby, showRegister, api, sound };
+  window.__game = { state, startRun, endRun, player, spawner, world, camera, showLobby, showRegister, api, sound };
 } catch (err) {
   hud.setProgress(1, 'Failed to load: ' + err.message);
   console.error(err);
@@ -310,7 +310,7 @@ function frame() {
     state.distance += step;
     state.score += step * SCORE_PER_METRE;
     const ev = spawner.update(dt, step, player);
-    if (ev.pickups) { state.score += ev.pickups * SCORE_PICKUP; hud.flash(`+${ev.pickups * SCORE_PICKUP}`); sound.pickup(); }
+    if (ev.pickups) { state.score += ev.pickups * SCORE_PICKUP; hud.flash(`+${ev.pickups * SCORE_PICKUP}`); sound.pickup(); player.clean(0.25 * ev.pickups); }
     sound.setIntensity((state.speed - SPEED.start) / (SPEED.max - SPEED.start));
     if (state.invulnerable > 0) state.invulnerable -= dt;
     else if (ev.hits) {
@@ -318,6 +318,7 @@ function frame() {
       state.invulnerable = INVULNERABLE_TIME;
       sound.hit();
       player.flinch();
+      player.stain(0.5);
       hud.flash('Stained!', 600);
       if (state.lives <= 0) endRun();
     }

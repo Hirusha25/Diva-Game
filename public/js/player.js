@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { LANE_WIDTH, LANE_COUNT, LANE_SWITCH_SPEED, JUMP } from './config.js';
+import { Sparkles, glowTexture, additive } from './fx.js';
 
 const MODEL_HEIGHT = (typeof window !== 'undefined' && window.__DIVA_RUNNER_H) || 3.2;   // metres, feet to top of hair (larger than life so he reads well on a phone)
 const RUNNER_SCALE = MODEL_HEIGHT / 2;     // the rigged model is 2 units tall, feet at y = -1
@@ -44,7 +45,7 @@ function stanceWeight(ph) {
  *  on a forearm/shin, it bends the elbow forward / the knee backward.
  */
 export class Player {
-  constructor(scene, model = null) {
+  constructor(scene, model = null, cleanMap = null) {
     this.group = new THREE.Group();
     scene.add(this.group);
 
@@ -58,8 +59,16 @@ export class Player {
     this.lean = 0;
     this.strideRate = 8;
 
+    // shirt dirt: 1 = muddy (as modelled), 0 = clean. Diva packs wash it,
+    // stains bring it back (see clean() / stain()).
+    this.dirt = 1; this.dirtShown = 1; this.shine = 0; this.twinkleT = 0;
+    this.shirtU = { uDirt: { value: 1 }, uShine: { value: 0 }, uCleanMap: { value: cleanMap } };
     this.body = model ? this._rigged(model) : this._placeholderBody();
     this.group.add(this.body);
+    this.sparkles = new Sparkles(this.group, 36);
+    this.aura = new THREE.Sprite(additive(glowTexture(), 0xbfefff, 0));
+    this.aura.position.set(0, RUNNER_SCALE * 1.15, 0); this.aura.scale.setScalar(RUNNER_SCALE * 2.6);
+    this.group.add(this.aura);
 
     // Soft blob shadow (no shadow maps on mobile).
     const shadow = new THREE.Mesh(
@@ -78,7 +87,7 @@ export class Player {
     model.scale.setScalar(RUNNER_SCALE);
     model.position.y = RUNNER_SCALE;           // feet on the ground
     model.traverse((o) => {
-      if (o.isMesh) { o.frustumCulled = false; if (o.material) { o.material.side = THREE.FrontSide; } }
+      if (o.isMesh) { o.frustumCulled = false; if (o.material) { o.material.side = THREE.FrontSide; if (this.shirtU.uCleanMap.value) this._washable(o.material); } }
     });
     turn.add(model); holder.add(turn);
     const b = (n) => model.getObjectByName(n);
@@ -103,6 +112,49 @@ export class Player {
     return holder;
   }
 
+  /** blend the texture towards the clean-shirt map as dirt goes down; shine adds a white glow */
+  _washable(mat) {
+    const U = this.shirtU;
+    U.uCleanMap.value.flipY = false;          // glTF texture convention
+    mat.onBeforeCompile = (sh) => {
+      Object.assign(sh.uniforms, U);
+      sh.fragmentShader = 'uniform sampler2D uCleanMap; uniform float uDirt; uniform float uShine;\n' + sh.fragmentShader
+        .replace('#include <map_fragment>', `#include <map_fragment>
+          vec4 cleanTx = texture2D(uCleanMap, vMapUv);
+          diffuseColor.rgb = mix(diffuseColor.rgb, cleanTx.rgb, cleanTx.a * (1.0 - uDirt));`)
+        .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+          totalEmissiveRadiance += diffuseColor.rgb * uShine;`);
+    };
+    mat.customProgramCacheKey = () => 'washable';
+    mat.needsUpdate = true;
+  }
+
+  /** a Diva pack: wash part of the dirt away, flash and sparkle */
+  clean(amount = 0.25) {
+    this.dirt = Math.max(0, this.dirt - amount);
+    this.shine = 1;
+    const chest = new THREE.Vector3(0, RUNNER_SCALE * 1.25, 0.2);
+    this.sparkles.burst(chest, 8, 0xffffff, 1.6, 0.45);
+    if (this.dirt === 0) this.sparkles.burst(chest, 16, 0xffe680, 2.6, 0.7);
+  }
+
+  /** hit a stain: the mud comes back */
+  stain(amount = 0.5) { this.dirt = Math.min(1, this.dirt + amount); this.shine = 0; }
+
+  _updateShirt(dt) {
+    this.dirtShown += (this.dirt - this.dirtShown) * Math.min(1, dt * (this.dirt > this.dirtShown ? 14 : 5));
+    this.shine = Math.max(0, this.shine - dt * 2.2);
+    const spotless = this.dirtShown < 0.05;
+    // fully clean: a soft white aura and a twinkle on the shirt now and then
+    const auraT = spotless ? 0.28 + 0.08 * Math.sin(this.runTime * 0.9) : 0;
+    this.aura.material.opacity += (auraT + this.shine * 0.45 - this.aura.material.opacity) * Math.min(1, dt * 8);
+    if (spotless) { this.twinkleT -= dt; if (this.twinkleT <= 0) { this.twinkleT = 0.18 + Math.random() * 0.25;
+      this.sparkles.twinkle(new THREE.Vector3((Math.random() - 0.5) * RUNNER_SCALE * 0.6, RUNNER_SCALE * (0.95 + Math.random() * 0.55), 0.25), 0.32 + Math.random() * 0.2); } }
+    this.sparkles.update(dt);
+    this.shirtU.uDirt.value = this.dirtShown;
+    this.shirtU.uShine.value = this.shine * 0.55 + (spotless ? 0.08 : 0);
+  }
+
   _placeholderBody() {
     const body = new THREE.Group();
     const blue = new THREE.MeshStandardMaterial({ color: 0x0a4fb5, roughness: 0.6 });
@@ -124,6 +176,7 @@ export class Player {
 
   reset() {
     this.lane = 1; this.x = 0; this.vx = 0; this.lean = 0; this.jumpT = -1; this.height = 0; this.hitT = -1;
+    this.dirt = this.dirtShown = 1; this.shine = 0;
     this.group.position.set(0, 0, 0);
   }
 
@@ -266,6 +319,7 @@ export class Player {
     }
 
     this.group.position.set(this.x, this.height, 0);
+    this._updateShirt(dt);
     this.shadow.position.y = -this.height + 0.02;
     this.shadow.scale.setScalar(Math.max(0.4, 1 - this.height * 0.25));
   }
