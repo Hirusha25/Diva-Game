@@ -130,15 +130,31 @@ img.layer { width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
 @keyframes shine { 0% { background-position: -60% 0; } 45%,100% { background-position: 160% 0; } }
 .layer.start:active { animation: none; transform: scale(.94); }
 
-/* returning player: a small card in the top-left corner, beside the hcb logo */
-.screen.cover > .player-card { position: absolute; z-index: 2; left: calc(10px + env(safe-area-inset-left, 0px)); top: calc(env(safe-area-inset-top, 0px) + 10px);
-  max-width: 34vw; padding: 6px 12px 5px; border-radius: 14px; border: 2px solid #fff; background: rgba(10, 58, 158, .88);
-  box-shadow: 0 4px 12px rgba(0,0,0,.3); text-align: left; color: #fff; }
-.screen.cover > .player-card.hidden, .screen.cover.reg > .player-card { display: none; }
-.player-card .cover-greeting { margin: 0; font: 800 13px/1.25 "Nunito", "Trebuchet MS", system-ui, sans-serif; overflow: hidden; text-overflow: ellipsis; }
-.player-card .cover-greeting b { color: var(--diva-yellow); }
-.player-card .cover-signout { display: block; margin: 3px 0 0; padding: 0; border: 0; background: none; color: #bfe6ff;
-  font: 700 11px/1.2 "Nunito", system-ui, sans-serif; text-decoration: underline; cursor: pointer; }
+/* returning player: a round button in the top-left (same size and style as
+   the sound button) with the initial and a best-score badge; tapping it opens
+   a card in the registration style (glassy panel, cyan rim, Lilita) */
+.screen.cover > .pc-avatar { position: absolute; z-index: 4; left: max(calc(12px + env(safe-area-inset-left, 0px)), calc(50vw - 32.76vh + 12px));   /* poster's left edge on wide screens */ top: calc(env(safe-area-inset-top, 0px) + 10px);
+  width: 40px; height: 40px; padding: 0; border-radius: 50%; border: 2px solid #fff; background: rgba(10, 79, 181, .9); color: #fff; cursor: pointer;
+  font: 400 20px/36px "Lilita One", "Trebuchet MS", sans-serif; text-align: center; box-shadow: 0 3px 0 rgba(0,0,0,.25); }
+.screen.cover > .pc-avatar:active { transform: translateY(2px); box-shadow: none; }
+.pc-avatar .pc-badge { position: absolute; left: 50%; bottom: -9px; transform: translateX(-50%); padding: 2px 6px 1px; border-radius: 99px;
+  background: var(--diva-yellow); color: #0b3a9e; border: 1.5px solid #fff; font: 400 11px/1 "Lilita One", "Trebuchet MS", sans-serif; white-space: nowrap; }
+.screen.cover > .pc-avatar.hidden, .screen.cover.reg > .pc-avatar, .screen.cover.reg > .player-card { display: none; }
+.screen.cover > .player-card { position: absolute; z-index: 5; left: max(calc(12px + env(safe-area-inset-left, 0px)), calc(50vw - 32.76vh + 12px)); top: calc(env(safe-area-inset-top, 0px) + 60px);
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px 16px 12px; border-radius: 16px;
+  background: linear-gradient(#f4f9ff, #d8ebfb); border: 3px solid #29c5f6; box-shadow: 0 0 0 2px rgba(255,255,255,.85), 0 8px 18px rgba(0,0,0,.3);
+  animation: pc-in .16s ease-out; }
+.screen.cover > .player-card.hidden { display: none; }
+@keyframes pc-in { from { opacity: 0; transform: translateY(-6px) scale(.97); } }
+.player-card .pc-text { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.player-card .pc-hi { font: 400 19px/1 "Lilita One", "Trebuchet MS", sans-serif; color: #0b3a9e; letter-spacing: .02em; white-space: nowrap; }
+.player-card .pc-best { display: inline-flex; align-items: baseline; gap: 6px; padding: 4px 11px 3px; border-radius: 99px;
+  background: #0a4fb5; border: 2px solid #fff; box-shadow: 0 2px 0 rgba(0,0,0,.2); color: #fff; }
+.player-card .pc-best .label { font: 800 10px/1 "Nunito", system-ui, sans-serif; text-transform: uppercase; letter-spacing: .08em; opacity: .9; }
+.player-card .pc-best b { font: 400 16px/1 "Lilita One", "Trebuchet MS", sans-serif; color: var(--diva-yellow); }
+.player-card .pc-change { padding: 7px 14px 6px; border-radius: 99px; border: 2px solid #fff; cursor: pointer; background: #e3262e; color: #fff;
+  font: 400 14px/1 "Lilita One", "Trebuchet MS", sans-serif; letter-spacing: .03em; box-shadow: 0 2px 0 rgba(0,0,0,.25); }
+.player-card .pc-change:active { transform: translateY(2px); box-shadow: none; }
 .load-logo { width: min(70vw, 320px); display: block; margin: 0 auto 18px; }
 
 /* Register / OTP as bottom sheets over the cover */

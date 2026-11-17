@@ -88,16 +88,26 @@ const controls = new Controls(canvas, (action) => {
 // ----------------------------------------------------------------- screens
 function showLobby() {
   state.mode = 'lobby';
-  const g = $('lobby-greeting'); g.textContent = '';
-  if (REQUIRE_REGISTRATION && me) {
+  const signedIn = !!(REQUIRE_REGISTRATION && me);
+  if (signedIn) {
     const first = String(me.name).trim().split(/\s+/)[0];
-    g.append(`Hi ${first}!`, document.createElement('br'), 'Best ');
-    const b = document.createElement('b'); b.textContent = String(me.best); g.append(b);
+    $('pc-name').textContent = first;
+    $('pc-initial').textContent = first.charAt(0).toUpperCase();
+    $('pc-best').textContent = $('pc-badge').textContent = String(me.best ?? 0);
   }
-  $('player-card').classList.toggle('hidden', !(REQUIRE_REGISTRATION && me));
+  $('pc-avatar').classList.toggle('hidden', !signedIn);
+  showPlayerCard(false);
   hud.screens.cover.classList.remove('leaving', 'reg');
   hud.show('cover');
 }
+
+// player card: opens from the round player button, closes on any tap elsewhere
+function showPlayerCard(open) {
+  $('player-card').classList.toggle('hidden', !open);
+  $('pc-avatar').setAttribute('aria-expanded', String(open));
+}
+$('pc-avatar').addEventListener('click', (e) => { e.stopPropagation(); sound.tap(); showPlayerCard($('player-card').classList.contains('hidden')); });
+document.addEventListener('pointerdown', (e) => { if (!e.target.closest('#player-card, #pc-avatar')) showPlayerCard(false); });
 
 function pop(el) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
 $('btn-logo').addEventListener('click', () => { pop($('btn-logo')); sound.tap(); });
