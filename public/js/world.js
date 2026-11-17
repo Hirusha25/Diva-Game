@@ -385,7 +385,7 @@ export class World {
     const ry = Math.PI / 2 - 0.5;                     // same angle as the right-side bushes
     shelter.scale.set(w, h, 1);
     shelter.rotation.y = side < 0 ? ry : -ry;
-    const cx = side * (WALL.inner - 0.45 - (w / 2) * Math.cos(ry));   // ~0.45 m off the wall, still clear of the kerb
+    const cx = side * (WALL.inner - 0.65 - (w / 2) * Math.cos(ry));   // ~0.65 m off the wall, outer edge just inside the kerb
     shelter.position.set(cx, PAVEMENT.height, 0);
     return shelter;
   }
