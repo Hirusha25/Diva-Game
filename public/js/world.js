@@ -424,9 +424,15 @@ export class World {
     const look = globalThis.__DIVA_HERO3D || 'none';  // none | A (shadow) | B (layers) | C (curved)
     const K = this.longBushKinds[kind];
     const L = 2.8;                                   // length of the planting along the wall
-    const h = L / K.aspect;
+    const h = (L / K.aspect) * 0.82;                  // a little lower so it hugs the ground
     const theta = 0.5;                               // ~29° off the wall line
+    // Lean back slightly toward the wall so the top no longer climbs it. The
+    // bush stays where it was; it only moves out by whatever the lean needs
+    // beyond the existing gap, so the top never goes into the wall.
+    const LEAN = globalThis.__DIVA_LEAN ?? 0.42;  // ~24°
+    const lean = Math.max(0, h * Math.sin(LEAN) * Math.cos(theta) - 0.1);
     const { front, back, curved, shadow } = hb.userData;
+    for (const m of [front, back, curved]) m.rotation.x = -LEAN;
     front.material = K.front; back.material = K.back; curved.material = K.curved;
     front.visible = look !== 'C';
     back.visible = look === 'B';
@@ -438,8 +444,9 @@ export class World {
     shadow.scale.set(L * 0.95, 1, 0.75); shadow.position.set(0, 0.012, -0.12);
     const depth = look === 'B' ? 0.32 : look === 'C' ? 0.18 : 0;
     hb.rotation.y = -(Math.PI / 2 - theta);
-    const cx = WALL.inner - 0.15 - (L / 2) * Math.sin(theta) - depth * Math.cos(theta);
+    const cx = WALL.inner - 0.15 - (L / 2) * Math.sin(theta) - depth * Math.cos(theta) - lean;
     hb.position.set(cx, PAVEMENT.height + 0.02, zc);
+    shadow.position.x = 0; shadow.position.z = -0.12 - h * Math.sin(LEAN) * 0.5;
     hb.visible = true;
   }
 
@@ -478,10 +485,12 @@ export class World {
         // midway between this long bush and the next one
         const z0 = longZ[i], z1 = i + 1 < longZ.length ? longZ[i + 1] : longZ[i] - spacing;
         const z = (z0 + z1) / 2 + (rng() - 0.5) * 2;
-        const L = 1.25 + rng() * 0.25, h = L / K.aspect;
+        const L = 1.25 + rng() * 0.25, h = (L / K.aspect) * 0.82;
+        const LEAN = globalThis.__DIVA_LEAN ?? 0.42;  // ~24°, see _placeLongBush
         g.userData.face.scale.set(L, h, 1);
-        g.userData.shadow.scale.set(L * 0.9, 1, 0.55); g.userData.shadow.position.set(0, 0.012, -0.05); g.userData.shadow.visible = true;
-        g.position.set(WALL.inner - 0.15 - (L / 2) * Math.sin(theta), PAVEMENT.height + 0.02, z);
+        g.userData.face.rotation.x = -LEAN;
+        g.userData.shadow.scale.set(L * 0.9, 1, 0.55); g.userData.shadow.position.set(0, 0.012, -0.05 - h * Math.sin(LEAN) * 0.5); g.userData.shadow.visible = true;
+        g.position.set(WALL.inner - 0.15 - (L / 2) * Math.sin(theta) - Math.max(0, h * Math.sin(LEAN) * Math.cos(theta) - 0.1), PAVEMENT.height + 0.02, z);
         g.visible = rng() < 0.8;                       // here and there
       } else {
         // on the wall's coping
