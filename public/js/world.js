@@ -11,7 +11,7 @@ const BUSHES_FRONT_PER_CHUNK = 20;  // 10 per side, every ~6 m along the wall ba
 const BUSHES_BACK_PER_CHUNK = 16;   // 8 per side: flowering hedge rising above the wall, between the trees
 const LONG_BUSHES_PER_CHUNK = 5;    // right wall, ~12 m apart
 const GROUND_BUNCHES_PER_CHUNK = 5; // small bunches in the gaps between the long bushes
-const WALLTOP_BUNCHES_PER_CHUNK = 4; // small bunches sitting on the right wall's coping
+const WALLTOP_BUNCHES_PER_CHUNK = 0; // none on the wall top: every bunch sits on the ground
 const BUSH_LEAF_CARDS = 70;         // leaf patches per bush (3x for the big hedge clumps)
 const BUSH_FLOWER_CARDS = 14;
 
