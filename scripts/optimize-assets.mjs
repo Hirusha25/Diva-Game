@@ -183,13 +183,18 @@ const kb = async (f) => ((await stat(f)).size / 1024).toFixed(0) + ' KB';
   await sharp(trimmed.data).extract({ left: 0, top: 0, width: trimmed.info.width, height: keepH })
     .resize({ width: 768 }).webp({ quality: 86, alphaQuality: 92 }).toFile(out);
   const final = await sharp(out).metadata();
-  // Long flowering bush that lies along the wall (single placement next to the stop).
-  const longOut = `${OUT_TEX}/bush-long.webp`;
-  await sharp(`${RAW}/bushes-v3/bush-long.png`).trim({ threshold: 40 }).resize({ width: 900 }).webp({ quality: 85, alphaQuality: 90 }).toFile(longOut);
-  const longMeta = await sharp(longOut).metadata();
+  // Long flowering bushes that lie along the right wall (pink, yellow, purple, orange).
+  const longMeta = {};
+  for (const [key, file] of [['bush-long', 'bush-long'], ['bush-long-2', 'bush-long-2'], ['bush-long-3', 'bush-long-3'], ['bush-long-4', 'bush-long-4']]) {
+    const out = `${OUT_TEX}/${key}.webp`;
+    await sharp(`${RAW}/bushes-v3/${file}.png`).trim({ threshold: 40 }).resize({ width: 900 }).webp({ quality: 85, alphaQuality: 90 }).toFile(out);
+    const m = await sharp(out).metadata();
+    longMeta[key] = { aspect: m.width / m.height };
+    console.log(`${key}: ->`, await kb(out));
+  }
   await writeFile(`${OUT_TEX}/props.json`, JSON.stringify({
     'bus-stand': { aspect: final.width / final.height },
-    'bush-long': { aspect: longMeta.width / longMeta.height },
+    ...longMeta,
   }, null, 2));
   console.log('bus-stand: ->', await kb(out));
 }

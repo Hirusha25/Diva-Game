@@ -9,6 +9,7 @@ import { pavingTexture, grassTexture, wallGridTexture, soilTexture } from './tex
 const TREES_PER_CHUNK = 40;   // 20 per side: 12 in a near row + 8 in a far row filling the gaps
 const BUSHES_FRONT_PER_CHUNK = 20;  // 10 per side, every ~6 m along the wall base
 const BUSHES_BACK_PER_CHUNK = 16;   // 8 per side: flowering hedge rising above the wall, between the trees
+const LONG_BUSHES_PER_CHUNK = 5;    // right wall, ~12 m apart
 const BUSH_LEAF_CARDS = 70;         // leaf patches per bush (3x for the big hedge clumps)
 const BUSH_FLOWER_CARDS = 14;
 
@@ -50,8 +51,16 @@ export class World {
     this.busStandAspect = assets.busStand.aspect;
     this.bushLongMaterial = new THREE.MeshBasicMaterial({ map: assets.bushLong.map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false });
     this.bushLongAspect = assets.bushLong.aspect;
-    this.bushLongBackMaterial = new THREE.MeshBasicMaterial({ map: assets.bushLong.map, color: 0x8e9a80, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false });
-    this.bushLongCurvedMaterial = new THREE.MeshBasicMaterial({ map: assets.bushLong.map, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false });
+    // Four colour variants of the long bush, each with its front / back-layer / curved materials.
+    this.longBushKinds = assets.bushLongs.map((b) => ({
+      aspect: b.aspect,
+      front: new THREE.MeshBasicMaterial({ map: b.map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false }),
+      back: new THREE.MeshBasicMaterial({ map: b.map, color: 0x8e9a80, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false }),
+      curved: new THREE.MeshBasicMaterial({ map: b.map, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false }),
+    }));
+    this.bushLongMaterial = this.longBushKinds[0].front;
+    this.bushLongBackMaterial = this.longBushKinds[0].back;
+    this.bushLongCurvedMaterial = this.longBushKinds[0].curved;
     // Foliage cards for the volumetric bushes (lit, double-sided, alpha-cut).
     const card = (map) => new THREE.MeshLambertMaterial({ map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, emissive: 0x2b4a12, emissiveIntensity: 0.55, emissiveMap: map });
     this.cardMaterials = {
@@ -296,9 +305,14 @@ export class World {
     chunk.add(chunk.userData.shelters.left, chunk.userData.shelters.right);
 
     // One long flowering bush along the wall, right after the bus stop.
-    const heroBush = this._makeHeroBush();
-    chunk.userData.heroBush = heroBush;
-    chunk.add(heroBush);
+    // Long flowering bushes along the right wall (several per block).
+    chunk.userData.longBushes = [];
+    for (let i = 0; i < LONG_BUSHES_PER_CHUNK; i++) {
+      const lb = this._makeHeroBush();
+      chunk.userData.longBushes.push(lb);
+      chunk.add(lb);
+    }
+    chunk.userData.heroBush = chunk.userData.longBushes[0];
 
     // Volumetric bushes: one instanced mesh per card material per chunk.
     const CARDS = BUSH_LEAF_CARDS * (BUSHES_FRONT_PER_CHUNK + BUSHES_BACK_PER_CHUNK * 3);
@@ -384,17 +398,15 @@ export class World {
     return g;
   }
 
-  /** Long bush lying along the RIGHT wall, once per block that has a stop. */
-  _placeHeroBush(chunk, hasStop, stopZ) {
-    const hb = chunk.userData.heroBush;
-    hb.visible = hasStop;
-    if (!hasStop) return;
+  /** Place one long bush on the RIGHT wall at z, using colour variant `kind`. */
+  _placeLongBush(hb, zc, kind) {
     const look = globalThis.__DIVA_HERO3D || 'none';  // none | A (shadow) | B (layers) | C (curved)
+    const K = this.longBushKinds[kind];
     const L = 2.8;                                   // length of the planting along the wall
-    const h = L / this.bushLongAspect;
-    const zc = stopZ + 1.6 + 0.3 + L / 2;            // level with the stop across the road
+    const h = L / K.aspect;
     const theta = 0.5;                               // ~29° off the wall line
     const { front, back, curved, shadow } = hb.userData;
+    front.material = K.front; back.material = K.back; curved.material = K.curved;
     front.visible = look !== 'C';
     back.visible = look === 'B';
     curved.visible = look === 'C';
@@ -403,12 +415,33 @@ export class World {
     back.scale.set(L * 1.04, h * 1.12, 1); back.position.set(0.12, 0, -0.32);
     curved.scale.set(L, h, 1); curved.position.set(0, 0, -0.18);
     shadow.scale.set(L * 0.95, 1, 0.75); shadow.position.set(0, 0.012, -0.12);
-    // local +z faces the road; keep the deepest point (back layer / curve ends)
-    // clear of the wall: push the group off the wall by that depth.
     const depth = look === 'B' ? 0.32 : look === 'C' ? 0.18 : 0;
     hb.rotation.y = -(Math.PI / 2 - theta);
     const cx = WALL.inner - 0.15 - (L / 2) * Math.sin(theta) - depth * Math.cos(theta);
     hb.position.set(cx, PAVEMENT.height + 0.02, zc);
+    hb.visible = true;
+  }
+
+  /** All long bushes of a chunk: evenly spaced along the right wall, colours never repeating side by side. */
+  _placeLongBushes(chunk, rng) {
+    const list = chunk.userData.longBushes;
+    const spacing = CHUNK_LENGTH / list.length;
+    let last = this._lastLongKind ?? -1;
+    list.forEach((hb, i) => {
+      let kind = Math.floor(rng() * this.longBushKinds.length);
+      if (kind === last) kind = (kind + 1) % this.longBushKinds.length;
+      last = kind;
+      const z = -CHUNK_LENGTH / 2 + (i + 0.35 + rng() * 0.3) * spacing;
+      this._placeLongBush(hb, z, kind);
+    });
+    this._lastLongKind = last;
+  }
+
+  /** Kept for the screenshot tools: one bush level with a stop. */
+  _placeHeroBush(chunk, hasStop, stopZ) {
+    const hb = chunk.userData.heroBush;
+    hb.visible = hasStop;
+    if (hasStop) this._placeLongBush(hb, stopZ + 1.6 + 0.3 + 1.4, 0);
   }
 
   _makeBush(material) {
@@ -551,7 +584,7 @@ export class World {
     // ---- Single-bush test: all other bushes off, one long bush placed after the stop.
     for (const b of bushes) b.visible = false;
     shadowIdx = 0;
-    this._placeHeroBush(chunk, shelters.left.visible, shelterZ);
+    this._placeLongBushes(chunk, rng);
     SS.setScalar(0); SP.set(0, -10, 0); SQ.identity(); SM.compose(SP, SQ, SS);
     for (let k = shadowIdx; k < chunk.userData.bushShadows.count; k++) chunk.userData.bushShadows.setMatrixAt(k, SM);
     chunk.userData.bushShadows.instanceMatrix.needsUpdate = true;
