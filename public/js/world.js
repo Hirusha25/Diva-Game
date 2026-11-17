@@ -50,6 +50,8 @@ export class World {
     this.busStandAspect = assets.busStand.aspect;
     this.bushLongMaterial = new THREE.MeshBasicMaterial({ map: assets.bushLong.map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false });
     this.bushLongAspect = assets.bushLong.aspect;
+    this.bushLongBackMaterial = new THREE.MeshBasicMaterial({ map: assets.bushLong.map, color: 0x8e9a80, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false });
+    this.bushLongCurvedMaterial = new THREE.MeshBasicMaterial({ map: assets.bushLong.map, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false });
     // Foliage cards for the volumetric bushes (lit, double-sided, alpha-cut).
     const card = (map) => new THREE.MeshLambertMaterial({ map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, emissive: 0x2b4a12, emissiveIntensity: 0.55, emissiveMap: map });
     this.cardMaterials = {
@@ -294,7 +296,7 @@ export class World {
     chunk.add(chunk.userData.shelters.left, chunk.userData.shelters.right);
 
     // One long flowering bush along the wall, right after the bus stop.
-    const heroBush = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0), this.bushLongMaterial);
+    const heroBush = this._makeHeroBush();
     chunk.userData.heroBush = heroBush;
     chunk.add(heroBush);
 
@@ -353,24 +355,59 @@ export class World {
     return shelter;
   }
 
+  /** Long bush: flat face, a darker back layer, a curved version, and a ground shadow. */
+  _makeHeroBush() {
+    const g = new THREE.Group();
+    const flatGeo = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
+    // Curved strip: bulges toward the road in the middle, ends bend back toward
+    // the wall; vertex colours darken the ends and the base for a rounded look.
+    const curvedGeo = new THREE.PlaneGeometry(1, 1, 24, 6).translate(0, 0.5, 0);
+    const pos = curvedGeo.attributes.position;
+    const col = new Float32Array(pos.count * 3);
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), y = pos.getY(i);
+      pos.setZ(i, 0.38 * (1 - (2 * x) ** 2));                     // bulge (metres, not scaled by L)
+      const shade = (1 - 0.38 * (2 * x) ** 2) * (0.72 + 0.28 * Math.min(1, y / 0.45));
+      col[i * 3] = col[i * 3 + 1] = col[i * 3 + 2] = shade;
+    }
+    curvedGeo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    curvedGeo.computeVertexNormals();
+    const front = new THREE.Mesh(flatGeo, this.bushLongMaterial);
+    const back = new THREE.Mesh(flatGeo, this.bushLongBackMaterial);
+    const curved = new THREE.Mesh(curvedGeo, this.bushLongCurvedMaterial);
+    const shadow = new THREE.Mesh(
+      new THREE.CircleGeometry(0.5, 24).rotateX(-Math.PI / 2),
+      new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.32, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3 }),
+    );
+    g.add(back, front, curved, shadow);
+    g.userData = { front, back, curved, shadow };
+    return g;
+  }
+
   /** Long bush lying along the RIGHT wall, once per block that has a stop. */
   _placeHeroBush(chunk, hasStop, stopZ) {
     const hb = chunk.userData.heroBush;
     hb.visible = hasStop;
     if (!hasStop) return;
-    const mode = globalThis.__DIVA_HERO || 'R1';
+    const look = globalThis.__DIVA_HERO3D || 'none';  // none | A (shadow) | B (layers) | C (curved)
     const L = 2.8;                                   // length of the planting along the wall
     const h = L / this.bushLongAspect;
     const zc = stopZ + 1.6 + 0.3 + L / 2;            // level with the stop across the road
     const theta = 0.5;                               // ~29° off the wall line
-    hb.scale.set(L, h, 1);
-    hb.userData.clamp = null;
-    if (mode === 'R1') {                             // face toward the road and the runner
-      hb.rotation.y = -(Math.PI / 2 - theta);
-    } else {                                         // R2: face toward the road, angled the other way
-      hb.rotation.y = -(Math.PI / 2 + theta);
-    }
-    const cx = WALL.inner - 0.15 - (L / 2) * Math.sin(theta);
+    const { front, back, curved, shadow } = hb.userData;
+    front.visible = look !== 'C';
+    back.visible = look === 'B';
+    curved.visible = look === 'C';
+    shadow.visible = look !== 'none';
+    front.scale.set(L, h, 1); front.position.set(0, 0, 0);
+    back.scale.set(L * 1.04, h * 1.12, 1); back.position.set(0.12, 0, -0.32);
+    curved.scale.set(L, h, 1); curved.position.set(0, 0, -0.18);
+    shadow.scale.set(L * 0.95, 1, 0.75); shadow.position.set(0, 0.012, -0.12);
+    // local +z faces the road; keep the deepest point (back layer / curve ends)
+    // clear of the wall: push the group off the wall by that depth.
+    const depth = look === 'B' ? 0.32 : look === 'C' ? 0.18 : 0;
+    hb.rotation.y = -(Math.PI / 2 - theta);
+    const cx = WALL.inner - 0.15 - (L / 2) * Math.sin(theta) - depth * Math.cos(theta);
     hb.position.set(cx, PAVEMENT.height + 0.02, zc);
   }
 
