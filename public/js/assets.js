@@ -57,13 +57,15 @@ export async function loadAssets(onProgress = () => {}) {
   const bushMeta = await loadJson('assets/textures/bushes.json');
   const propMeta = await loadJson('assets/textures/props.json');
 
-  const [asphalt, shadows, leaf, busStandMap] = await Promise.all([
+  const [asphalt, shadows, leaf, busStandMap, bushLongMap] = await Promise.all([
     loadTex('assets/textures/asphalt.webp', { repeat: true }),
     loadTex('assets/textures/tree-shadows.webp', { srgb: false, repeat: true }),
     loadTex('assets/textures/leaf.webp'),
     loadTex('assets/textures/bus-stand.webp'),
+    loadTex('assets/textures/bush-long.webp'),
   ]);
   const busStand = { map: busStandMap, aspect: propMeta['bus-stand'].aspect };
+  const bushLong = { map: bushLongMap, aspect: propMeta['bush-long'].aspect };
   const treeFiles = [
     ['tree-1', 'assets/textures/tree-1.webp'],
     ['tree-2', 'assets/textures/tree-2.webp'],
@@ -108,6 +110,7 @@ export async function loadAssets(onProgress = () => {}) {
 
   return {
     busStand,
+    bushLong,
     asphalt,
     shadows,
     leaf,

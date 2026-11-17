@@ -48,6 +48,8 @@ export class World {
     };
     this.busStandMaterial = new THREE.MeshBasicMaterial({ map: assets.busStand.map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false });
     this.busStandAspect = assets.busStand.aspect;
+    this.bushLongMaterial = new THREE.MeshBasicMaterial({ map: assets.bushLong.map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false });
+    this.bushLongAspect = assets.bushLong.aspect;
     // Foliage cards for the volumetric bushes (lit, double-sided, alpha-cut).
     const card = (map) => new THREE.MeshLambertMaterial({ map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, emissive: 0x2b4a12, emissiveIntensity: 0.55, emissiveMap: map });
     this.cardMaterials = {
@@ -291,6 +293,11 @@ export class World {
     };
     chunk.add(chunk.userData.shelters.left, chunk.userData.shelters.right);
 
+    // One long flowering bush along the wall, right after the bus stop.
+    const heroBush = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0), this.bushLongMaterial);
+    chunk.userData.heroBush = heroBush;
+    chunk.add(heroBush);
+
     // Volumetric bushes: one instanced mesh per card material per chunk.
     const CARDS = BUSH_LEAF_CARDS * (BUSHES_FRONT_PER_CHUNK + BUSHES_BACK_PER_CHUNK * 3);
     const FLOWERS = BUSH_FLOWER_CARDS * (BUSHES_FRONT_PER_CHUNK + BUSHES_BACK_PER_CHUNK * 3);
@@ -324,6 +331,7 @@ export class World {
       chunk.add(tree);
     }
     chunk.userData.billboards = [...chunk.userData.trees, ...chunk.userData.bushes];
+    if ((globalThis.__DIVA_HERO || 'B') === 'C') chunk.userData.billboards.push(chunk.userData.heroBush);
     return chunk;
   }
 
@@ -344,6 +352,33 @@ export class World {
     const cx = side * (WALL.inner - 0.05 - (w / 2) * Math.cos(theta));
     shelter.position.set(cx, PAVEMENT.height, 0);
     return shelter;
+  }
+
+  /** Long bush lying along the left wall, just before the bus stop. */
+  _placeHeroBush(chunk, hasStop, stopZ) {
+    const hb = chunk.userData.heroBush;
+    hb.visible = hasStop;
+    if (!hasStop) return;
+    const mode = globalThis.__DIVA_HERO || 'B';
+    const L = 2.8;                                   // length of the planting along the wall
+    const h = L / this.bushLongAspect;
+    const stopNearEnd = stopZ + 1.6;                 // end of the bus stop nearest the runner
+    const zc = stopNearEnd + 0.3 + L / 2;            // the bush sits just before the stop (as in the reference)
+    hb.scale.set(L, h, 1);
+    if (mode === 'A') {                              // flat along the wall, facing the road
+      hb.rotation.y = Math.PI / 2;
+      hb.position.set(-(WALL.inner - 0.3), PAVEMENT.height + 0.02, zc);
+    } else if (mode === 'B') {                       // angled: far end on the wall, near end toward the path
+      const theta = 0.5;                             // ~29° off the wall line
+      hb.rotation.y = Math.PI / 2 - theta;
+      // keep the far (wall-side) end 0.15 m off the wall
+      const cx = -(WALL.inner - 0.15 - (L / 2) * Math.sin(theta));
+      hb.position.set(cx, PAVEMENT.height + 0.02, zc);
+    } else {                                         // C: faces the camera (set per frame), centred off the wall
+      hb.rotation.y = 0;
+      hb.position.set(-(WALL.inner - 0.2 - L * 0.35), PAVEMENT.height + 0.02, zc);
+      hb.userData.clamp = { centre: Math.PI / 2, min: -0.6, max: 0.6 };
+    }
   }
 
   _makeBush(material) {
@@ -483,6 +518,10 @@ export class World {
         bush.visible = rng() < 0.8;
       }
     });
+    // ---- Single-bush test: all other bushes off, one long bush placed after the stop.
+    for (const b of bushes) b.visible = false;
+    shadowIdx = 0;
+    this._placeHeroBush(chunk, shelters.left.visible, shelterZ);
     SS.setScalar(0); SP.set(0, -10, 0); SQ.identity(); SM.compose(SP, SQ, SS);
     for (let k = shadowIdx; k < chunk.userData.bushShadows.count; k++) chunk.userData.bushShadows.setMatrixAt(k, SM);
     chunk.userData.bushShadows.instanceMatrix.needsUpdate = true;
