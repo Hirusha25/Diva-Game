@@ -192,6 +192,15 @@ const kb = async (f) => ((await stat(f)).size / 1024).toFixed(0) + ' KB';
     longMeta[key] = { aspect: m.width / m.height };
     console.log(`${key}: ->`, await kb(out));
   }
+  // Small flower bunches (yellow, purple, coral) for between the long bushes and on the wall top.
+  for (const n of [1, 2, 3]) {
+    const key = `bunch-${n}`;
+    const out = `${OUT_TEX}/${key}.webp`;
+    await sharp(`${RAW}/bushes-v3/${key}.png`).trim({ threshold: 40 }).resize({ width: 600 }).webp({ quality: 85, alphaQuality: 90 }).toFile(out);
+    const m = await sharp(out).metadata();
+    longMeta[key] = { aspect: m.width / m.height };
+    console.log(`${key}: ->`, await kb(out));
+  }
   await writeFile(`${OUT_TEX}/props.json`, JSON.stringify({
     'bus-stand': { aspect: final.width / final.height },
     ...longMeta,

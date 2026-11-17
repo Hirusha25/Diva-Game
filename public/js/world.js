@@ -10,6 +10,8 @@ const TREES_PER_CHUNK = 40;   // 20 per side: 12 in a near row + 8 in a far row 
 const BUSHES_FRONT_PER_CHUNK = 20;  // 10 per side, every ~6 m along the wall base
 const BUSHES_BACK_PER_CHUNK = 16;   // 8 per side: flowering hedge rising above the wall, between the trees
 const LONG_BUSHES_PER_CHUNK = 5;    // right wall, ~12 m apart
+const GROUND_BUNCHES_PER_CHUNK = 5; // small bunches in the gaps between the long bushes
+const WALLTOP_BUNCHES_PER_CHUNK = 4; // small bunches sitting on the right wall's coping
 const BUSH_LEAF_CARDS = 70;         // leaf patches per bush (3x for the big hedge clumps)
 const BUSH_FLOWER_CARDS = 14;
 
@@ -57,6 +59,10 @@ export class World {
       front: new THREE.MeshBasicMaterial({ map: b.map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false }),
       back: new THREE.MeshBasicMaterial({ map: b.map, color: 0x8e9a80, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false }),
       curved: new THREE.MeshBasicMaterial({ map: b.map, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false }),
+    }));
+    this.bunchKinds = assets.bunches.map((b) => ({
+      aspect: b.aspect,
+      material: new THREE.MeshBasicMaterial({ map: b.map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false }),
     }));
     this.bushLongMaterial = this.longBushKinds[0].front;
     this.bushLongBackMaterial = this.longBushKinds[0].back;
@@ -314,6 +320,21 @@ export class World {
     }
     chunk.userData.heroBush = chunk.userData.longBushes[0];
 
+    // Small flower bunches: some on the soil strip between the long bushes, some on the wall top.
+    const bunchGeo = this._bunchGeo || (this._bunchGeo = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0));
+    const shadowGeo = this._bunchShadowGeo || (this._bunchShadowGeo = new THREE.CircleGeometry(0.5, 16).rotateX(-Math.PI / 2));
+    const shadowMat = this._bunchShadowMat || (this._bunchShadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.25, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3 }));
+    chunk.userData.bunches = [];
+    for (let i = 0; i < GROUND_BUNCHES_PER_CHUNK + WALLTOP_BUNCHES_PER_CHUNK; i++) {
+      const g = new THREE.Group();
+      const face = new THREE.Mesh(bunchGeo, this.bunchKinds[0].material);
+      const sh = new THREE.Mesh(shadowGeo, shadowMat);
+      g.add(face, sh);
+      g.userData = { face, shadow: sh };
+      chunk.userData.bunches.push(g);
+      chunk.add(g);
+    }
+
     // Volumetric bushes: one instanced mesh per card material per chunk.
     const CARDS = BUSH_LEAF_CARDS * (BUSHES_FRONT_PER_CHUNK + BUSHES_BACK_PER_CHUNK * 3);
     const FLOWERS = BUSH_FLOWER_CARDS * (BUSHES_FRONT_PER_CHUNK + BUSHES_BACK_PER_CHUNK * 3);
@@ -435,6 +456,44 @@ export class World {
       this._placeLongBush(hb, z, kind);
     });
     this._lastLongKind = last;
+  }
+
+  /**
+   * Small bunches on the RIGHT side: ground ones sit on the soil strip in the
+   * gaps between the long bushes, wall-top ones sit on the coping. Same 3/4
+   * angle as the long bushes so the drawn perspective matches the wall.
+   */
+  _placeBunches(chunk, rng) {
+    const list = chunk.userData.bunches;
+    const theta = 0.5;
+    const spacing = CHUNK_LENGTH / LONG_BUSHES_PER_CHUNK;
+    const longZ = chunk.userData.longBushes.map((b) => b.position.z);
+    let last = -1;
+    const pick = () => { let k = Math.floor(rng() * this.bunchKinds.length); if (k === last) k = (k + 1) % this.bunchKinds.length; last = k; return this.bunchKinds[k]; };
+    list.forEach((g, i) => {
+      const K = pick();
+      g.userData.face.material = K.material;
+      g.rotation.y = -(Math.PI / 2 - theta);
+      if (i < GROUND_BUNCHES_PER_CHUNK) {
+        // midway between this long bush and the next one
+        const z0 = longZ[i], z1 = i + 1 < longZ.length ? longZ[i + 1] : longZ[i] - spacing;
+        const z = (z0 + z1) / 2 + (rng() - 0.5) * 2;
+        const L = 1.25 + rng() * 0.25, h = L / K.aspect;
+        g.userData.face.scale.set(L, h, 1);
+        g.userData.shadow.scale.set(L * 0.9, 1, 0.55); g.userData.shadow.position.set(0, 0.012, -0.05); g.userData.shadow.visible = true;
+        g.position.set(WALL.inner - 0.15 - (L / 2) * Math.sin(theta), PAVEMENT.height + 0.02, z);
+        g.visible = rng() < 0.8;                       // here and there
+      } else {
+        // on the wall's coping
+        const j = i - GROUND_BUNCHES_PER_CHUNK;
+        const z = -CHUNK_LENGTH / 2 + (j + 0.2 + rng() * 0.6) * (CHUNK_LENGTH / WALLTOP_BUNCHES_PER_CHUNK);
+        const L = 0.95 + rng() * 0.2, h = L / K.aspect;
+        g.userData.face.scale.set(L, h, 1);
+        g.userData.shadow.scale.set(L * 0.8, 1, 0.4); g.userData.shadow.position.set(0, 0.012, 0); g.userData.shadow.visible = true;
+        g.position.set((WALL.inner + WALL.outer) / 2, WALL.height + 0.23, z);
+        g.visible = rng() < 0.75;
+      }
+    });
   }
 
   /** Kept for the screenshot tools: one bush level with a stop. */
@@ -585,6 +644,7 @@ export class World {
     for (const b of bushes) b.visible = false;
     shadowIdx = 0;
     this._placeLongBushes(chunk, rng);
+    this._placeBunches(chunk, rng);
     SS.setScalar(0); SP.set(0, -10, 0); SQ.identity(); SM.compose(SP, SQ, SS);
     for (let k = shadowIdx; k < chunk.userData.bushShadows.count; k++) chunk.userData.bushShadows.setMatrixAt(k, SM);
     chunk.userData.bushShadows.instanceMatrix.needsUpdate = true;
