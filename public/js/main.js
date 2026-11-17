@@ -88,7 +88,12 @@ const controls = new Controls(canvas, (action) => {
 // ----------------------------------------------------------------- screens
 function showLobby() {
   state.mode = 'lobby';
-  $('lobby-greeting').textContent = REQUIRE_REGISTRATION && me ? `Hi ${me.name}! Best: ${me.best}` : '';
+  const g = $('lobby-greeting'); g.textContent = '';
+  if (REQUIRE_REGISTRATION && me) {
+    const first = String(me.name).trim().split(/\s+/)[0];
+    g.append(`Hi ${first}!  ·  Best `);
+    const b = document.createElement('b'); b.textContent = String(me.best); g.append(b);
+  }
   $('btn-signout').classList.toggle('hidden', !REQUIRE_REGISTRATION || !me);
   hud.screens.cover.classList.remove('leaving', 'reg');
   hud.show('cover');

@@ -37,7 +37,7 @@ if (inline) {
     'assets/textures/tree-1.webp', 'assets/textures/tree-2.webp', 'assets/textures/tree-3.webp', 'assets/textures/tree-4.webp',
     'assets/textures/bush-1.webp', 'assets/textures/bush-2.webp', 'assets/textures/bush-3.webp', 'assets/textures/bush-4.webp', 'assets/textures/bus-stand.webp', 'assets/textures/bush-long.webp', 'assets/textures/bush-long-2.webp', 'assets/textures/bush-long-3.webp', 'assets/textures/bush-long-4.webp', 'assets/textures/bunch-1.webp', 'assets/textures/bunch-2.webp', 'assets/textures/bunch-3.webp', 'assets/textures/long-L1.webp', 'assets/textures/long-L2.webp', 'assets/textures/bunch-L1.webp', 'assets/textures/bunch-L2.webp', 'assets/textures/bunch-L3.webp',
     'assets/textures/card-leaf-1.webp', 'assets/textures/card-leaf-2.webp', 'assets/textures/card-leaf-3.webp', 'assets/textures/card-flower-white.webp', 'assets/textures/card-flower-pink.webp',
-    'assets/ui/cover-bg.webp', 'assets/ui/glow.webp', 'assets/ui/hcb.webp', 'assets/ui/logo.webp', 'assets/ui/tagline.webp', 'assets/ui/heroes.webp', 'assets/ui/ribbon.webp', 'assets/ui/start.webp', 'assets/ui/runner-sprite.webp',
+    'assets/ui/cover-bg.webp', 'assets/ui/glow.webp', 'assets/ui/hcb.webp', 'assets/ui/logo.webp', 'assets/ui/tagline.webp', 'assets/ui/heroes.webp', 'assets/ui/ribbon.webp', 'assets/ui/start.webp',
     'assets/ui/reg/panel.webp', 'assets/ui/reg/header.webp', 'assets/ui/reg/fieldName.webp', 'assets/ui/reg/fieldPhone.webp', 'assets/ui/reg/divider.webp', 'assets/ui/reg/male.webp', 'assets/ui/reg/female.webp', 'assets/ui/reg/card.webp', 'assets/ui/reg/tick.webp', 'assets/ui/reg/submit.webp',
     'assets/textures/cloud-1.webp', 'assets/textures/cloud-2.webp', 'assets/textures/cloud-3.webp', 'assets/textures/cloud-4.webp',
   ];
