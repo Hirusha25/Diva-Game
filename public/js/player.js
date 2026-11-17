@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 import { LANE_WIDTH, LANE_COUNT, LANE_SWITCH_SPEED, JUMP } from './config.js';
 
-const MODEL_HEIGHT = 1.55;                 // metres, feet to top of hair
+const MODEL_HEIGHT = (typeof window !== 'undefined' && window.__DIVA_RUNNER_H) || 2.55;   // metres, feet to top of hair (larger than life so he reads well on a phone)
 const RUNNER_SCALE = MODEL_HEIGHT / 2;     // the rigged model is 2 units tall, feet at y = -1
+const SIZE = MODEL_HEIGHT / 1.55;          // relative to the original size (shadow etc.)
 
 /**
  * The runner: the rigged Diva boy (scripts/rig-runner.mjs) animated
@@ -24,13 +25,16 @@ export class Player {
     this.height = 0;
     this.runTime = 0;
     this.hitT = -1;                      // flinch timer after hitting a stain
+    this.vx = 0;                         // sideways velocity (smooth lane changes)
+    this.lean = 0;
+    this.strideRate = 8;
 
     this.body = model ? this._rigged(model) : this._placeholderBody();
     this.group.add(this.body);
 
     // Soft blob shadow (no shadow maps on mobile).
     const shadow = new THREE.Mesh(
-      new THREE.CircleGeometry(0.4, 20).rotateX(-Math.PI / 2),
+      new THREE.CircleGeometry(0.4 * SIZE, 24).rotateX(-Math.PI / 2),
       new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35, depthWrite: false }),
     );
     shadow.position.y = 0.02;
@@ -77,49 +81,59 @@ export class Player {
   flinch() { this.hitT = 0; }
 
   reset() {
-    this.lane = 1; this.x = 0; this.jumpT = -1; this.height = 0; this.hitT = -1;
+    this.lane = 1; this.x = 0; this.vx = 0; this.lean = 0; this.jumpT = -1; this.height = 0; this.hitT = -1;
     this.group.position.set(0, 0, 0);
   }
 
-  /** Pose the skeleton. phase: stride phase; air: 0..1 jump tuck; hit: 0..1 flinch. */
+  /**
+   * Pose the skeleton. phase: stride phase; air: 0..1 jump tuck; hit: 0..1 flinch.
+   * Every curve is a smooth function of the phase (no |x| or max(0, x) kinks),
+   * so the cycle flows without snaps at any frame rate.
+   */
   _pose(phase, air, hit) {
     const B = this.bones; if (!B) return;
     const s = Math.sin(phase), c = Math.cos(phase);
     const run = 1 - air;
-    const flexL = Math.max(0, c) ** 1.4, flexR = Math.max(0, -c) ** 1.4;
+    // knee bend peaks as each leg swings through, eases to nearly straight at push-off
+    const flexL = ((1 + Math.cos(phase - 0.5)) / 2) ** 2, flexR = ((1 - Math.cos(phase - 0.5)) / 2) ** 2;
 
-    // pelvis: bob, twist
-    B.hips.position.y = this.hipsRestY + run * 0.03 * Math.abs(c) - air * 0.02;
-    B.hips.rotation.set(0, 0.14 * s * run, 0);
-    // torso leans into the run, counter-twists the hips
-    B.spine.rotation.set(0.08 * run + 0.1 * air - 0.25 * hit, -0.08 * s * run, 0);
-    B.chest.rotation.set(0.1 * run, -0.1 * s * run, 0);
-    B.neck.rotation.set(-0.06, 0.05 * s * run, 0);
-    B.head.rotation.set(-0.12 * run + 0.2 * hit, 0.06 * s * run, 0);
+    // pelvis: two soft bobs per cycle (one per step), gentle twist
+    B.hips.position.y = this.hipsRestY + run * (0.028 * c * c - 0.01) - air * 0.02;
+    B.hips.rotation.set(0, 0.12 * s * run, 0.03 * c * run);
+    // torso leans into the run, counter-twists the hips, head stays steady
+    B.spine.rotation.set(0.1 * run + 0.1 * air - 0.25 * hit + 0.02 * Math.cos(2 * phase) * run, -0.07 * s * run, 0);
+    B.chest.rotation.set(0.06 * run, -0.08 * s * run, -0.02 * c * run);
+    B.neck.rotation.set(-0.06, 0.06 * s * run, 0);
+    B.head.rotation.set(-0.12 * run + 0.2 * hit - 0.02 * Math.cos(2 * phase) * run, 0.07 * s * run, 0.02 * c * run);
 
-    // legs: thigh swing, knee flexes as the leg swings through, foot follows
-    B.thigh_L.rotation.set(run * -0.72 * s + air * -1.0, 0, 0.03);
-    B.thigh_R.rotation.set(run * 0.72 * s + air * -0.55, 0, -0.03);
-    B.shin_L.rotation.set(run * (0.15 + 1.25 * flexL) + air * 1.5, 0, 0);
-    B.shin_R.rotation.set(run * (0.15 + 1.25 * flexR) + air * 0.9, 0, 0);
-    B.foot_L.rotation.set(run * (-0.15 * s - 0.25 * flexL) + air * 0.3, 0, 0);
-    B.foot_R.rotation.set(run * (0.15 * s - 0.25 * flexR) + air * 0.3, 0, 0);
+    // legs: thigh swing, knee folds through the swing, foot follows
+    B.thigh_L.rotation.set(run * -0.68 * s + air * -1.0, 0, 0.03);
+    B.thigh_R.rotation.set(run * 0.68 * s + air * -0.55, 0, -0.03);
+    B.shin_L.rotation.set(run * (0.18 + 1.15 * flexL) + air * 1.5, 0, 0);
+    B.shin_R.rotation.set(run * (0.18 + 1.15 * flexR) + air * 0.9, 0, 0);
+    B.foot_L.rotation.set(run * (-0.18 * s - 0.2 * flexL + 0.1) + air * 0.3, 0, 0);
+    B.foot_R.rotation.set(run * (0.18 * s - 0.2 * flexR + 0.1) + air * 0.3, 0, 0);
 
-    // arms: boxer's guard, swinging opposite the legs; gloves (rigid) up in front
-    const guard = -0.55, swing = 0.42;
-    B.upperarm_L.rotation.set(guard + run * swing * s + air * -0.9 + hit * 0.4, 0, 0.16 + air * 0.25);
-    B.upperarm_R.rotation.set(guard - run * swing * s + air * -0.9 + hit * 0.4, 0, -0.16 - air * 0.25);
-    B.forearm_L.rotation.set(-1.75 + run * 0.15 * s - air * 0.2, 0, -0.1);
-    B.forearm_R.rotation.set(-1.75 - run * 0.15 * s - air * 0.2, 0, 0.1);
-    B.hand_L.rotation.set(-0.15, 0, 0);
-    B.hand_R.rotation.set(-0.15, 0, 0);
+    // arms: boxer's guard swinging opposite the legs, slightly behind the legs'
+    // timing (follow-through); gloves (rigid) stay up in front
+    const guard = -0.55, swing = 0.36, sa = Math.sin(phase - 0.25);
+    B.upperarm_L.rotation.set(guard + run * swing * sa + air * -0.9 + hit * 0.4, 0, 0.16 + air * 0.25);
+    B.upperarm_R.rotation.set(guard - run * swing * sa + air * -0.9 + hit * 0.4, 0, -0.16 - air * 0.25);
+    B.forearm_L.rotation.set(-1.72 + run * 0.12 * sa - air * 0.2, 0, -0.1);
+    B.forearm_R.rotation.set(-1.72 - run * 0.12 * sa - air * 0.2, 0, 0.1);
+    B.hand_L.rotation.set(-0.15 + 0.05 * Math.cos(2 * phase) * run, 0, 0);
+    B.hand_R.rotation.set(-0.15 + 0.05 * Math.cos(2 * phase) * run, 0, 0);
   }
 
   update(dt, speed) {
-    // Lane slide
+    // Lane change: a critically damped glide (eases out and in) instead of a
+    // constant-speed slide; capped so it never lags behind the old feel.
     const target = this.laneX;
-    const step = LANE_SWITCH_SPEED * dt;
-    this.x += THREE.MathUtils.clamp(target - this.x, -step, step);
+    const w = 13;                                            // stiffness
+    this.vx += ((target - this.x) * w * w - 2 * w * this.vx) * dt;
+    this.vx = THREE.MathUtils.clamp(this.vx, -LANE_SWITCH_SPEED * 1.6, LANE_SWITCH_SPEED * 1.6);
+    this.x += this.vx * dt;
+    if (Math.abs(target - this.x) < 0.002 && Math.abs(this.vx) < 0.02) { this.x = target; this.vx = 0; }
 
     // Jump arc
     let air = 0;
@@ -132,21 +146,27 @@ export class Player {
     let hit = 0;
     if (this.hitT >= 0) { this.hitT += dt; hit = Math.max(0, 1 - this.hitT / 0.35); if (this.hitT > 0.35) this.hitT = -1; }
 
-    // Stride rate follows speed, capped so the legs never blur.
-    this.runTime += dt * THREE.MathUtils.clamp(speed * 0.62, 7, 14.5);
+    // Stride rate follows speed (eased, so speed-ups never make the legs jump),
+    // capped so the legs never blur.
+    const rate = THREE.MathUtils.clamp(6.2 + speed * 0.2, 8, 12);
+    this.strideRate += (rate - this.strideRate) * Math.min(1, dt * 3);
+    this.runTime += dt * this.strideRate;
 
     if (this.bones) {
       this._pose(this.runTime, air, hit);
       this.body.position.y = 0;
-      this.body.rotation.z = THREE.MathUtils.clamp((this.x - target) * 0.18, -0.22, 0.22);   // lean into lane changes
+      // lean into lane changes, from the sideways velocity, eased
+      const leanT = THREE.MathUtils.clamp(-this.vx * 0.022, -0.2, 0.2);
+      this.lean += (leanT - this.lean) * Math.min(1, dt * 10);
+      this.body.rotation.z = this.lean;
       this.body.rotation.x = 0;
     } else {
       this.body.position.y = this.isAirborne ? 0 : Math.abs(Math.sin(this.runTime)) * 0.08;
-      this.body.rotation.z = THREE.MathUtils.clamp((this.x - target) * 0.25, -0.3, 0.3);
+      this.body.rotation.z = THREE.MathUtils.clamp(-this.vx * 0.03, -0.3, 0.3);
     }
 
     this.group.position.set(this.x, this.height, 0);
     this.shadow.position.y = -this.height + 0.02;
-    this.shadow.scale.setScalar(1 - this.height * 0.25);
+    this.shadow.scale.setScalar(Math.max(0.4, 1 - this.height * 0.25));
   }
 }
