@@ -12,7 +12,6 @@
     "cover": "node scripts/build-cover.mjs",
     "foliage": "node scripts/make-foliage-cards.mjs",
     "rig": "node scripts/rig-runner.mjs",
-    "busstop": "node scripts/optimize-busstop.mjs",
     "busstop-art": "node scripts/build-busstop-art.mjs",
     "register-ui": "node scripts/build-register.mjs",
     "serve": "php -S 0.0.0.0:8080 -t public public/router.php",

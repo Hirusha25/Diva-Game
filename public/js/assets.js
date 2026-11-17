@@ -47,7 +47,8 @@ export async function loadAssets(onProgress = () => {}) {
     : fetch(url).then((r) => r.json());
 
   const runnerGltf = await loadGltf('assets/models/runner.glb');
-  const busStopGltf = await loadGltf('assets/models/bus-stop.glb');
+  // sharp artwork pasted onto the bus stop's panels (scripts/build-busstop-art.mjs)
+  const [bsPoster, bsSign, bsRoof] = await Promise.all(['poster', 'sign', 'roof'].map((k) => loadTex(`assets/textures/busstop/${k}.webp`)));
   const coverMeta = { ...(await loadJson('assets/ui/cover.json')), ...(await loadJson('assets/ui/reg/register.json')) };
   const coverImages = {
     bg: 'assets/ui/cover-bg.webp',
@@ -146,7 +147,7 @@ export async function loadAssets(onProgress = () => {}) {
   return {
     busStand,
     runner: runnerGltf.scene,
-    busStop: busStopGltf.scene,
+    busStopArt: { poster: bsPoster, sign: bsSign, roof: bsRoof },
     bushLong,
     bushLongs,
     bunches,

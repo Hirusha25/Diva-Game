@@ -38,6 +38,7 @@ if (inline) {
     'assets/textures/bush-1.webp', 'assets/textures/bush-2.webp', 'assets/textures/bush-3.webp', 'assets/textures/bush-4.webp', 'assets/textures/bus-stand.webp', 'assets/textures/bush-long.webp', 'assets/textures/bush-long-2.webp', 'assets/textures/bush-long-3.webp', 'assets/textures/bush-long-4.webp', 'assets/textures/bunch-1.webp', 'assets/textures/bunch-2.webp', 'assets/textures/bunch-3.webp', 'assets/textures/long-L1.webp', 'assets/textures/long-L2.webp', 'assets/textures/bunch-L1.webp', 'assets/textures/bunch-L2.webp', 'assets/textures/bunch-L3.webp',
     'assets/textures/card-leaf-1.webp', 'assets/textures/card-leaf-2.webp', 'assets/textures/card-leaf-3.webp', 'assets/textures/card-flower-white.webp', 'assets/textures/card-flower-pink.webp',
     'assets/ui/cover-bg.webp', 'assets/ui/glow.webp', 'assets/ui/hcb.webp', 'assets/ui/logo.webp', 'assets/ui/tagline.webp', 'assets/ui/heroes.webp', 'assets/ui/ribbon.webp', 'assets/ui/start.webp',
+    'assets/textures/busstop/poster.webp', 'assets/textures/busstop/sign.webp', 'assets/textures/busstop/roof.webp',
     'assets/ui/reg/panel.webp', 'assets/ui/reg/header.webp', 'assets/ui/reg/fieldName.webp', 'assets/ui/reg/fieldPhone.webp', 'assets/ui/reg/divider.webp', 'assets/ui/reg/male.webp', 'assets/ui/reg/female.webp', 'assets/ui/reg/card.webp', 'assets/ui/reg/tick.webp', 'assets/ui/reg/submit.webp',
     'assets/textures/cloud-1.webp', 'assets/textures/cloud-2.webp', 'assets/textures/cloud-3.webp', 'assets/textures/cloud-4.webp',
   ];
@@ -50,7 +51,6 @@ if (inline) {
   const data = {
     models: {
       'assets/models/runner.glb': (await readFile('public/assets/models/runner.glb')).toString('base64'),
-      'assets/models/bus-stop.glb': (await readFile('public/assets/models/bus-stop.glb')).toString('base64'),
     },
     json: {
       'assets/textures/trees.json': JSON.parse(await readFile('public/assets/textures/trees.json', 'utf8')),
