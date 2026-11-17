@@ -57,7 +57,7 @@ export async function loadAssets(onProgress = () => {}) {
   const bushMeta = await loadJson('assets/textures/bushes.json');
   const propMeta = await loadJson('assets/textures/props.json');
 
-  const [asphalt, shadows, leaf, busStandMap, bushLongMap, bushLong2, bushLong3, bushLong4, bunch1, bunch2, bunch3] = await Promise.all([
+  const [asphalt, shadows, leaf, busStandMap, bushLongMap, bushLong2, bushLong3, bushLong4, bunch1, bunch2, bunch3, longL1, longL2, bunchL1, bunchL2, bunchL3] = await Promise.all([
     loadTex('assets/textures/asphalt.webp', { repeat: true }),
     loadTex('assets/textures/tree-shadows.webp', { srgb: false, repeat: true }),
     loadTex('assets/textures/leaf.webp'),
@@ -69,6 +69,11 @@ export async function loadAssets(onProgress = () => {}) {
     loadTex('assets/textures/bunch-1.webp'),
     loadTex('assets/textures/bunch-2.webp'),
     loadTex('assets/textures/bunch-3.webp'),
+    loadTex('assets/textures/long-L1.webp'),
+    loadTex('assets/textures/long-L2.webp'),
+    loadTex('assets/textures/bunch-L1.webp'),
+    loadTex('assets/textures/bunch-L2.webp'),
+    loadTex('assets/textures/bunch-L3.webp'),
   ]);
   const busStand = { map: busStandMap, aspect: propMeta['bus-stand'].aspect };
   const bushLong = { map: bushLongMap, aspect: propMeta['bush-long'].aspect };
@@ -82,6 +87,15 @@ export async function loadAssets(onProgress = () => {}) {
     { map: bunch1, aspect: propMeta['bunch-1'].aspect },
     { map: bunch2, aspect: propMeta['bunch-2'].aspect },
     { map: bunch3, aspect: propMeta['bunch-3'].aspect },
+  ];
+  const leftLongs = [
+    { map: longL1, aspect: propMeta['long-L1'].aspect },
+    { map: longL2, aspect: propMeta['long-L2'].aspect },
+  ];
+  const leftBunches = [
+    { map: bunchL1, aspect: propMeta['bunch-L1'].aspect },
+    { map: bunchL2, aspect: propMeta['bunch-L2'].aspect },
+    { map: bunchL3, aspect: propMeta['bunch-L3'].aspect },
   ];
   const treeFiles = [
     ['tree-1', 'assets/textures/tree-1.webp'],
@@ -130,6 +144,8 @@ export async function loadAssets(onProgress = () => {}) {
     bushLong,
     bushLongs,
     bunches,
+    leftLongs,
+    leftBunches,
     asphalt,
     shadows,
     leaf,

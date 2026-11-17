@@ -10,6 +10,7 @@ const TREES_PER_CHUNK = 40;   // 20 per side: 12 in a near row + 8 in a far row 
 const BUSHES_FRONT_PER_CHUNK = 20;  // 10 per side, every ~6 m along the wall base
 const BUSHES_BACK_PER_CHUNK = 16;   // 8 per side: flowering hedge rising above the wall, between the trees
 const LONG_BUSHES_PER_CHUNK = 5;    // right wall, ~12 m apart
+const LEFT_LONG_PER_CHUNK = 4;       // left wall long bushes (~15 m apart, gap left at the bus stop)
 const GROUND_BUNCHES_PER_CHUNK = 5; // small bunches in the gaps between the long bushes
 const WALLTOP_BUNCHES_PER_CHUNK = 0; // none on the wall top: every bunch sits on the ground
 const BUSH_LEAF_CARDS = 70;         // leaf patches per bush (3x for the big hedge clumps)
@@ -61,6 +62,17 @@ export class World {
       curved: new THREE.MeshBasicMaterial({ map: b.map, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false }),
     }));
     this.bunchKinds = assets.bunches.map((b) => ({
+      aspect: b.aspect,
+      material: new THREE.MeshBasicMaterial({ map: b.map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false }),
+    }));
+    const kindOf = (b) => ({
+      aspect: b.aspect,
+      front: new THREE.MeshBasicMaterial({ map: b.map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false }),
+      back: new THREE.MeshBasicMaterial({ map: b.map, color: 0x8e9a80, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false }),
+      curved: new THREE.MeshBasicMaterial({ map: b.map, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false }),
+    });
+    this.leftLongKinds = assets.leftLongs.map(kindOf);
+    this.leftBunchKinds = assets.leftBunches.map((b) => ({
       aspect: b.aspect,
       material: new THREE.MeshBasicMaterial({ map: b.map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false }),
     }));
@@ -319,12 +331,28 @@ export class World {
       chunk.add(lb);
     }
     chunk.userData.heroBush = chunk.userData.longBushes[0];
+    chunk.userData.leftLongBushes = [];
+    for (let i = 0; i < LEFT_LONG_PER_CHUNK; i++) {
+      const lb = this._makeHeroBush();
+      chunk.userData.leftLongBushes.push(lb);
+      chunk.add(lb);
+    }
 
     // Small flower bunches: some on the soil strip between the long bushes, some on the wall top.
     const bunchGeo = this._bunchGeo || (this._bunchGeo = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0));
     const shadowGeo = this._bunchShadowGeo || (this._bunchShadowGeo = new THREE.CircleGeometry(0.5, 16).rotateX(-Math.PI / 2));
     const shadowMat = this._bunchShadowMat || (this._bunchShadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.25, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3 }));
     chunk.userData.bunches = [];
+    chunk.userData.leftBunches = [];
+    for (let i = 0; i < LEFT_LONG_PER_CHUNK; i++) {
+      const g = new THREE.Group();
+      const face = new THREE.Mesh(bunchGeo, this.leftBunchKinds[0].material);
+      const sh = new THREE.Mesh(shadowGeo, shadowMat);
+      g.add(face, sh);
+      g.userData = { face, shadow: sh };
+      chunk.userData.leftBunches.push(g);
+      chunk.add(g);
+    }
     for (let i = 0; i < GROUND_BUNCHES_PER_CHUNK + WALLTOP_BUNCHES_PER_CHUNK; i++) {
       const g = new THREE.Group();
       const face = new THREE.Mesh(bunchGeo, this.bunchKinds[0].material);
@@ -420,9 +448,9 @@ export class World {
   }
 
   /** Place one long bush on the RIGHT wall at z, using colour variant `kind`. */
-  _placeLongBush(hb, zc, kind) {
+  _placeLongBush(hb, zc, kind, side = 1, kinds = this.longBushKinds) {
     const look = globalThis.__DIVA_HERO3D || 'none';  // none | A (shadow) | B (layers) | C (curved)
-    const K = this.longBushKinds[kind];
+    const K = kinds[kind];
     const L = 2.8;                                   // length of the planting along the wall
     const h = (L / K.aspect) * 0.82;                  // a little lower so it hugs the ground
     const theta = 0.5;                               // ~29° off the wall line
@@ -443,8 +471,8 @@ export class World {
     curved.scale.set(L, h, 1); curved.position.set(0, 0, -0.18);
     shadow.scale.set(L * 0.95, 1, 0.75); shadow.position.set(0, 0.012, -0.12);
     const depth = look === 'B' ? 0.32 : look === 'C' ? 0.18 : 0;
-    hb.rotation.y = -(Math.PI / 2 - theta);
-    const cx = WALL.inner - 0.15 - (L / 2) * Math.sin(theta) - depth * Math.cos(theta) - lean;
+    hb.rotation.y = -side * (Math.PI / 2 - theta);   // left wall is the mirror of the right
+    const cx = side * (WALL.inner - 0.15 - (L / 2) * Math.sin(theta) - depth * Math.cos(theta) - lean);
     hb.position.set(cx, PAVEMENT.height + 0.02, zc);
     shadow.position.x = 0; shadow.position.z = -0.12 - h * Math.sin(LEAN) * 0.5;
     hb.visible = true;
@@ -503,6 +531,51 @@ export class World {
         g.visible = rng() < 0.75;
       }
     });
+  }
+
+  /**
+   * LEFT wall: same treatment as the right. Long bushes along the wall base,
+   * bunches and the white bush in the gaps, all leaned back slightly and on
+   * the soil strip. Nothing is placed where the bus stop stands.
+   */
+  _placeLeftPlanting(chunk, rng, stopZ) {
+    const theta = 0.5, LEAN = globalThis.__DIVA_LEAN ?? 0.42;
+    const longs = chunk.userData.leftLongBushes, bunches = chunk.userData.leftBunches;
+    const spacing = CHUNK_LENGTH / longs.length;
+    const clearOfStop = (z, half) => stopZ === null || Math.abs(z - stopZ) > half + 2.6;
+    let lastLong = -1, lastBunch = -1;
+    const zs = [];
+    longs.forEach((hb, i) => {
+      let k = Math.floor(rng() * this.leftLongKinds.length); if (k === lastLong) k = (k + 1) % this.leftLongKinds.length; lastLong = k;
+      const z = -CHUNK_LENGTH / 2 + (i + 0.35 + rng() * 0.3) * spacing;
+      zs.push(z);
+      this._placeLongBush(hb, z, k, -1, this.leftLongKinds);
+      hb.visible = clearOfStop(z, 1.4);
+    });
+    // gaps: alternate a new bunch and the white bush
+    const whites = chunk.userData.leftWhites || [];
+    let wi = 0;
+    bunches.forEach((g, i) => {
+      const z0 = zs[i], z1 = i + 1 < zs.length ? zs[i + 1] : zs[i] - spacing;
+      const z = (z0 + z1) / 2 + (rng() - 0.5) * 2;
+      const useWhite = i % 2 === 1 && wi < whites.length;
+      if (useWhite) {
+        const wb = whites[wi++]; wb.position.z = z; wb.visible = clearOfStop(z, 0.8) && rng() < 0.9;
+        g.visible = false; return;
+      }
+      let k = Math.floor(rng() * this.leftBunchKinds.length); if (k === lastBunch) k = (k + 1) % this.leftBunchKinds.length; lastBunch = k;
+      const K = this.leftBunchKinds[k];
+      const L = 1.25 + rng() * 0.25, h = (L / K.aspect) * 0.82;
+      g.userData.face.material = K.material;
+      g.userData.face.scale.set(L, h, 1);
+      g.userData.face.rotation.x = -LEAN;
+      g.userData.shadow.scale.set(L * 0.9, 1, 0.55); g.userData.shadow.position.set(0, 0.012, -0.05 - h * Math.sin(LEAN) * 0.5); g.userData.shadow.visible = true;
+      g.rotation.y = Math.PI / 2 - theta;
+      g.position.set(-(WALL.inner - 0.15 - (L / 2) * Math.sin(theta) - Math.max(0, h * Math.sin(LEAN) * Math.cos(theta) - 0.1)), PAVEMENT.height + 0.02, z);
+      g.visible = clearOfStop(z, 0.8) && rng() < 0.85;
+    });
+    // any white bushes not used in a gap stay hidden
+    for (; wi < whites.length; wi++) whites[wi].visible = false;
   }
 
   /** Kept for the screenshot tools: one bush level with a stop. */
@@ -655,13 +728,13 @@ export class World {
     for (const b of bushes) b.visible = false;
     shadowIdx = 0;
     {
+      // The restored white bush (bush-1), look unchanged: on the soil strip,
+      // full face toward the runner within ±32°. Its spots are set by
+      // _placeLeftPlanting (it fills every other gap between the long bushes).
       const white = this.bushMaterials[0];
-      const perSideL = BUSHES_FRONT_PER_CHUNK / 2;
-      for (let i = 0; i < BUSHES_FRONT_PER_CHUNK; i += 2) {             // even = left wall
+      chunk.userData.leftWhites = [];
+      for (let i = 0; i < BUSHES_FRONT_PER_CHUNK; i += 2) {
         const bush = bushes[i];
-        const slot = i / 2;
-        const z = -CHUNK_LENGTH / 2 + (slot + 0.25 + rng() * 0.5) * (CHUNK_LENGTH / perSideL);
-        const blocked = shelterSide === -1 && Math.abs(z - shelterZ) < 7.5;
         const h = 0.9 + rng() * 0.15;
         const w = Math.min(h * white.aspect, 1.5);
         bush.userData.planes.forEach((pl, k) => {
@@ -673,17 +746,14 @@ export class World {
         bush.userData.billboard = true;
         bush.userData.clamp = { centre: Math.PI / 2, min: -0.56, max: 0.56 };
         bush.userData.shadow.visible = false;
-        const cx = -(WALL.inner - 0.5 * w - 0.08);
-        bush.position.set(cx, PAVEMENT.height + 0.03, z);
-        bush.visible = !blocked && rng() < 0.85;
-        if (bush.visible) {
-          SP.set(cx, PAVEMENT.height + 0.035, z); SQ.identity(); SS.set(w * 0.75, 1, w * 0.5); SM.compose(SP, SQ, SS);
-          chunk.userData.bushShadows.setMatrixAt(shadowIdx++, SM);
-        }
+        bush.position.set(-(WALL.inner - 0.5 * w - 0.08), PAVEMENT.height + 0.03, 0);
+        bush.visible = false;
+        chunk.userData.leftWhites.push(bush);
       }
     }
     this._placeLongBushes(chunk, rng);
     this._placeBunches(chunk, rng);
+    this._placeLeftPlanting(chunk, rng, shelters.left.visible ? shelterZ : null);
     SS.setScalar(0); SP.set(0, -10, 0); SQ.identity(); SM.compose(SP, SQ, SS);
     for (let k = shadowIdx; k < chunk.userData.bushShadows.count; k++) chunk.userData.bushShadows.setMatrixAt(k, SM);
     chunk.userData.bushShadows.instanceMatrix.needsUpdate = true;
