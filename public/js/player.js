@@ -5,6 +5,34 @@ const MODEL_HEIGHT = (typeof window !== 'undefined' && window.__DIVA_RUNNER_H) |
 const RUNNER_SCALE = MODEL_HEIGHT / 2;     // the rigged model is 2 units tall, feet at y = -1
 const SIZE = MODEL_HEIGHT / 1.55;          // relative to the original size (shadow etc.)
 
+// Run-cycle keyframes for one leg, [phase, angle in radians].
+// 2.4 foot lands ahead · 3.45 foot under the body · 4.55 toe-off ·
+// ~5.9 heel kicked up behind · 1.4 knee driven up in front.
+// Thigh: < 0 forward. Knee: > 0 bent. Foot (swing): > 0 toes down.
+const THIGH = [[2.4, -0.5], [3.45, 0.0], [4.55, 0.5], [5.2, 0.45], [5.9, 0.15], [0.6, -0.45], [1.4, -0.8], [2.0, -0.75]];
+const KNEE = [[2.4, 0.25], [3.45, 0.5], [4.55, 0.4], [5.2, 1.0], [5.9, 1.55], [0.6, 1.6], [1.4, 1.2], [2.0, 0.6]];
+const FOOT_WORLD = [[2.4, -0.25], [3.45, 0.0], [4.2, 0.2], [4.55, 0.6]];          // sole angle on the road (stance)
+const FOOT_SWING = [[5.2, 0.35], [5.9, 0.4], [0.6, 0.25], [1.4, 0.0], [2.0, -0.1]];
+const TAU = Math.PI * 2;
+/** Smooth periodic (Catmull-Rom style) interpolation through [phase, value] keys. */
+for (const k of [THIGH, KNEE, FOOT_WORLD, FOOT_SWING]) k.sort((a, b) => a[0] - b[0]);
+function loopSpline(keys, ph) {
+  ph = ((ph % TAU) + TAU) % TAU;
+  const n = keys.length; let i = n - 1; for (let k = 0; k < n; k++) if (keys[k][0] <= ph) i = k;
+  const key = (j) => { const w = Math.floor(j / n); const kk = keys[((j % n) + n) % n]; return [kk[0] + w * TAU, kk[1]]; };
+  const p0 = key(i - 1), p1 = key(i), p2 = key(i + 1), p3 = key(i + 2);
+  const h = p2[0] - p1[0], t = (ph - p1[0]) / h;
+  const m1 = (p2[1] - p0[1]) / (p2[0] - p0[0]) * h, m2 = (p3[1] - p1[1]) / (p3[0] - p1[0]) * h;
+  const t2 = t * t, t3 = t2 * t;
+  return (2 * t3 - 3 * t2 + 1) * p1[1] + (t3 - 2 * t2 + t) * m1 + (-2 * t3 + 3 * t2) * p2[1] + (t3 - t2) * m2;
+}
+/** 1 while the foot is on the road (landing → toe-off), easing in/out. */
+function stanceWeight(ph) {
+  ph = ((ph % TAU) + TAU) % TAU;
+  const e = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  return e(2.25, 2.45, ph) * (1 - e(4.45, 4.75, ph));
+}
+
 /**
  * The runner: the rigged Diva boy (scripts/rig-runner.mjs) animated
  * procedurally so the stride keeps pace with the run speed. Falls back to a
@@ -62,6 +90,11 @@ export class Player {
     const pts = () => [new THREE.Vector3(0, -0.12, -0.05), new THREE.Vector3(0, -0.12, 0.2)];
     this.footPts = [[this.bones.foot_L, pts()], [this.bones.foot_R, pts()]];
     this._v = new THREE.Vector3();
+    // leg geometry for the stance IK (model units; sole of the foot at y = -0.99)
+    this.thighV = this.bones.shin_L.position.clone();     // thigh bone vector
+    this.shinV = this.bones.foot_L.position.clone();      // shin bone vector
+    this.thighX = Math.abs(this.bones.thigh_L.position.x); // hip joint half-width
+    this.hipH = this.hipsRestY + this.bones.thigh_L.position.y + 1;   // thigh joint above the road
     return holder;
   }
 
@@ -100,21 +133,44 @@ export class Player {
   _pose(phase, air, hit) {
     const B = this.bones; if (!B) return;
     const run = 1 - air;
-    const leg = (ph) => {                 // ph: this leg's phase
-      const sn = Math.sin(ph);
-      const thigh = -0.3 - 0.85 * sn;                                  // -1.15 knee up … +0.55 pushed back
-      const kick = ((1 + Math.cos(ph + 0.35)) / 2) ** 2.2;             // heel kick during recovery
-      const shin = 0.22 + 2.05 * kick;
-      const foot = 0.25 * Math.cos(ph) - 0.35 * kick + 0.12;           // toe-off, then foot tucks
-      return [thigh, shin, foot];
+    // Body height over the stride (model units): lowest as a foot passes under
+    // the body, highest in the flight between steps.
+    const bodyY = run * (-0.02 - 0.025 * Math.cos(2 * (phase - 3.45)));
+    const tilt = 0.05 * run;                // pelvis tilt (hips rotation.x below)
+    const roll = 0.04 * Math.cos(phase) * run;   // pelvis roll (hips rotation.z below)
+    const leg = (ph, side) => {           // ph: this leg's phase; side: +1 left, -1 right
+      const thigh = loopSpline(THIGH, ph);
+      const kneeKey = loopSpline(KNEE, ph);
+      const st = stanceWeight(ph);
+      let knee = kneeKey, footWorld = 0;
+      if (st > 0) {
+        // stance: solve the knee so the sole sits exactly on the road (2-bone IK)
+        footWorld = loopSpline(FOOT_WORLD, ph);
+        const cw = Math.cos(footWorld), sw = Math.sin(footWorld);
+        const ankleH = -Math.min(-0.12 * cw - 0.2 * sw, -0.12 * cw + 0.05 * sw);   // lowest of toe / heel
+        const tw = thigh + tilt;                                                   // thigh angle in the body
+        const T = this.thighV, Sv = this.shinV;
+        const thighDrop = -(T.y * Math.cos(tw) - T.z * Math.sin(tw));
+        const need = this.hipH + side * this.thighX * Math.sin(roll) + bodyY - ankleH - thighDrop;   // drop the shin must make
+        // shin drop = -(Sv.y cos ψ - Sv.z sin ψ) = R cos(ψ + δ)
+        const R = Math.hypot(Sv.y, Sv.z), dl = Math.atan2(-Sv.z, -Sv.y);
+        const c = THREE.MathUtils.clamp(need / R, -1, 1);
+        const sgn = thigh + kneeKey >= 0 ? 1 : -1;
+        const psi = sgn * Math.acos(c) - dl;
+        const kneeIK = Math.max(0.02, psi - tw);
+        knee = st * kneeIK + (1 - st) * kneeKey;
+      }
+      const foot = st * (footWorld - tilt - thigh - knee) + (1 - st) * loopSpline(FOOT_SWING, ph);
+      return [thigh, knee, foot];
     };
-    const [tL, kL, fL] = leg(phase), [tR, kR, fR] = leg(phase + Math.PI);
+    this._bodyY = bodyY;
+    const [tL, kL, fL] = leg(phase, 1), [tR, kR, fR] = leg(phase + Math.PI, -1);
     const s = Math.sin(phase), c = Math.cos(phase);
 
     // pelvis twists with the legs; shoulders counter-twist (very visible from behind)
     B.hips.position.y = this.hipsRestY;
-    B.hips.rotation.set(0.05 * run, 0.2 * s * run, 0.05 * c * run);
-    B.spine.rotation.set(0.2 * run + 0.1 * air - 0.25 * hit, -0.14 * s * run, -0.03 * c * run);
+    B.hips.rotation.set(tilt, 0.2 * s * run, roll);
+    B.spine.rotation.set(0.14 * run + 0.1 * air - 0.25 * hit, -0.12 * s * run, -0.03 * c * run);
     B.chest.rotation.set(0.1 * run, -0.2 * s * run, -0.03 * c * run);
     B.neck.rotation.set(-0.12 * run, 0.12 * s * run, 0);
     B.head.rotation.set(-0.16 * run + 0.2 * hit, 0.1 * s * run, 0.03 * c * run);
@@ -126,27 +182,31 @@ export class Player {
     B.foot_L.rotation.set(run * fL + air * 0.3, 0, 0);
     B.foot_R.rotation.set(run * fR + air * 0.3, 0, 0);
 
-    // arms: boxer's guard pumping hard, opposite to the legs, slight follow-through
-    const sa = Math.sin(phase - 0.2);
-    B.upperarm_L.rotation.set(-0.5 + run * 0.62 * sa + air * -0.9 + hit * 0.4, 0, 0.2 + air * 0.25);
-    B.upperarm_R.rotation.set(-0.5 - run * 0.62 * sa + air * -0.9 + hit * 0.4, 0, -0.2 - air * 0.25);
-    B.forearm_L.rotation.set(-1.65 - run * 0.3 * Math.max(-0.4, sa) - air * 0.2, 0, -0.12);
-    B.forearm_R.rotation.set(-1.65 - run * 0.3 * Math.max(-0.4, -sa) - air * 0.2, 0, 0.12);
-    B.hand_L.rotation.set(-0.15, 0, 0);
-    B.hand_R.rotation.set(-0.15, 0, 0);
+    // arms: a natural running swing, opposite to the legs (left arm forward as
+    // the right knee comes up), elbows bent, gloves passing chest-high in front
+    // and by the hip behind
+    const aw = Math.sin(phase - 3.0);                 // +1: left arm forward
+    const armL = -0.15 - 0.75 * aw, armR = -0.15 + 0.75 * aw;
+    const elbow = (sw) => -1.35 - 0.35 * Math.max(0, sw) + 0.15 * Math.max(0, -sw);   // more bent in front
+    B.upperarm_L.rotation.set(run * armL + air * -1.1 + hit * 0.4, 0, 0.14 + air * 0.35);
+    B.upperarm_R.rotation.set(run * armR + air * -1.1 + hit * 0.4, 0, -0.14 - air * 0.35);
+    B.forearm_L.rotation.set(run * elbow(aw) + air * -1.3, 0, -0.08);
+    B.forearm_R.rotation.set(run * elbow(-aw) + air * -1.3, 0, 0.08);
+    B.hand_L.rotation.set(-0.1, 0, 0);
+    B.hand_R.rotation.set(-0.1, 0, 0);
 
     this._ground(run);
   }
 
-  /** Raise/lower the body so the lowest heel or toe touches the road (on the ground only). */
+  /** Place the body at the stride height; lift it if a foot would sink into the road. */
   _ground(run) {
     if (!this.footPts) return;
     this.body.position.y = 0;
     this.group.updateMatrixWorld(true);
     let min = Infinity;
     for (const [bone, pts] of this.footPts) for (const p of pts) { this._v.copy(p).applyMatrix4(bone.matrixWorld); min = Math.min(min, this._v.y); }
-    const off = -(min - this.group.position.y);
-    this.body.position.y = off * run;
+    const sink = -(min - this.group.position.y);              // > 0: a foot is below the road
+    this.body.position.y = Math.max(this._bodyY * RUNNER_SCALE, sink * run);
   }
 
   update(dt, speed) {
