@@ -90,6 +90,7 @@ export class Player {
     // pelvis: tilt, roll, then yaw; thighs: undo yaw, undo roll, then swing
     this.bones.hips.rotation.order = 'XZY';
     this.bones.thigh_L.rotation.order = 'YZX'; this.bones.thigh_R.rotation.order = 'YZX';
+    this.bones.upperarm_L.rotation.order = 'YXZ'; this.bones.upperarm_R.rotation.order = 'YXZ';   // outward angle first, then the swing
     // heel and toe of each foot, in the foot bone's space (model units)
     const pts = () => [new THREE.Vector3(0, -0.12, -0.05), new THREE.Vector3(0, -0.12, 0.2)];
     this.footPts = [[this.bones.foot_L, pts()], [this.bones.foot_R, pts()]];
@@ -175,8 +176,9 @@ export class Player {
     B.hips.position.y = this.hipsRestY;
     const yaw = 0.08 * s * run;
     B.hips.rotation.set(tilt, yaw, roll);
-    B.spine.rotation.set(0.14 * run + 0.1 * air - 0.25 * hit, -0.12 * s * run, -0.03 * c * run);
-    B.chest.rotation.set(0.1 * run, -0.2 * s * run, -0.03 * c * run);
+    const spYaw = -0.06 * s * run, spRoll = -0.02 * c * run, chYaw = -0.1 * s * run, chRoll = -0.02 * c * run;
+    B.spine.rotation.set(0.14 * run + 0.1 * air - 0.25 * hit, spYaw, spRoll);
+    B.chest.rotation.set(0.1 * run, chYaw, chRoll);
     B.neck.rotation.set(-0.12 * run, 0.12 * s * run, 0);
     B.head.rotation.set(-0.16 * run + 0.2 * hit, 0.1 * s * run, 0.03 * c * run);
 
@@ -189,16 +191,17 @@ export class Player {
     B.foot_L.rotation.set(run * fL + air * 0.3, 0, 0);
     B.foot_R.rotation.set(run * fR + air * 0.3, 0, 0);
 
-    // arms: a natural running swing, opposite to the legs (left arm forward as
-    // the right knee comes up), elbows bent, gloves passing chest-high in front
-    // and by the hip behind
+    // arms: a fast runner's swing, straight forward and back, opposite to the
+    // legs: the glove rises to chest height in front and drives back past the
+    // hip. Pure sine curves (no kinks), and the upper arms undo the shoulder
+    // twist and roll so the arms never swing across the body.
     const aw = Math.sin(phase - 3.0);                 // +1: left arm forward
-    const armL = -0.15 - 0.75 * aw, armR = -0.15 + 0.75 * aw;
-    const elbow = (sw) => -1.35 - 0.35 * Math.max(0, sw) + 0.15 * Math.max(0, -sw);   // more bent in front
-    B.upperarm_L.rotation.set(run * armL + air * -1.1 + hit * 0.4, 0, 0.2 + air * 0.3);
-    B.upperarm_R.rotation.set(run * armR + air * -1.1 + hit * 0.4, 0, -0.2 - air * 0.3);
-    B.forearm_L.rotation.set(run * elbow(aw) + air * -1.3, 0, -0.08);
-    B.forearm_R.rotation.set(run * elbow(-aw) + air * -1.3, 0, 0.08);
+    const shYaw = yaw + spYaw + chYaw, shRoll = roll + spRoll + chRoll;
+    const swingL = 0.1 - 0.8 * aw, swingR = 0.1 + 0.8 * aw;
+    B.upperarm_L.rotation.set(run * swingL + air * -1.1 + hit * 0.4, -shYaw * run, 0.2 - shRoll + air * 0.3);
+    B.upperarm_R.rotation.set(run * swingR + air * -1.1 + hit * 0.4, -shYaw * run, -0.2 - shRoll - air * 0.3);
+    B.forearm_L.rotation.set(run * (-1.3 - 0.15 * aw) + air * -1.3, 0, -0.08);
+    B.forearm_R.rotation.set(run * (-1.3 + 0.15 * aw) + air * -1.3, 0, 0.08);
     B.hand_L.rotation.set(-0.1, 0, 0);
     B.hand_R.rotation.set(-0.1, 0, 0);
 
