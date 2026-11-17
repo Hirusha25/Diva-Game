@@ -39,10 +39,13 @@ export const additive = (map, color = 0xffffff, opacity = 1) => new THREE.Sprite
  * point; twinkle() pops a single star that grows and fades in place.
  */
 export class Sparkles {
-  constructor(parent, count = 40) {
+  /** mud: brown blobs drawn normally (not glowing) instead of white stars */
+  constructor(parent, count = 40, mud = false) {
     this.items = [];
     for (let i = 0; i < count; i++) {
-      const s = new THREE.Sprite(additive(starTexture(), 0xffffff, 0));
+      const s = new THREE.Sprite(mud
+        ? new THREE.SpriteMaterial({ map: glowTexture(), color: 0x5a3212, transparent: true, opacity: 0, depthWrite: false, fog: false })
+        : additive(starTexture(), 0xffffff, 0));
       s.visible = false; parent.add(s);
       this.items.push({ s, t: 1, life: 1, v: new THREE.Vector3(), size: 0.3 });
     }
@@ -54,7 +57,7 @@ export class Sparkles {
       const it = this._take(); const a = (i / n) * Math.PI * 2 + Math.random() * 0.4, up = Math.random() * 0.8 - 0.2;
       it.s.position.copy(pos); it.v.set(Math.cos(a) * speed, up * speed + 0.8, Math.sin(a) * speed * 0.6);
       it.t = 0; it.life = 0.55 + Math.random() * 0.35; it.size = size * (0.6 + Math.random() * 0.7);
-      it.s.material.color.set(color); it.s.visible = true;
+      if (!this.keepColor) it.s.material.color.set(color); it.s.visible = true;
     }
   }
   twinkle(pos, size = 0.3, color = 0xffffff) {

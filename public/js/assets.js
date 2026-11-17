@@ -53,6 +53,9 @@ export async function loadAssets(onProgress = () => {}) {
     'pack-lotus': 'assets/textures/packs/pack-lotus.webp', 'pack-rose': 'assets/textures/packs/pack-rose.webp', 'pack-sepalika': 'assets/textures/packs/pack-sepalika.webp' };
   const packs = await Promise.all(Object.entries(packUrls).map(async ([name, url]) => ({ name, map: await loadTex(url), aspect: packMeta[name].aspect })));
   const runnerClean = await loadTex('assets/textures/runner-clean.webp');
+  const stainMeta = await loadJson('assets/textures/stains/stains.json');
+  const stainUrls = { 'mud-1': ['assets/textures/stains/mud-1.webp', 2.7], 'mud-2': ['assets/textures/stains/mud-2.webp', 2.4], 'sand-1': ['assets/textures/stains/sand-1.webp', 2.4] };   // width on the road, metres
+  const stains = await Promise.all(Object.entries(stainUrls).map(async ([name, [url, width]]) => ({ name, width, map: await loadTex(url), aspect: stainMeta[name].aspect })));
   // sharp artwork pasted onto the bus stop's panels (scripts/build-busstop-art.mjs)
   // (full literal paths: the single-file build inlines textures by path)
   const [bsPoster, bsSign, bsRoof] = await Promise.all(['assets/textures/busstop/poster.webp', 'assets/textures/busstop/sign.webp', 'assets/textures/busstop/roof.webp'].map((u) => loadTex(u)));
@@ -156,6 +159,7 @@ export async function loadAssets(onProgress = () => {}) {
     runner: runnerGltf.scene,
     busStopArt: { poster: bsPoster, sign: bsSign, roof: bsRoof },
     packs,
+    stains,
     runnerClean,
     bushLong,
     bushLongs,

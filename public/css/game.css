@@ -196,6 +196,9 @@ img.layer { width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
 .cover.reg [data-layer="tagline"] { left: 32.3% !important; top: 24.6% !important; width: 34.3% !important; height: 6.56% !important; }
 .cover.reg [data-layer="heroes"], .cover.reg #btn-start { opacity: 0; pointer-events: none; transition: opacity .25s; }
 .cover.reg .reg .layer { animation: reg-in .35s ease-out backwards; }
+/* SUBMIT pulses and shines like START (after its entrance) */
+.cover.reg .reg .layer.start { animation: reg-in .35s ease-out backwards, pulse 1.6s ease-in-out .35s infinite; }
+.cover.reg .reg .layer.start:active { animation: none; transform: scale(.94); }
 @keyframes reg-in { from { opacity: 0; transform: translateY(1.2cqh); } to { opacity: 1; transform: none; } }
 .reg-back { display: none; position: absolute; left: 12px; top: calc(env(safe-area-inset-top) + 10px); z-index: 3; width: 40px; height: 40px;
   border-radius: 50%; border: 2px solid rgba(255,255,255,.85); background: rgba(10,58,158,.75); color: #fff; font: 700 26px/1 system-ui, sans-serif; cursor: pointer; }

@@ -15,6 +15,7 @@
     "busstop-art": "node scripts/build-busstop-art.mjs",
     "register-ui": "node scripts/build-register.mjs",
     "packs": "node scripts/build-packs.mjs",
+    "stains": "node scripts/build-stains.mjs",
     "runner-clean": "node scripts/build-runner-clean.mjs",
     "serve": "php -S 0.0.0.0:8080 -t public public/router.php",
     "build:pages": "node scripts/build-artifact.mjs docs --inline-assets --full-html && rm -f docs/diva-fresh-run.html"

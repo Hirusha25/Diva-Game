@@ -270,7 +270,7 @@ try {
   scene.add(cloudField.group);
   world = new World(scene, assets);
   player = new Player(scene, assets.runner, assets.runnerClean);
-  spawner = new Spawner(scene, assets.packs);
+  spawner = new Spawner(scene, assets.packs, assets.stains);
   hud.layoutCover(assets.cover.meta, assets.cover.images);
   hud.setProgress(0.95, REQUIRE_REGISTRATION ? 'Signing in…' : 'Ready');
   me = REQUIRE_REGISTRATION ? await api.me() : null;

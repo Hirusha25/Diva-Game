@@ -38,7 +38,7 @@ export class Hud {
       if (el.tagName === 'IMG') el.src = img;
       else el.style.backgroundImage = `url("${img}")`;
       // CSS custom properties resolve URLs against the stylesheet, so pass an absolute URL.
-      if (key === 'start') el.style.setProperty('--start-img', `url("${new URL(images[key], document.baseURI).href}")`);
+      if (key === 'start' || key === 'submit') el.style.setProperty('--start-img', `url("${new URL(images[key], document.baseURI).href}")`);   // the shine is masked to the button's own shape
     }
     // ticked-box overlays inside the consent cards (fractions of the card)
     for (const el of this.screens.cover.querySelectorAll('[data-tick]')) {

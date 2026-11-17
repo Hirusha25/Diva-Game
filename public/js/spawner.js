@@ -10,12 +10,12 @@ const DESPAWN_Z = 12;
  * and scrolls them with the world. The packs are the five Diva Fresh
  * variants (scripts/build-packs.mjs) as puffy 3D pouches with a coloured
  * glow and twinkles; collecting one sends it flying into the runner with a
- * sparkle burst. (Stains are still placeholders.)
+ * sparkle burst. Stains are the mud / sand puddle pictures.
  */
 const PACK_H = 1.25, PACK_Y = 1.45;
 const PACK_GLOW = { 'pack-rose': 0xff3fa4, 'pack-gardenia': 0x3fd6f0, 'pack-lotus': 0xb35cf0, 'pack-sepalika': 0xff7a2a, 'pack-jasmine': 0x55e06a };
 export class Spawner {
-  constructor(scene, packs = []) {
+  constructor(scene, packs = [], stains = []) {
     this.group = new THREE.Group();
     scene.add(this.group);
     this.items = [];
@@ -24,11 +24,15 @@ export class Spawner {
     this.kinds = packs.map((p) => ({
       aspect: p.aspect,
       mat: new THREE.MeshStandardMaterial({ map: p.map, alphaTest: 0.5, roughness: 0.3, metalness: 0.05,
-        emissive: 0xffffff, emissiveMap: p.map, emissiveIntensity: 0.35 }),
-      glow: additive(glowTexture(), PACK_GLOW[p.name] ?? 0xffffff, 0.75),
+        emissive: 0xffffff, emissiveMap: p.map, emissiveIntensity: 0.12 }),
+      glow: additive(glowTexture(), PACK_GLOW[p.name] ?? 0xffffff, 0.5),
     }));
     this.starMat = additive(starTexture(), 0xffffff, 0.95);
     this.sparkles = new Sparkles(this.group, 60);
+    // stains: the mud / sand puddle pictures (scripts/build-stains.mjs), each a
+    // camera-facing picture standing on the road, about a lane wide
+    this.stainKinds = stains.map((st) => ({ aspect: st.aspect, width: st.width,
+      mat: new THREE.SpriteMaterial({ map: st.map, transparent: true, alphaTest: 0.08, depthWrite: false, toneMapped: false }) }));
     this.stainGeo = new THREE.CircleGeometry(0.75, 18).rotateX(-Math.PI / 2).scale(1.35, 1, 1);
     this.stainMat = new THREE.MeshStandardMaterial({ color: 0x5a3b16, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2 });
     this.time = 0;
@@ -80,11 +84,17 @@ export class Spawner {
       const front = new THREE.Mesh(this.packGeo, k.mat), back = new THREE.Mesh(this.packGeo, k.mat);
       back.rotation.y = Math.PI;
       pouch.add(front, back); pouch.scale.set(PACK_H * k.aspect, PACK_H, PACK_H);
-      const glow = new THREE.Sprite(k.glow); glow.scale.setScalar(PACK_H * 2.2); glow.position.z = -0.05;
+      const glow = new THREE.Sprite(k.glow); glow.scale.setScalar(PACK_H * 1.9); glow.position.z = -0.7;   // well behind the pack: a halo round it, the pack itself stays clear
       const stars = [0, 1, 2].map(() => { const st = new THREE.Sprite(this.starMat); st.scale.setScalar(0.001); return st; });
       mesh.add(glow, pouch, ...stars);
       mesh.userData = { pouch, glow, stars, phase: Math.random() * 10, color: k.glow.color.getHex() };
       mesh.position.y = PACK_Y;
+    } else if (this.stainKinds.length) {
+      const k = this.stainKinds[Math.floor(Math.random() * this.stainKinds.length)];
+      mesh = new THREE.Sprite(k.mat);
+      mesh.center.set(0.5, 0.06);                      // the puddle's front edge sits on the road
+      mesh.scale.set(k.width, k.width / k.aspect, 1);
+      mesh.position.y = 0.01;
     } else {
       mesh = new THREE.Mesh(this.stainGeo, this.stainMat);
       mesh.position.y = 0.015;
@@ -123,11 +133,11 @@ export class Spawner {
         }
         u.pouch.rotation.y = t * 2.2;                                   // spin
         it.mesh.position.y = PACK_Y + Math.sin(t * 3.2) * 0.12;          // bob
-        u.glow.material.opacity = 0.6 + 0.2 * Math.sin(t * 5);
-        u.glow.scale.setScalar(PACK_H * (2.1 + 0.15 * Math.sin(t * 5)));
+        u.glow.material.opacity = 0.42 + 0.12 * Math.sin(t * 5);
+        u.glow.scale.setScalar(PACK_H * (1.85 + 0.12 * Math.sin(t * 5)));
         u.stars.forEach((st, i) => {                                       // twinkles around the pack
           const a = t * 1.6 + i * 2.09, k = (Math.sin(t * 4 + i * 1.7) + 1) / 2;
-          st.position.set(Math.cos(a) * 0.62, Math.sin(a * 1.3) * 0.62, 0.15);
+          st.position.set(Math.cos(a) * 0.68, Math.sin(a * 1.3) * 0.72, 0.15);
           st.scale.setScalar(0.05 + 0.28 * k * k);
         });
       }

@@ -66,6 +66,7 @@ export class Player {
     this.body = model ? this._rigged(model) : this._placeholderBody();
     this.group.add(this.body);
     this.sparkles = new Sparkles(this.group, 36);
+    this.mud = new Sparkles(this.group, 24, true); this.mud.keepColor = true;
     this.aura = new THREE.Sprite(additive(glowTexture(), 0xbfefff, 0));
     this.aura.position.set(0, RUNNER_SCALE * 1.15, 0); this.aura.scale.setScalar(RUNNER_SCALE * 2.6);
     this.group.add(this.aura);
@@ -139,7 +140,10 @@ export class Player {
   }
 
   /** hit a stain: the mud comes back */
-  stain(amount = 0.5) { this.dirt = Math.min(1, this.dirt + amount); this.shine = 0; }
+  stain(amount = 0.6) {
+    this.dirt = Math.min(1, this.dirt + amount); this.shine = 0; this.dirtShown = Math.max(this.dirtShown, this.dirt * 0.7);
+    this.mud.burst(new THREE.Vector3(0, RUNNER_SCALE * 0.9, 0.3), 16, 0x5a3212, 2.4, 0.5);   // mud splashes up onto him
+  }
 
   _updateShirt(dt) {
     this.dirtShown += (this.dirt - this.dirtShown) * Math.min(1, dt * (this.dirt > this.dirtShown ? 14 : 5));
@@ -150,7 +154,7 @@ export class Player {
     this.aura.material.opacity += (auraT + this.shine * 0.45 - this.aura.material.opacity) * Math.min(1, dt * 8);
     if (spotless) { this.twinkleT -= dt; if (this.twinkleT <= 0) { this.twinkleT = 0.18 + Math.random() * 0.25;
       this.sparkles.twinkle(new THREE.Vector3((Math.random() - 0.5) * RUNNER_SCALE * 0.6, RUNNER_SCALE * (0.95 + Math.random() * 0.55), 0.25), 0.32 + Math.random() * 0.2); } }
-    this.sparkles.update(dt);
+    this.sparkles.update(dt); this.mud.update(dt);
     this.shirtU.uDirt.value = this.dirtShown;
     this.shirtU.uShine.value = this.shine * 0.55 + (spotless ? 0.08 : 0);
   }
