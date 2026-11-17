@@ -48,11 +48,13 @@ export async function loadAssets(onProgress = () => {}) {
 
   const runnerGltf = await loadGltf('assets/models/runner.glb');
   const busStopGltf = await loadGltf('assets/models/bus-stop.glb');
-  const coverMeta = await loadJson('assets/ui/cover.json');
+  const coverMeta = { ...(await loadJson('assets/ui/cover.json')), ...(await loadJson('assets/ui/reg/register.json')) };
   const coverImages = {
     bg: 'assets/ui/cover-bg.webp',
     glow: 'assets/ui/glow.webp', hcb: 'assets/ui/hcb.webp', logo: 'assets/ui/logo.webp',
     tagline: 'assets/ui/tagline.webp', heroes: 'assets/ui/heroes.webp', ribbon: 'assets/ui/ribbon.webp', start: 'assets/ui/start.webp',
+    // registration screen (scripts/build-register.mjs)
+    panel: 'assets/ui/reg/panel.webp', header: 'assets/ui/reg/header.webp', fieldName: 'assets/ui/reg/fieldName.webp', fieldPhone: 'assets/ui/reg/fieldPhone.webp', divider: 'assets/ui/reg/divider.webp', male: 'assets/ui/reg/male.webp', female: 'assets/ui/reg/female.webp', card: 'assets/ui/reg/card.webp', tick: 'assets/ui/reg/tick.webp', submit: 'assets/ui/reg/submit.webp',
   };
   const treeMeta = await loadJson('assets/textures/trees.json');
   const cloudMeta = await loadJson('assets/textures/clouds.json');

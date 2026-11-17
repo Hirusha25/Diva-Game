@@ -59,5 +59,24 @@ final class Db
         foreach (array_filter(array_map('trim', explode(';', file_get_contents($file)))) as $stmt) {
             self::pdo()->exec($stmt);
         }
+        self::upgrade();
+    }
+
+    /**
+     * Adds columns introduced after a database was first created (CREATE TABLE
+     * IF NOT EXISTS leaves existing tables as they were). Safe to run often.
+     */
+    public static function upgrade(): void
+    {
+        $sqlite = self::isSqlite();
+        $have = $sqlite
+            ? array_column(self::all('PRAGMA table_info(players)'), 'name')
+            : array_column(self::all('SHOW COLUMNS FROM players'), 'Field');
+        $add = $sqlite
+            ? ['gender' => 'TEXT', 'consent_game_at' => 'TEXT', 'consent_marketing' => 'INTEGER NOT NULL DEFAULT 0', 'consent_marketing_at' => 'TEXT']
+            : ['gender' => 'VARCHAR(6) NULL', 'consent_game_at' => 'DATETIME NULL', 'consent_marketing' => 'TINYINT(1) NOT NULL DEFAULT 0', 'consent_marketing_at' => 'DATETIME NULL'];
+        foreach ($add as $col => $type) {
+            if (!in_array($col, $have, true)) self::pdo()->exec("ALTER TABLE players ADD COLUMN $col $type");
+        }
     }
 }

@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800&display=swap');
 :root {
   --diva-red: #e3001b;
   --diva-blue: #0a4fb5;
@@ -89,6 +90,7 @@ html, body {
 /* ---------- Cover page (poster layers) ---------- */
 .screen.cover { align-items: center; justify-content: center; padding: 0; overflow: hidden; background: none; }
 .stage {
+  container-type: size;   /* registration text sizes follow the poster (cqh units) */
   /* Fill the screen top to bottom like the poster; on tall phones the sides
      crop a little (the poster's own margins), on wide screens it letterboxes. */
   position: relative; flex: none; aspect-ratio: 2048 / 3126;
@@ -151,3 +153,65 @@ img.layer { width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
 .sound-btn.muted .on { display: none; }
 .sound-btn.muted .off { display: inline; }
 .sound-btn:focus-visible { outline: 3px solid var(--diva-yellow); outline-offset: 2px; }
+
+/* ---------- Registration (a mode of the cover poster) ---------- */
+/* START needs a sign-up: the heroes and START give way to the form, drawn
+   from the design layers (scripts/build-register.mjs). The poster is sized so
+   the panel fits the screen width. */
+.stage .reg { display: none; }
+.cover.reg .stage { height: min(100%, 206vw); }
+/* short landscape screens: keep the form a usable size and let it scroll */
+@media (max-height: 600px) {
+  .screen.cover.reg { overflow-y: auto; align-items: flex-start; justify-content: center; }
+  .cover.reg .stage { height: 780px; }
+}
+.cover.reg .reg { display: contents; }
+/* the registration design shows hcb, logo and tagline smaller and higher (sizes keep each layer's aspect) */
+.stage [data-layer="hcb"], .stage [data-layer="logo"], .stage [data-layer="tagline"] { transition: left .3s, top .3s, width .3s, height .3s; }
+.cover.reg [data-layer="hcb"] { left: 43.8% !important; top: 3.8% !important; width: 12.5% !important; height: 4.88% !important; }
+.cover.reg [data-layer="logo"] { left: 30.8% !important; top: 9.5% !important; width: 37.1% !important; height: 16.03% !important; }
+.cover.reg [data-layer="tagline"] { left: 32.3% !important; top: 24.6% !important; width: 34.3% !important; height: 6.56% !important; }
+.cover.reg [data-layer="heroes"], .cover.reg #btn-start { opacity: 0; pointer-events: none; transition: opacity .25s; }
+.cover.reg .reg .layer, .cover.reg .reg-error { animation: reg-in .35s ease-out backwards; }
+@keyframes reg-in { from { opacity: 0; transform: translateY(1.2cqh); } to { opacity: 1; transform: none; } }
+.reg-back { display: none; position: absolute; left: 12px; top: calc(env(safe-area-inset-top) + 10px); z-index: 3; width: 40px; height: 40px;
+  border-radius: 50%; border: 2px solid rgba(255,255,255,.85); background: rgba(10,58,158,.75); color: #fff; font: 700 26px/1 system-ui, sans-serif; cursor: pointer; }
+.screen.cover > .reg-back { position: absolute; z-index: 3; }
+.cover.reg .reg-back { display: block; }
+
+.reg .field input {
+  position: absolute; left: 20.5%; right: 6%; top: 0; bottom: 0; width: auto; margin: 0; padding: 0;
+  border: 0; outline: 0; background: transparent; color: #0b2f8a;
+  font: 800 1.85cqh/1 "Nunito", "Trebuchet MS", system-ui, sans-serif; letter-spacing: .01em;
+}
+.reg .field input::placeholder { color: #8b9097; opacity: 1; font-weight: 700; }
+.reg .field:focus-within { filter: drop-shadow(0 0 .5cqh rgba(255, 214, 0, .9)); }
+
+/* gender: the design's radio circles; the chosen one gets a filled dot and a glow */
+.reg .gender { overflow: visible; }
+.reg .gender::after { content: ""; position: absolute; border-radius: 50%; background: #0b3a9e; transform: translate(-50%, -50%) scale(0); transition: transform .15s; }
+.reg .gender[data-gender="male"]::after { left: 15.8%; top: 57.8%; width: 6%; aspect-ratio: 1; }
+.reg .gender[data-gender="female"]::after { left: 13.4%; top: 58.5%; width: 5.2%; aspect-ratio: 1; }
+.reg .gender[aria-checked="true"] { filter: drop-shadow(0 0 .7cqh rgba(255, 214, 0, .95)); }
+.reg .gender[aria-checked="true"]::after { transform: translate(-50%, -50%) scale(1); }
+
+/* consent cards: text over the card art; tapping the card ticks the box */
+.reg .consent { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.reg .consent:focus-visible { outline: 3px solid var(--diva-yellow); outline-offset: 2px; border-radius: 2cqh; }
+.reg .tick { position: absolute; background: center / 100% 100% no-repeat; opacity: 0; transition: opacity .12s; pointer-events: none; }
+.reg .consent[aria-checked="true"] .tick { opacity: 1; }
+.reg .consent-text { position: absolute; left: 15.3%; right: 3.5%; top: 9%; bottom: 5%; text-align: left; color: #6b7280; }
+.reg .consent-text h3 { margin: .55cqh 0 0; padding-right: 19%; font: 400 1.22cqh/1.1 "Lilita One", "Trebuchet MS", sans-serif; color: #0b3a9e; text-transform: uppercase; letter-spacing: .02em; }
+.reg .consent-text p { margin: .45cqh 0 0; font: 600 1.05cqh/1.32 "Nunito", "Trebuchet MS", system-ui, sans-serif; }
+.reg .pill { position: absolute; right: 0; top: 0; padding: .32cqh .9cqh .28cqh; border-radius: 99px; background: #1b2a6b; color: #fff;
+  font: 400 1.08cqh/1 "Lilita One", "Trebuchet MS", sans-serif; text-transform: uppercase; letter-spacing: .04em; }
+.reg .consent-link { margin: .5cqh 0 0; padding: 0; border: 0; background: none; cursor: pointer; color: #0b1f5e;
+  font: 400 1.12cqh/1 "Lilita One", "Trebuchet MS", sans-serif; text-transform: uppercase; letter-spacing: .03em; }
+.reg-error { position: absolute; left: 16%; right: 16%; top: 84.6%; z-index: 2; margin: 0; text-align: center; pointer-events: none;
+  font: 700 1.2cqh/1.25 "Nunito", system-ui, sans-serif; color: #fff; }
+.reg-error:not(:empty) { padding: .5cqh 1cqh; border-radius: 1cqh; background: #d7263d; box-shadow: 0 .3cqh 1cqh rgba(0,0,0,.25); }
+.consent-sheet { text-align: left; max-width: 440px; }
+.consent-sheet p, .consent-sheet li { font-size: 14px; line-height: 1.45; }
+.consent-sheet ul { padding-left: 20px; margin: 6px 0; }
+.consent-sheet .btn { display: block; margin: 14px auto 0; }
+@media (prefers-reduced-motion: reduce) { .cover.reg .reg .layer, .cover.reg .reg-error { animation: none; } }

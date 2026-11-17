@@ -39,9 +39,17 @@ export const api = {
   hasToken: () => !!store.get(TOKEN_KEY),
   signOut: () => { store.set(TOKEN_KEY, null); store.set(NAME_KEY, null); },
 
-  async register(name, phone) {
-    if (OFFLINE) { store.set(NAME_KEY, name); return { ok: true, resend_in: 0, otp_length: 4, offline: true }; }
-    return call('register.php', { method: 'POST', body: { name, phone }, auth: false });
+  /** details: { gender: 'male' | 'female', consentGame: true, consentMarketing: boolean } */
+  async register(name, phone, details = {}) {
+    if (OFFLINE) {
+      store.set(NAME_KEY, name);
+      store.set('diva.profile', JSON.stringify({ phone, ...details, at: new Date().toISOString() }));
+      return { ok: true, resend_in: 0, otp_length: 4, offline: true };
+    }
+    return call('register.php', {
+      method: 'POST', auth: false,
+      body: { name, phone, gender: details.gender, consent_game: !!details.consentGame, consent_marketing: !!details.consentMarketing },
+    });
   },
 
   async verify(phone, code) {

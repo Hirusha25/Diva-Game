@@ -78,7 +78,7 @@ $csrf = $_SESSION['csrf'] ?? '';
       <h2>Players</h2>
       <div class="row"><input id="player-search" placeholder="Search name or phone" autocomplete="off"><span class="muted" id="player-count"></span></div>
       <table class="table" id="player-table">
-        <thead><tr><th>Name</th><th>Phone</th><th class="num">Best</th><th class="num">Runs</th><th>Registered</th><th>Last seen</th></tr></thead>
+        <thead><tr><th>Name</th><th>Phone</th><th>Gender</th><th>Marketing</th><th class="num">Best</th><th class="num">Runs</th><th>Registered</th><th>Last seen</th></tr></thead>
         <tbody></tbody>
       </table>
     </section>

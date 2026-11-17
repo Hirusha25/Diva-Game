@@ -13,6 +13,7 @@
     "foliage": "node scripts/make-foliage-cards.mjs",
     "rig": "node scripts/rig-runner.mjs",
     "busstop": "node scripts/optimize-busstop.mjs",
+    "register-ui": "node scripts/build-register.mjs",
     "serve": "php -S 0.0.0.0:8080 -t public public/router.php",
     "build:pages": "node scripts/build-artifact.mjs docs --inline-assets --full-html && rm -f docs/diva-fresh-run.html"
   },

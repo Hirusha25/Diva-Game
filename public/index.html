@@ -52,21 +52,57 @@
       <img class="layer" data-layer="heroes" id="heroes" alt="" draggable="false">
       <img class="layer" data-layer="ribbon" alt="" draggable="false">
       <button class="layer tap start" data-layer="start" id="btn-start" aria-label="Start"></button>
+
+      <!-- Registration: shown on the same poster when START needs a sign-up. -->
+      <form class="reg" id="form-register" novalidate autocomplete="on">
+        <img class="layer" data-layer="panel" alt="" draggable="false">
+        <img class="layer" data-layer="header" alt="Register Now" draggable="false">
+        <label class="layer field" data-layer="fieldName"><input id="reg-name" name="name" type="text" maxlength="40" autocomplete="name" placeholder="Full Name" aria-label="Full name" required></label>
+        <label class="layer field" data-layer="fieldPhone"><input id="reg-phone" name="phone" type="tel" inputmode="numeric" maxlength="13" autocomplete="tel" placeholder="Contact Number" aria-label="Contact number" required></label>
+        <img class="layer" data-layer="divider" alt="Select Gender" draggable="false">
+        <div class="gender-group" role="radiogroup" aria-label="Select gender">
+          <button type="button" class="layer tap gender" data-layer="male" data-gender="male" role="radio" aria-checked="false" aria-label="Male"></button>
+          <button type="button" class="layer tap gender" data-layer="female" data-gender="female" role="radio" aria-checked="false" aria-label="Female"></button>
+        </div>
+        <div class="layer consent" data-layer="card1" data-img="card" id="consent-game" role="checkbox" aria-checked="false" tabindex="0" aria-label="Game management consent (required)">
+          <span class="tick" data-tick="card1"></span>
+          <div class="consent-text">
+            <span class="pill">Required</span>
+            <h3>Game management consent</h3>
+            <p>I consent to Hemas Manufacturing (Private) Limited collecting and processing my personal data to manage my participation in this game.</p>
+            <button type="button" class="consent-link" id="btn-read-consent">[Read full consent]</button>
+          </div>
+        </div>
+        <div class="layer consent" data-layer="card2" data-img="card" id="consent-marketing" role="checkbox" aria-checked="false" tabindex="0" aria-label="Personalised services and marketing (optional)">
+          <span class="tick" data-tick="card2"></span>
+          <div class="consent-text">
+            <span class="pill">Optional</span>
+            <h3>Personalized services &amp; marketing</h3>
+            <p>I consent to Hemas Manufacturing (Private) Limited using my personal data to send me personalised offers and news about its products.</p>
+          </div>
+        </div>
+        <p class="reg-error" id="reg-error" role="alert"></p>
+        <button type="submit" class="layer tap" data-layer="submit" id="btn-register" aria-label="Submit"></button>
+      </form>
     </div>
+    <button type="button" class="reg-back" id="btn-back-cover" aria-label="Back">&#8249;</button>
     <p class="hint cover-greeting" id="lobby-greeting"></p>
     <button type="button" id="btn-signout" class="link cover-signout hidden">Not you? Change player</button>
   </div>
 
-  <!-- Register (sheet over the cover) -->
-  <div id="screen-register" class="screen sheet hidden">
-    <form class="card form" id="form-register" novalidate>
-      <h2 class="subtitle">Enter your details to play and win</h2>
-      <label class="field"><span>Your name</span><input id="reg-name" name="name" type="text" maxlength="40" autocomplete="name" required></label>
-      <label class="field"><span>Mobile number</span><input id="reg-phone" name="phone" type="tel" inputmode="numeric" placeholder="07X XXX XXXX" autocomplete="tel" required></label>
-      <p class="error" id="reg-error"></p>
-      <button type="submit" id="btn-register" class="btn btn-start">SEND CODE</button>
-      <div class="row"><button type="button" id="btn-back-cover" class="link">Back</button></div>
-    </form>
+  <!-- Consent text (sheet over the registration screen) -->
+  <div id="screen-consent" class="screen sheet hidden">
+    <div class="card consent-sheet">
+      <h2 class="subtitle">Game management consent</h2>
+      <p>By registering for Diva Fresh Run, I consent to Hemas Manufacturing (Private) Limited collecting and processing the personal data I provide here (my name, contact number and gender) and my game results, in order to:</p>
+      <ul>
+        <li>register me and verify my contact number;</li>
+        <li>run the game, keep my scores and show my name on the leaderboard;</li>
+        <li>contact me if I win, and deliver my gift.</li>
+      </ul>
+      <p>My data is used only for this game and kept only for as long as the campaign requires. I can ask Hemas to access, correct or delete it at any time.</p>
+      <button type="button" class="btn btn-start" id="btn-consent-close">OK</button>
+    </div>
   </div>
 
   <!-- OTP (sheet) -->

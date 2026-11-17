@@ -14,14 +14,27 @@ exports everything to Excel.
 | SMS | pluggable driver: `log` (dev), generic `http` gateway (Notify.lk / Dialog / Mobitel style), `twilio` |
 | Admin | PHP session login, live polling, dependency-free `.xlsx` export |
 
-Live preview of the world (offline build, no registration):
+Live preview of the world (offline build; registration is stored on the device):
 <https://claude.ai/artifact/3y742C6APyV6TYjLFzo4eQ>
+
+### Registration
+
+START opens the registration screen (built from the design layers in
+`assets/raw/register` by `npm run register-ui`): full name, contact number,
+gender, the **required** game-management consent and the **optional**
+marketing consent. With the PHP backend an SMS code follows; the static
+build (GitHub Pages / preview) keeps the sign-up on the device and starts the
+run. Gender and both consents are stored on `players` (columns are added to
+older databases automatically) and appear in the admin list and Excel export.
+Turn registration off with `REQUIRE_REGISTRATION` in `public/js/config.js`.
+The full consent text (`#screen-consent` in `index.html`) is a draft: replace
+it with Hemas' approved wording.
 
 ## Repository layout
 
 ```
 public/            web root – deploy this folder
-  index.html       game page (register → OTP → lobby → run → game over)
+  index.html       game page (cover → register → OTP → run → game over)
   js/              game modules (world, player, spawner, api client, …)
   css/game.css
   assets/          optimised runtime assets (generated, committed)

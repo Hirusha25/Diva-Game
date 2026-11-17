@@ -38,6 +38,7 @@ if (inline) {
     'assets/textures/bush-1.webp', 'assets/textures/bush-2.webp', 'assets/textures/bush-3.webp', 'assets/textures/bush-4.webp', 'assets/textures/bus-stand.webp', 'assets/textures/bush-long.webp', 'assets/textures/bush-long-2.webp', 'assets/textures/bush-long-3.webp', 'assets/textures/bush-long-4.webp', 'assets/textures/bunch-1.webp', 'assets/textures/bunch-2.webp', 'assets/textures/bunch-3.webp', 'assets/textures/long-L1.webp', 'assets/textures/long-L2.webp', 'assets/textures/bunch-L1.webp', 'assets/textures/bunch-L2.webp', 'assets/textures/bunch-L3.webp',
     'assets/textures/card-leaf-1.webp', 'assets/textures/card-leaf-2.webp', 'assets/textures/card-leaf-3.webp', 'assets/textures/card-flower-white.webp', 'assets/textures/card-flower-pink.webp',
     'assets/ui/cover-bg.webp', 'assets/ui/glow.webp', 'assets/ui/hcb.webp', 'assets/ui/logo.webp', 'assets/ui/tagline.webp', 'assets/ui/heroes.webp', 'assets/ui/ribbon.webp', 'assets/ui/start.webp',
+    'assets/ui/reg/panel.webp', 'assets/ui/reg/header.webp', 'assets/ui/reg/fieldName.webp', 'assets/ui/reg/fieldPhone.webp', 'assets/ui/reg/divider.webp', 'assets/ui/reg/male.webp', 'assets/ui/reg/female.webp', 'assets/ui/reg/card.webp', 'assets/ui/reg/tick.webp', 'assets/ui/reg/submit.webp',
     'assets/textures/cloud-1.webp', 'assets/textures/cloud-2.webp', 'assets/textures/cloud-3.webp', 'assets/textures/cloud-4.webp',
   ];
   for (const f of textures) {
@@ -57,6 +58,7 @@ if (inline) {
       'assets/textures/bushes.json': JSON.parse(await readFile('public/assets/textures/bushes.json', 'utf8')),
       'assets/textures/props.json': JSON.parse(await readFile('public/assets/textures/props.json', 'utf8')),
       'assets/ui/cover.json': JSON.parse(await readFile('public/assets/ui/cover.json', 'utf8')),
+      'assets/ui/reg/register.json': JSON.parse(await readFile('public/assets/ui/reg/register.json', 'utf8')),
     },
   };
   inlineScript = `<script>window.__DIVA_OFFLINE = true; window.__DIVA_INLINE = ${JSON.stringify(data)};</script>\n`;
@@ -64,8 +66,8 @@ if (inline) {
 
 const page = `<title>Diva Fresh Run</title>
 <style>
-html, body { height: 100%; }
 ${css}
+html, body { height: 100%; }
 </style>
 ${body}
 ${inlineScript}<script type="module">
@@ -82,7 +84,7 @@ if (process.argv.includes('--full-html')) {
 <meta name="theme-color" content="#0a4fb5">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-${page.replace('<style>', '<style>html,body{height:100%}')}
+${page.replace('</style>', 'html,body{height:100%}</style>')}
 </head>
 <body></body>
 </html>`.replace('</head>\n<body></body>', '</head>\n<body>').replace('</html>', '</body>\n</html>');

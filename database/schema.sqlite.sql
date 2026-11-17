@@ -2,6 +2,10 @@ CREATE TABLE IF NOT EXISTS players (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   phone TEXT NOT NULL UNIQUE,
   name TEXT NOT NULL,
+  gender TEXT,
+  consent_game_at TEXT,
+  consent_marketing INTEGER NOT NULL DEFAULT 0,
+  consent_marketing_at TEXT,
   created_at TEXT NOT NULL,
   last_seen_at TEXT
 );

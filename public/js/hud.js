@@ -7,7 +7,7 @@ export class Hud {
     this.distance = this.$('hud-distance');
     this.lives = this.$('hud-lives');
     this.toast = this.$('hud-toast');
-    this.screens = { loading: this.$('screen-loading'), cover: this.$('screen-cover'), register: this.$('screen-register'), otp: this.$('screen-otp'), over: this.$('screen-over') };
+    this.screens = { loading: this.$('screen-loading'), cover: this.$('screen-cover'), consent: this.$('screen-consent'), otp: this.$('screen-otp'), over: this.$('screen-over') };
     this.loadBar = this.$('load-bar');
     this.loadText = this.$('load-text');
     this._toastTimer = 0;
@@ -19,8 +19,9 @@ export class Hud {
   }
 
   show(name) {
-    // Register / OTP are sheets that sit on top of the cover.
-    const sheet = name === 'register' || name === 'otp';
+    // Consent / OTP are sheets that sit on top of the cover (registration
+    // itself is a mode of the cover poster: see main.js showRegister).
+    const sheet = name === 'consent' || name === 'otp';
     for (const [k, el] of Object.entries(this.screens)) el.classList.toggle('hidden', !(k === name || (sheet && k === 'cover')));
     this.hud.classList.toggle('hidden', name !== null);
   }
@@ -33,10 +34,18 @@ export class Hud {
       const key = el.dataset.layer; const m = meta[key]; if (!m) continue;
       el.style.left = `${m.x * 100}%`; el.style.top = `${m.y * 100}%`;
       el.style.width = `${m.w * 100}%`; el.style.height = `${m.h * 100}%`;
-      if (el.tagName === 'IMG') el.src = images[key];
-      else el.style.backgroundImage = `url("${images[key]}")`;
+      const img = images[el.dataset.img || key];
+      if (el.tagName === 'IMG') el.src = img;
+      else el.style.backgroundImage = `url("${img}")`;
       // CSS custom properties resolve URLs against the stylesheet, so pass an absolute URL.
       if (key === 'start') el.style.setProperty('--start-img', `url("${new URL(images[key], document.baseURI).href}")`);
+    }
+    // ticked-box overlays inside the consent cards (fractions of the card)
+    for (const el of this.screens.cover.querySelectorAll('[data-tick]')) {
+      const t = meta.tick, p = t[el.dataset.tick];
+      el.style.left = `${p.x * 100}%`; el.style.top = `${p.y * 100}%`;
+      el.style.width = `${t.w * 100}%`; el.style.height = `${t.h * 100}%`;
+      el.style.backgroundImage = `url("${images.tick}")`;
     }
   }
 

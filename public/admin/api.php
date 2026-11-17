@@ -58,7 +58,8 @@ switch ($action) {
 
     case 'players':
         $q = trim((string) ($_GET['q'] ?? ''));
-        $sql = 'SELECT p.id, p.name, p.phone, p.created_at, p.last_seen_at,
+        Db::upgrade();
+        $sql = 'SELECT p.id, p.name, p.phone, p.gender, p.consent_marketing, p.created_at, p.last_seen_at,
                        (SELECT MAX(score) FROM scores s WHERE s.player_id = p.id) AS best,
                        (SELECT COUNT(*) FROM scores s WHERE s.player_id = p.id) AS runs
                   FROM players p';
@@ -68,19 +69,20 @@ switch ($action) {
         json_out(['ok' => true, 'players' => Db::all($sql, $params)]);
 
     case 'export':
+        Db::upgrade();
         $players = Db::all(
-            'SELECT p.id, p.name, p.phone, p.created_at, p.last_seen_at,
+            'SELECT p.id, p.name, p.phone, p.gender, p.consent_marketing, p.created_at, p.last_seen_at,
                     COALESCE(t.best, 0) AS best, COALESCE(t.runs, 0) AS runs, t.last_run
                FROM players p
                LEFT JOIN (SELECT player_id, MAX(score) AS best, COUNT(*) AS runs, MAX(created_at) AS last_run FROM scores GROUP BY player_id) t ON t.player_id = p.id
               ORDER BY best DESC, t.last_run ASC, p.created_at ASC'
         );
-        $rows = [['Rank', 'Name', 'Phone', 'Best score', 'Runs', 'Gift', 'Registered (UTC)', 'Last run (UTC)']];
+        $rows = [['Rank', 'Name', 'Phone', 'Gender', 'Marketing consent', 'Best score', 'Runs', 'Gift', 'Registered (UTC)', 'Last run (UTC)']];
         $rank = 0;
         foreach ($players as $p) {
             $rank++;
             $hasRuns = (int) $p['runs'] > 0;
-            $rows[] = [$hasRuns ? $rank : '', $p['name'], $p['phone'], (int) $p['best'], (int) $p['runs'],
+            $rows[] = [$hasRuns ? $rank : '', $p['name'], $p['phone'], ucfirst((string) ($p['gender'] ?? '')), (int) $p['consent_marketing'] === 1 ? 'Yes' : 'No', (int) $p['best'], (int) $p['runs'],
                        $hasRuns ? (Settings::giftForRank($rank) ?? '') : '', $p['created_at'], $p['last_run'] ?? ''];
         }
         $runs = [['Run ID', 'Name', 'Phone', 'Score', 'Distance (m)', 'Duration (s)', 'Played at (UTC)']];

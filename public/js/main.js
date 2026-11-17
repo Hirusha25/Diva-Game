@@ -89,8 +89,8 @@ const controls = new Controls(canvas, (action) => {
 function showLobby() {
   state.mode = 'lobby';
   $('lobby-greeting').textContent = REQUIRE_REGISTRATION && me ? `Hi ${me.name}! Best: ${me.best}` : '';
-  $('btn-signout').classList.toggle('hidden', !REQUIRE_REGISTRATION || api.offline || !me);
-  hud.screens.cover.classList.remove('leaving');
+  $('btn-signout').classList.toggle('hidden', !REQUIRE_REGISTRATION || !me);
+  hud.screens.cover.classList.remove('leaving', 'reg');
   hud.show('cover');
 }
 
@@ -100,13 +100,31 @@ $('btn-tagline').addEventListener('click', () => { pop($('btn-tagline')); sound.
 $('btn-back-cover').addEventListener('click', showLobby);
 $('btn-home').addEventListener('click', () => { sound.tap(); sound.stopMusic(); showLobby(); });
 
+// Registration is a mode of the cover poster (the form layers replace the
+// heroes and START). Gender and the two consents are set by tapping.
 function showRegister() {
   state.mode = 'register';
   hud.error('reg-error', '');
-  hud.busy('btn-register', false, 'SEND CODE');
-  hud.show('register');
-  setTimeout(() => $('reg-name').focus(), 50);
+  hud.screens.cover.classList.remove('leaving');
+  hud.screens.cover.classList.add('reg');
+  hud.show('cover');
 }
+const regChoice = { gender: null };
+for (const b of document.querySelectorAll('.reg .gender')) {
+  b.addEventListener('click', () => {
+    regChoice.gender = b.dataset.gender;
+    for (const o of document.querySelectorAll('.reg .gender')) o.setAttribute('aria-checked', String(o === b));
+    sound.tap(); hud.error('reg-error', '');
+  });
+}
+for (const card of document.querySelectorAll('.reg .consent')) {
+  const toggle = () => { card.setAttribute('aria-checked', String(card.getAttribute('aria-checked') !== 'true')); sound.tap(); hud.error('reg-error', ''); };
+  card.addEventListener('click', (e) => { if (!e.target.closest('.consent-link')) toggle(); });
+  card.addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); } });
+}
+$('btn-read-consent').addEventListener('click', (e) => { e.stopPropagation(); sound.tap(); hud.show('consent'); });
+$('btn-consent-close').addEventListener('click', () => { hud.show('cover'); });
+const checked = (id) => $(id).getAttribute('aria-checked') === 'true';
 
 function showOtp(phone, resendIn) {
   state.mode = 'otp';
@@ -137,17 +155,19 @@ $('form-register').addEventListener('submit', async (e) => {
   const name = $('reg-name').value.trim();
   const phone = $('reg-phone').value.trim();
   hud.error('reg-error', '');
-  if (name.length < 2) return hud.error('reg-error', 'Please enter your name');
-  if (phone.replace(/\D/g, '').length < 9) return hud.error('reg-error', 'Please enter your mobile number');
-  hud.busy('btn-register', true, 'SENDING…');
+  if (name.length < 2) { $('reg-name').focus(); return hud.error('reg-error', 'Please enter your full name'); }
+  if (phone.replace(/\D/g, '').length < 9) { $('reg-phone').focus(); return hud.error('reg-error', 'Please enter your contact number'); }
+  if (!regChoice.gender) return hud.error('reg-error', 'Please select Male or Female');
+  if (!checked('consent-game')) return hud.error('reg-error', 'Please tick the game management consent to play');
+  const btn = $('btn-register'); btn.disabled = true; sound.tap();
   try {
-    const r = await api.register(name, phone);
+    const r = await api.register(name, phone, { gender: regChoice.gender, consentGame: true, consentMarketing: checked('consent-marketing') });
     if (r.offline) { me = { name, best: 0 }; return startRun(); }
     showOtp(r.phone, r.resend_in);
   } catch (err) {
     hud.error('reg-error', err.message);
   } finally {
-    hud.busy('btn-register', false, 'SEND CODE');
+    btn.disabled = false;
   }
 });
 
@@ -169,7 +189,7 @@ $('form-otp').addEventListener('submit', async (e) => {
 $('btn-resend').addEventListener('click', async () => {
   hud.error('otp-error', '');
   try {
-    const r = await api.register($('reg-name').value.trim(), pendingPhone);
+    const r = await api.register($('reg-name').value.trim(), pendingPhone, { gender: regChoice.gender, consentGame: true, consentMarketing: checked('consent-marketing') });
     startResendCountdown(r.resend_in);
   } catch (err) {
     hud.error('otp-error', err.message);
@@ -189,7 +209,7 @@ function startRun() {
   const cover = hud.screens.cover;
   if (!cover.classList.contains('hidden')) {
     cover.classList.add('leaving');
-    setTimeout(() => { cover.classList.remove('leaving'); cover.classList.add('hidden'); }, 320);
+    setTimeout(() => { cover.classList.remove('leaving', 'reg'); cover.classList.add('hidden'); }, 320);
   }
   sound.unlock();
   sound.start();

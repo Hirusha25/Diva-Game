@@ -19,8 +19,9 @@ export const LANE_SWITCH_SPEED = 12;  // metres/second sideways (keeps up with t
 export const JUMP = { height: 1.5, duration: 0.55 };
 
 export const LIVES = 3;
-// Phone registration + SMS code before the first run. Off for now: START plays immediately.
-export const REQUIRE_REGISTRATION = false;
+// Registration (name, contact number, gender, consents) before the first run.
+// With the PHP backend an SMS code follows; the static build signs up locally.
+export const REQUIRE_REGISTRATION = true;
 export const SCORE_PICKUP = 10;
 export const SCORE_PER_METRE = 0.5;
 export const INVULNERABLE_TIME = 1.6;

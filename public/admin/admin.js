@@ -82,8 +82,8 @@
   async function loadPlayers() {
     const q = $('#player-search').value.trim();
     const { players } = await api('players', { query: q ? `&q=${encodeURIComponent(q)}` : '' });
-    $('#player-table tbody').innerHTML = players.length ? players.map((p) => `<tr><td>${esc(p.name)}</td><td>${esc(p.phone)}</td><td class="num">${p.best ?? 0}</td><td class="num">${p.runs}</td><td>${fmt(p.created_at)}</td><td>${fmt(p.last_seen_at)}</td></tr>`).join('')
-      : '<tr><td colspan="6" class="muted">No players found.</td></tr>';
+    $('#player-table tbody').innerHTML = players.length ? players.map((p) => `<tr><td>${esc(p.name)}</td><td>${esc(p.phone)}</td><td>${esc(p.gender ? p.gender[0].toUpperCase() + p.gender.slice(1) : '')}</td><td>${+p.consent_marketing === 1 ? 'Yes' : 'No'}</td><td class="num">${p.best ?? 0}</td><td class="num">${p.runs}</td><td>${fmt(p.created_at)}</td><td>${fmt(p.last_seen_at)}</td></tr>`).join('')
+      : '<tr><td colspan="8" class="muted">No players found.</td></tr>';
     $('#player-count').textContent = `${players.length} shown`;
   }
   $('#player-search').addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(loadPlayers, 300); });

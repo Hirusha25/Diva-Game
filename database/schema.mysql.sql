@@ -2,6 +2,10 @@ CREATE TABLE IF NOT EXISTS players (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   phone VARCHAR(15) NOT NULL UNIQUE,
   name VARCHAR(60) NOT NULL,
+  gender VARCHAR(6) NULL,
+  consent_game_at DATETIME NULL,
+  consent_marketing TINYINT(1) NOT NULL DEFAULT 0,
+  consent_marketing_at DATETIME NULL,
   created_at DATETIME NOT NULL,
   last_seen_at DATETIME NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
