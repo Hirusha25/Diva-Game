@@ -140,3 +140,14 @@ img.layer { width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) {
   .layer, .layer.start, .layer.start::after, [data-layer="heroes"], [data-layer="logo"], [data-layer="tagline"], [data-layer="glow"] { animation: none !important; }
 }
+
+/* Sound toggle */
+.sound-btn {
+  position: fixed; z-index: 30; right: calc(12px + env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 64px);
+  width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; background: rgba(10, 79, 181, .85);
+  color: #fff; font-size: 18px; line-height: 1; padding: 0; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,.25);
+}
+.sound-btn .off { display: none; }
+.sound-btn.muted .on { display: none; }
+.sound-btn.muted .off { display: inline; }
+.sound-btn:focus-visible { outline: 3px solid var(--diva-yellow); outline-offset: 2px; }

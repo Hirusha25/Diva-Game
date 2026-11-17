@@ -7,11 +7,23 @@ import { Controls } from './controls.js';
 import { Hud } from './hud.js';
 import { Spawner } from './spawner.js';
 import { api } from './api.js';
+import { Sound } from './audio.js';
 import { SPEED, LIVES, SCORE_PICKUP, SCORE_PER_METRE, INVULNERABLE_TIME, COLORS, REQUIRE_REGISTRATION } from './config.js';
 
 const canvas = document.getElementById('game');
 const hud = new Hud();
 const $ = (id) => document.getElementById(id);
+
+// ------------------------------------------------------------------- sound
+const sound = new Sound();
+const soundBtn = $('btn-sound');
+const paintSound = () => { soundBtn.classList.toggle('muted', sound.muted); soundBtn.setAttribute('aria-pressed', String(sound.muted)); soundBtn.setAttribute('aria-label', sound.muted ? 'Turn sound on' : 'Mute sound'); };
+paintSound();
+// Browsers allow audio only after a user gesture: unlock on the first tap/key.
+const unlockAudio = () => sound.unlock();
+window.addEventListener('pointerdown', unlockAudio, { capture: true });
+window.addEventListener('keydown', unlockAudio, { capture: true });
+soundBtn.addEventListener('click', (e) => { e.stopPropagation(); sound.unlock(); sound.setMuted(!sound.muted); paintSound(); if (!sound.muted) sound.tap(); });
 
 // ------------------------------------------------------------------ renderer
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
@@ -68,9 +80,9 @@ let resendTimer = 0;
 
 const controls = new Controls(canvas, (action) => {
   if (state.mode !== 'running') return;
-  if (action === 'left') player.moveLane(-1);
-  else if (action === 'right') player.moveLane(1);
-  else if (action === 'up') player.jump();
+  if (action === 'left') { const l = player.lane; player.moveLane(-1); if (player.lane !== l) sound.lane(-1); }
+  else if (action === 'right') { const l = player.lane; player.moveLane(1); if (player.lane !== l) sound.lane(1); }
+  else if (action === 'up') { if (!player.isAirborne) sound.jump(); player.jump(); }
 });
 
 // ----------------------------------------------------------------- screens
@@ -83,10 +95,10 @@ function showLobby() {
 }
 
 function pop(el) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
-$('btn-logo').addEventListener('click', () => pop($('btn-logo')));
-$('btn-tagline').addEventListener('click', () => pop($('btn-tagline')));
+$('btn-logo').addEventListener('click', () => { pop($('btn-logo')); sound.tap(); });
+$('btn-tagline').addEventListener('click', () => { pop($('btn-tagline')); sound.tap(); });
 $('btn-back-cover').addEventListener('click', showLobby);
-$('btn-home').addEventListener('click', showLobby);
+$('btn-home').addEventListener('click', () => { sound.tap(); sound.stopMusic(); showLobby(); });
 
 function showRegister() {
   state.mode = 'register';
@@ -179,6 +191,9 @@ function startRun() {
     cover.classList.add('leaving');
     setTimeout(() => { cover.classList.remove('leaving'); cover.classList.add('hidden'); }, 320);
   }
+  sound.unlock();
+  sound.start();
+  sound.startMusic();
   state.mode = 'running';
   state.speed = SPEED.start;
   state.distance = 0;
@@ -196,6 +211,8 @@ function startRun() {
 
 async function endRun() {
   state.mode = 'over';
+  sound.stopMusic();
+  sound.gameOver();
   const score = Math.floor(state.score);
   const distance = state.distance;
   const duration = (performance.now() - state.runStart) / 1000;
@@ -225,7 +242,7 @@ try {
   hud.setProgress(1, 'Ready');
   showLobby();
   window.__gameReady = true;       // hook for automated screenshots
-  window.__game = { state, startRun, endRun, player, world, camera, showLobby, showRegister, api };
+  window.__game = { state, startRun, endRun, player, world, camera, showLobby, showRegister, api, sound };
 } catch (err) {
   hud.setProgress(1, 'Failed to load: ' + err.message);
   console.error(err);
@@ -258,11 +275,13 @@ function frame() {
     state.distance += step;
     state.score += step * SCORE_PER_METRE;
     const ev = spawner.update(dt, step, player);
-    if (ev.pickups) { state.score += ev.pickups * SCORE_PICKUP; hud.flash(`+${ev.pickups * SCORE_PICKUP}`); }
+    if (ev.pickups) { state.score += ev.pickups * SCORE_PICKUP; hud.flash(`+${ev.pickups * SCORE_PICKUP}`); sound.pickup(); }
+    sound.setIntensity((state.speed - SPEED.start) / (SPEED.max - SPEED.start));
     if (state.invulnerable > 0) state.invulnerable -= dt;
     else if (ev.hits) {
       state.lives -= 1;
       state.invulnerable = INVULNERABLE_TIME;
+      sound.hit();
       hud.flash('Stained!', 600);
       if (state.lives <= 0) endRun();
     }
