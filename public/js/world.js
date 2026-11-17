@@ -4,7 +4,11 @@ import {
   LANE_WIDTH, LANE_COUNT, ROAD_HALF, KERB, PAVEMENT, WALL, SHELTER_OFFSET_X,
   CHUNK_LENGTH, CHUNK_COUNT, COLORS,
 } from './config.js';
+
 import { pavingTexture, grassTexture, wallGridTexture, soilTexture } from './textures.js';
+
+// 3D bus stop placement: height in metres, front edge distance from the road centre.
+const BUS_STOP = { height: 2.6, frontX: 3.8 };
 
 const TREES_PER_CHUNK = 40;   // 20 per side: 12 in a near row + 8 in a far row filling the gaps
 const BUSHES_FRONT_PER_CHUNK = 20;  // 10 per side, every ~6 m along the wall base
@@ -52,6 +56,11 @@ export class World {
     };
     this.busStandMaterial = new THREE.MeshBasicMaterial({ map: assets.busStand.map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false });
     this.busStandAspect = assets.busStand.aspect;
+    this.busStopModel = assets.busStop || null;      // 3D bus stop (scripts/optimize-busstop.mjs)
+    if (this.busStopModel) {                        // measured size (model units): height, depth front-to-back
+      const box = new THREE.Box3().setFromObject(this.busStopModel); const sz = box.getSize(new THREE.Vector3());
+      this.busStopSize = { h: sz.y, d: sz.z, base: box.min.y };
+    }
     this.bushLongMaterial = new THREE.MeshBasicMaterial({ map: assets.bushLong.map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false });
     this.bushLongAspect = assets.bushLong.aspect;
     // Four colour variants of the long bush, each with its front / back-layer / curved materials.
@@ -400,6 +409,31 @@ export class World {
   }
 
   _makeShelter(side) {
+    if (this.busStopModel) return this._makeShelter3D(side);
+    return this._makeShelterArt(side);
+  }
+
+  /**
+   * The 3D Diva bus stop. The model has its open front (bench) facing +z and
+   * its own striped kerb base; it stands with the long side along the road
+   * and the bench facing the road.
+   * BUS_STOP.height: metres; frontX: distance of its front edge from the road
+   * centre line.
+   */
+  _makeShelter3D(side) {
+    const opt = (typeof window !== 'undefined' && window.__DIVA_BUSSTOP) || {};
+    const height = opt.height ?? BUS_STOP.height, frontX = opt.frontX ?? BUS_STOP.frontX;
+    const s = height / this.busStopSize.h, depth = this.busStopSize.d * s;
+    const g = new THREE.Group();
+    const m = this.busStopModel.clone();
+    m.scale.setScalar(s);
+    m.rotation.y = side < 0 ? Math.PI / 2 : -Math.PI / 2;   // bench toward the road
+    g.add(m);
+    g.position.set(side * (frontX + depth / 2), PAVEMENT.height - (this.busStopSize.base + 0.02) * s, 0);
+    return g;
+  }
+
+  _makeShelterArt(side) {
     // Illustrated bus stand on the pavement. It is NOT camera-facing: the art
     // is a 3/4 view, so it stays angled toward the road like a real stand.
     // Never mirrored (the Diva lettering would read backwards).

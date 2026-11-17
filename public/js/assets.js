@@ -47,6 +47,7 @@ export async function loadAssets(onProgress = () => {}) {
     : fetch(url).then((r) => r.json());
 
   const runnerGltf = await loadGltf('assets/models/runner.glb');
+  const busStopGltf = await loadGltf('assets/models/bus-stop.glb');
   const coverMeta = await loadJson('assets/ui/cover.json');
   const coverImages = {
     bg: 'assets/ui/cover-bg.webp',
@@ -143,6 +144,7 @@ export async function loadAssets(onProgress = () => {}) {
   return {
     busStand,
     runner: runnerGltf.scene,
+    busStop: busStopGltf.scene,
     bushLong,
     bushLongs,
     bunches,

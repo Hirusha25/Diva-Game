@@ -47,7 +47,10 @@ if (inline) {
     body = body.replaceAll(f, uri);
   }
   const data = {
-    models: { 'assets/models/runner.glb': (await readFile('public/assets/models/runner.glb')).toString('base64') },
+    models: {
+      'assets/models/runner.glb': (await readFile('public/assets/models/runner.glb')).toString('base64'),
+      'assets/models/bus-stop.glb': (await readFile('public/assets/models/bus-stop.glb')).toString('base64'),
+    },
     json: {
       'assets/textures/trees.json': JSON.parse(await readFile('public/assets/textures/trees.json', 'utf8')),
       'assets/textures/clouds.json': JSON.parse(await readFile('public/assets/textures/clouds.json', 'utf8')),
