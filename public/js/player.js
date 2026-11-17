@@ -125,10 +125,13 @@ export class Player {
         .replace('#include <map_fragment>', `#include <map_fragment>
           vec4 cleanTx = texture2D(uCleanMap, vMapUv);
           diffuseColor.rgb = mix(diffuseColor.rgb, cleanTx.rgb, cleanTx.a * (1.0 - uDirt));
-          // bus dust: a soft sandy-grey film over the outfit only (t-shirt + shorts)
+          // bus dust: a sandy-grey film over the whole runner, heaviest on the
+          // t-shirt and shorts, with a grainy speckle so it reads as dust
           float dl = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11));
           float outfitK = texture2D(uOutfitMap, vMapUv).r;
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(dl) * vec3(0.92, 0.86, 0.76) * 0.86 + vec3(0.07, 0.06, 0.05), uDull * 0.62 * outfitK);`)
+          float grain = fract(sin(dot(floor(vMapUv * 900.0), vec2(12.9898, 78.233))) * 43758.5453);
+          vec3 dustCol = vec3(dl) * vec3(0.9, 0.82, 0.7) * 0.72 + vec3(0.1, 0.08, 0.06) - grain * 0.09;
+          diffuseColor.rgb = mix(diffuseColor.rgb, dustCol, uDull * mix(0.5, 0.9, outfitK));`)
         .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
           totalEmissiveRadiance += diffuseColor.rgb * uShine;`);
     };
@@ -138,7 +141,7 @@ export class Player {
 
   /** a Diva pack: wash part of the dirt away, flash and sparkle */
   clean(amount = 0.25) {
-    this.dirt = Math.max(0, this.dirt - amount); this.dull = Math.max(0, this.dull - 0.6);
+    this.dirt = Math.max(0, this.dirt - amount); this.dull = Math.max(0, this.dull - 0.34);   // ~3 packs wash the dust off
     this.shine = 1;
     const chest = new THREE.Vector3(0, RUNNER_SCALE * 1.25, 0.2);
     this.sparkles.burst(chest, 8, 0xffffff, 1.6, 0.45);
@@ -152,7 +155,7 @@ export class Player {
     this.mud.burst(new THREE.Vector3(0, RUNNER_SCALE * 0.9, 0.3), 16, 0x5a3212, 2.4, 0.5);   // mud splashes up onto him
   }
 
-  /** ran through bus smoke: he goes dusty and dull (fades as he runs on, or with a pack) */
+  /** ran through bus smoke: he goes dusty all over and stays so until Diva packs wash it off */
   dust(amount = 0.3) {
     this.dirt = Math.min(1, this.dirt + amount); this.shine = 0; this.dull = 1; this.dustT = 0;
     this.dust3 = this.dust3 || new Sparkles(this.group, 18, true);
@@ -161,17 +164,17 @@ export class Player {
   }
 
   /** 0 = muddy … 1 = spotless, as shown on screen (for the shirt meter) */
-  get cleanliness() { return 1 - this.dirtShown; }
+  get cleanliness() { return 1 - Math.max(this.dirtShown, (this.dullShown || 0) * 0.85); }
 
   _updateShirt(dt) {
-    // dust film fades over ~6 s; dust keeps drifting off him while it lasts
+    // the dust stays until packs wash it off (shown easing in/out); dust keeps drifting off him meanwhile
+    this.dullShown = (this.dullShown || 0) + (this.dull - (this.dullShown || 0)) * Math.min(1, dt * 4);
     if (this.dull > 0) {
-      this.dull = Math.max(0, this.dull - dt / 6);
       this.dustT = (this.dustT || 0) - dt;
-      if (this.dustT <= 0 && this.dust3) { this.dustT = 0.12;
+      if (this.dustT <= 0 && this.dust3) { this.dustT = 0.1 + 0.15 * (1 - this.dull);
         this.dust3.twinkle(new THREE.Vector3((Math.random() - 0.5) * RUNNER_SCALE * 0.7, RUNNER_SCALE * (0.5 + Math.random() * 1.0), 0.3), 0.35 + 0.35 * this.dull); }
     }
-    this.shirtU.uDull.value = this.dull;
+    this.shirtU.uDull.value = this.dullShown;
     this.dirtShown += (this.dirt - this.dirtShown) * Math.min(1, dt * (this.dirt > this.dirtShown ? 14 : 5));
     this.shine = Math.max(0, this.shine - dt * 2.2);
     const spotless = this.dirtShown < 0.05;
@@ -206,7 +209,7 @@ export class Player {
 
   reset() {
     this.lane = 1; this.x = 0; this.vx = 0; this.lean = 0; this.jumpT = -1; this.height = 0; this.hitT = -1;
-    this.dirt = this.dirtShown = 1; this.shine = 0; this.dull = 0;
+    this.dirt = this.dirtShown = 1; this.shine = 0; this.dull = this.dullShown = 0;
     this.group.position.set(0, 0, 0);
   }
 

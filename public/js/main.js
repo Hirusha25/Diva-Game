@@ -334,7 +334,7 @@ function frame() {
     state.score += step * SCORE_PER_METRE;
     const ev = spawner.update(dt, step, player);
     if (ev.pickups) { state.score += ev.pickups * SCORE_PICKUP; hud.flash(`+${ev.pickups * SCORE_PICKUP}`, 600, 'pack'); sound.pickup(); player.clean(0.25 * ev.pickups); state.packs += ev.pickups; }
-    if (ev.bonus) { state.score += 50 * ev.bonus; player.dirt = 0; player.clean(0); state.boostT = 4; state.slipT = 0; hud.flash('SPEED UP! +50', 1000, 'bonus'); sound.pickup(); sound.pickup(); }
+    if (ev.bonus) { state.score += 50 * ev.bonus; player.dirt = 0; player.dull = 0; player.clean(0); state.boostT = 4; state.slipT = 0; hud.flash('SPEED UP! +50', 1000, 'bonus'); sound.pickup(); sound.pickup(); }
     if (ev.slip) { state.slipT = 2.5; state.boostT = 0; state.invulnerable = Math.max(state.invulnerable, 2.5); player.flinch(); hud.flash('Slipped!', 800, 'slip'); sound.hit(); }
     if (ev.dust) { player.dust(0.3); hud.flash('Dusty!', 700, 'dust'); sound.lane(1); }
     if (ev.bus) {   // running into the bus ends the run

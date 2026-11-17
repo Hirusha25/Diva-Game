@@ -76,20 +76,26 @@ export class Spawner {
     const r = Math.random();
     // rare bonus: the flower bubble, floating a little higher over a lane
     if (this.bonusMap && Math.random() < 0.09) this._spawn('bonus', Math.floor(Math.random() * LANE_COUNT), z - 12);
-    if (r < 0.45) {
-      // A line of packs in one lane
-      const lane = Math.floor(Math.random() * LANE_COUNT);
-      for (let i = 0; i < 5; i++) this._spawn('pack', lane, z - i * 2.2);
-    } else if (r < 0.75) {
-      // Stain in one lane, packs in a neighbour
-      const lane = Math.floor(Math.random() * LANE_COUNT);
+    const L = () => Math.floor(Math.random() * LANE_COUNT);
+    const other = (lane) => (lane + 1 + Math.floor(Math.random() * 2)) % LANE_COUNT;
+    if (r < 0.3) {
+      // packs scattered across the lanes, one at a time: you have to weave for them
+      let lane = L();
+      for (let i = 0; i < 3; i++) { this._spawn('pack', lane, z - i * 7); lane = other(lane); }
+    } else if (r < 0.6) {
+      // an obstacle with a single pack tucked just past it in another lane
+      const lane = L();
       this._spawn('stain', lane, z);
-      const other = (lane + 1 + Math.floor(Math.random() * 2)) % LANE_COUNT;
-      for (let i = 0; i < 3; i++) this._spawn('pack', other, z - 1 - i * 2.2);
-    } else {
-      // Two stains leaving one lane free
-      const free = Math.floor(Math.random() * LANE_COUNT);
+      this._spawn('pack', other(lane), z - 4);
+    } else if (r < 0.85) {
+      // two obstacles leaving one lane free; sometimes a pack waits further up the free lane
+      const free = L();
       for (let lane = 0; lane < LANE_COUNT; lane++) if (lane !== free) this._spawn('stain', lane, z);
+      if (Math.random() < 0.35) this._spawn('pack', free, z - 9);
+    } else {
+      // staggered obstacles: switch lanes twice
+      const a = L(), b2 = other(a);
+      this._spawn('stain', a, z); this._spawn('stain', b2, z - 9);
     }
   }
 
@@ -105,7 +111,9 @@ export class Spawner {
 
   _blockedByBus(kind, lane, z) {
     for (const b of this.buses) { const rear = b.mesh.position.z;
-      if (z < rear + 6 && z > rear - BUS.length - 4 && (kind === 'stain' || lane === 2)) return true; }
+      if (z < rear + 6 && z > rear - BUS.length - 4 && (kind === 'stain' || lane === 2)) return true;
+      // no packs around a bus, nor for a stretch after it: the dust stays on show until you earn it off
+      if (kind === 'pack' && z < rear + 10 && z > rear - BUS.length - 45) return true; }
     if (kind === 'bonus') return false;
     return false;
   }
@@ -164,7 +172,7 @@ export class Spawner {
     this.nextSpawnIn -= distance;
     if (this.nextSpawnIn <= 0) {
       this._spawnPattern();
-      this.nextSpawnIn = 16 + Math.random() * 14;
+      this.nextSpawnIn = 20 + Math.random() * 16;   // packs are scarce: you earn your washes
     }
     const events = { pickups: 0, hits: 0, dust: 0, bus: 0 };
     // a bus parks at each bus stop on the right as it comes into range
