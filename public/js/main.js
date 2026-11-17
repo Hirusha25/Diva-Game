@@ -234,7 +234,7 @@ try {
   cloudField = new CloudField(assets.clouds);
   scene.add(cloudField.group);
   world = new World(scene, assets);
-  player = new Player(scene);
+  player = new Player(scene, assets.runner);
   spawner = new Spawner(scene);
   hud.layoutCover(assets.cover.meta, assets.cover.images);
   hud.setProgress(0.95, REQUIRE_REGISTRATION ? 'Signing in…' : 'Ready');
@@ -282,6 +282,7 @@ function frame() {
       state.lives -= 1;
       state.invulnerable = INVULNERABLE_TIME;
       sound.hit();
+      player.flinch();
       hud.flash('Stained!', 600);
       if (state.lives <= 0) endRun();
     }
