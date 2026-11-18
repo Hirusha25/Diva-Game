@@ -124,7 +124,17 @@ export class Player {
       sh.fragmentShader = 'uniform sampler2D uCleanMap; uniform sampler2D uOutfitMap; uniform float uDirt; uniform float uShine; uniform float uDull; uniform float uExtra;\n' + sh.fragmentShader
         .replace('#include <map_fragment>', `#include <map_fragment>
           vec4 cleanTx = texture2D(uCleanMap, vMapUv);
-          diffuseColor.rgb = mix(diffuseColor.rgb, cleanTx.rgb, cleanTx.a * (1.0 - uDirt));
+          // progressive wash: each patch of the shirt has its own turn, so stains vanish
+          // splash by splash as packs are collected (not all fading together)
+          // smooth value noise (two octaves) gives each area its turn, with soft organic edges
+          vec2 q = vMapUv * 14.0; vec2 qi = floor(q), qf = fract(q); qf = qf * qf * (3.0 - 2.0 * qf);
+          #define H2(p) fract(sin(dot(p, vec2(41.3, 289.1))) * 15731.743)
+          float n1 = mix(mix(H2(qi), H2(qi + vec2(1, 0)), qf.x), mix(H2(qi + vec2(0, 1)), H2(qi + vec2(1, 1)), qf.x), qf.y);
+          vec2 r = vMapUv * 37.0; vec2 ri = floor(r), rf = fract(r); rf = rf * rf * (3.0 - 2.0 * rf);
+          float n2 = mix(mix(H2(ri), H2(ri + vec2(1, 0)), rf.x), mix(H2(ri + vec2(0, 1)), H2(ri + vec2(1, 1)), rf.x), rf.y);
+          float turn = clamp((n1 * 0.75 + n2 * 0.25 - 0.2) / 0.6, 0.0, 1.0) * 0.9 + 0.05;
+          float washed = smoothstep(turn - 0.1, turn + 0.1, 1.0 - uDirt);
+          diffuseColor.rgb = mix(diffuseColor.rgb, cleanTx.rgb, cleanTx.a * washed);
           // bus dust: a sandy-grey film over the whole runner, heaviest on the
           // t-shirt and shorts, with a grainy speckle so it reads as dust
           float dl = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11));
@@ -165,7 +175,7 @@ export class Player {
   /** a Diva pack: wash part of the dirt away, flash and sparkle */
   clean(amount = 0.25) {
     // extra mud washes off first, then the original stains
-    if ((this.extra || 0) > 0) { this.extra = Math.max(0, this.extra - amount * 2); amount = 0; }
+    if ((this.extra || 0) > 0) { this.extra = Math.max(0, this.extra - 0.34); amount = 0; }   // one layer of extra mud per pack
     this.dirt = Math.max(0, this.dirt - amount); this.dull = Math.max(0, this.dull - 0.34);   // ~3 packs wash the dust off
     this.shine = 1;
     const chest = new THREE.Vector3(0, RUNNER_SCALE * 1.25, 0.2);
