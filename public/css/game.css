@@ -36,6 +36,8 @@ html, body {
   opacity: 0; transition: opacity .12s, transform .18s cubic-bezier(.3,1.6,.5,1);
 }
 .toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.toast { text-align: center; }
+.toast small { display: block; margin-top: 6px; font-size: 19px; letter-spacing: .02em; color: #fff; -webkit-text-stroke-width: 5px; }
 .toast.t-pack { color: var(--diva-yellow); }
 .toast.t-bonus { color: #7fe0ff; font-size: 46px; }
 .toast.t-stain { color: #ff8a4a; -webkit-text-stroke-color: #6b2a0c; text-shadow: 0 4px 0 #6b2a0c, 0 7px 14px rgba(0,0,0,.35); }
@@ -380,3 +382,20 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
   font: 400 26px/1 "Lilita One", sans-serif; letter-spacing: .3em; box-shadow: 0 0 0 2px rgba(255,255,255,.9); }
 #screen-otp .error { color: #d7263d; text-shadow: none; }
 .screen.pause { background: rgba(5, 30, 80, .45); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+
+/* ---------- Swipe hint at the start of a run ---------- */
+.swipe-hint { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 22%); transform: translateX(-50%); width: min(300px, 82vw);
+  padding: 14px 18px 12px; border-radius: 22px; text-align: center; pointer-events: none;
+  background: linear-gradient(#eef6fe, #d6e9fa); border: 4px solid #29c5f6; box-shadow: 0 0 0 3px rgba(255,255,255,.9), 0 0 18px rgba(41,197,246,.5), 0 10px 22px rgba(0,0,0,.3);
+  animation: sh-in .35s ease-out; transition: opacity .3s, transform .3s; }
+@keyframes sh-in { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%); } }
+.swipe-hint.out { opacity: 0; transform: translateX(-50%) translateY(14px); }
+.sh-track { position: relative; height: 54px; margin: 0 auto 4px; width: 200px; }
+.sh-hand { position: absolute; left: 50%; top: 4px; font-size: 40px; line-height: 1; transform: translateX(-50%); animation: sh-swipe 1.6s ease-in-out infinite; filter: drop-shadow(0 3px 2px rgba(0,0,0,.25)); }
+.sh-arrow { position: absolute; top: 2px; font: 400 44px/1 "Lilita One", sans-serif; color: #29c5f6; -webkit-text-stroke: 3px #0b3a9e; paint-order: stroke fill; animation: sh-blink 1.6s ease-in-out infinite; }
+.sh-arrow.l { left: 6px; } .sh-arrow.r { right: 6px; animation-delay: .8s; }
+@keyframes sh-swipe { 0%,100% { transform: translateX(-120%) rotate(-12deg); } 50% { transform: translateX(20%) rotate(12deg); } }
+@keyframes sh-blink { 0%,100% { opacity: .35; } 25% { opacity: 1; } 50% { opacity: .35; } }
+.sh-title { margin: 0; font: 400 26px/1.05 "Lilita One", "Trebuchet MS", sans-serif; color: #0b3a9e; letter-spacing: .02em; }
+.sh-sub { margin: 4px 0 0; font: 700 13px/1.3 "Nunito", system-ui, sans-serif; color: #36507e; }
+@media (prefers-reduced-motion: reduce) { .sh-hand, .sh-arrow { animation: none; } }

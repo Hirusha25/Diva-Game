@@ -38,6 +38,11 @@
       <div class="sm-icon sm-dirty"><img src="assets/ui/shirt-dirty.webp" alt="Muddy shirt"></div>
     </div>
     <div id="hud-toast" class="toast"></div>
+    <div id="swipe-hint" class="swipe-hint hidden" aria-live="polite">
+      <div class="sh-track"><span class="sh-arrow l">&#8249;</span><span class="sh-hand">&#9757;&#65039;</span><span class="sh-arrow r">&#8250;</span></div>
+      <p class="sh-title">Swipe to move</p>
+      <p class="sh-sub">Swipe up to jump<span id="hint-keys"> &middot; or use the arrow keys</span></p>
+    </div>
   </div>
   <div id="screen-pause" class="screen pause hidden">
     <div class="card"><h2 class="subtitle">Paused</h2>
@@ -83,7 +88,7 @@
           <span class="tick" data-tick="card1"></span>
           <div class="consent-text">
             <div class="consent-head"><h3>Game management consent</h3><span class="pill">Required</span></div>
-            <p>I consent to Hemas Manufacturing (Private) Limited collecting and processing my personal data to manage my participation in this game. <button type="button" class="consent-link" id="btn-read-consent" data-read="game">Read full consent</button></p>
+            <p>I hereby consent to Hemas Manufacturing (Private) Limited collecting and processing my personal data for this game, in accordance with the Personal Data Protection Act No. 9 of 2022. <button type="button" class="consent-link" id="btn-read-consent" data-read="game">Read full consent</button></p>
           </div>
         </div>
         <div class="layer consent" data-layer="card2" data-img="card" id="consent-marketing" role="checkbox" aria-checked="false" tabindex="0" aria-label="Personalised services and marketing (optional)">

@@ -86,10 +86,33 @@ let resendTimer = 0;
 
 const controls = new Controls(canvas, (action) => {
   if (state.mode !== 'running') return;
+  if (action === 'left' || action === 'right' || action === 'up') hideHint();
   if (action === 'left') { const l = player.lane; player.moveLane(-1); if (player.lane !== l) sound.lane(-1); }
   else if (action === 'right') { const l = player.lane; player.moveLane(1); if (player.lane !== l) sound.lane(1); }
   else if (action === 'up') { if (!player.isAirborne) sound.jump(); player.jump(); }
 });
+
+// ------------------------------------------------------- swipe hint (run start)
+let hintTimer = 0;
+function showHint() {
+  const h = $('swipe-hint'); h.classList.remove('hidden', 'out');
+  $('hint-keys').hidden = !matchMedia('(hover: hover) and (pointer: fine)').matches;
+  clearTimeout(hintTimer); hintTimer = setTimeout(hideHint, 6000);
+}
+function hideHint() {
+  const h = $('swipe-hint'); if (h.classList.contains('hidden') || h.classList.contains('out')) return;
+  h.classList.add('out'); clearTimeout(hintTimer); hintTimer = setTimeout(() => h.classList.add('hidden'), 350);
+}
+
+// ------------------------------------------------------------ pop-up lines
+const LINES = {
+  pack: ["It's a Diva!", 'Diva Fresh!', 'So Fresh!', 'Stain Gone!', 'Sparkling!', 'Fresh Catch!', 'Nice One!', 'Diva Power!'],
+  spotless: ['Spotless!', 'Brilliant White!', 'Diva Clean!'],
+  stain: ['Stained!', 'Oops, Mud!', 'Muddy!', 'Splat!'],
+  slip: ['Slipped!', 'Whoops!', 'Banana Slip!'],
+  dust: ['Dusty!', 'Cough, Cough!', 'Bus Dust!'],
+};
+const line = (k) => LINES[k][Math.floor(Math.random() * LINES[k].length)];
 
 // ----------------------------------------------------------------- screens
 function showLobby() {
@@ -155,13 +178,13 @@ for (const card of document.querySelectorAll('.reg .consent')) {
   card.addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); } });
 }
 // Full consent text, shown on the registration poster in the same panel / banner / card boxes.
-// DRAFT wording: replace with Hemas' approved text.
+// Game consent: Hemas' wording. Marketing consent: DRAFT, to be replaced with approved text.
 const CONSENT_TEXT = {
-  game: { title: 'Game Consent', sections: [
-    ['What we collect', 'Your name, contact number and gender, and your game results (scores, distance, Diva packs collected).'],
-    ['Why we use it', 'To register you and verify your number, run the game and show your name on the leaderboard, and contact you if you win to deliver your gift.'],
-    ['How long we keep it', 'Only for this game, and only for as long as the campaign needs it.'],
-    ['Your choices', 'You can ask Hemas Manufacturing (Private) Limited to see, correct or delete your data at any time.'],
+  game: { title: 'Game Consent', sections: [   // Hemas' approved wording
+    ['My consent', 'I hereby consent to Hemas Manufacturing (Private) Limited collecting and processing my personal data for this game, in accordance with the Personal Data Protection Act No. 9 of 2022.'],
+    ['How it is used', 'I understand that this data will be stored and processed for managing my participation in the game, including game administration, communication and related purposes.'],
+    ['Sharing', 'It may be shared with authorized third parties, strictly in compliance with the PDPA.'],
+    ['Withdrawing consent', "I also acknowledge the right to withdraw this consent at any time by contacting the Company's Data Protection Officer at dpo.hhl@hemas.com."],
   ] },
   marketing: { title: 'Marketing Consent', sections: [
     ['Optional', 'You can play and win without ticking this box.'],
@@ -284,6 +307,7 @@ function startRun() {
   state.packs = 0; state.paused = false; state.boostT = 0; state.slipT = 0;
   state.invulnerable = 0;
   state.runStart = performance.now();
+  showHint();
   player.reset();
   spawner.reset();
   spawner.start();
@@ -295,6 +319,7 @@ function startRun() {
 
 async function endRun() {
   state.mode = 'over';
+  hideHint();
   sound.stopMusic();
   sound.gameOver();
   const score = Math.floor(state.score);
@@ -357,6 +382,7 @@ function frame() {
 
   world.update(step, camera.position);
   cloudField.update(dt, step);
+  if (state.mode !== 'running' && spawner) spawner.drift(dt, step);   // puddles, packs and buses stay put on the road
   player.update(dt, state.speed * (state.speedMul ?? 1));
   player.group.visible = state.mode === 'running';
 
@@ -364,12 +390,18 @@ function frame() {
     state.distance += step;
     state.score += step * SCORE_PER_METRE;
     const ev = spawner.update(dt, step, player);
-    if (ev.pickups) { state.score += ev.pickups * SCORE_PICKUP; hud.flash(`+${ev.pickups * SCORE_PICKUP}`, 600, 'pack'); sound.pickup(); player.clean(0.25 * ev.pickups); state.packs += ev.pickups; }
-    if (ev.bonus) { state.score += 50 * ev.bonus; player.dirt = 0; player.dull = 0; player.clean(0); state.boostT = 4; state.slipT = 0; hud.flash('SPEED UP! +50', 1000, 'bonus'); sound.pickup(); sound.pickup(); }
-    if (ev.slip) { state.slipT = 2.5; state.boostT = 0; state.invulnerable = Math.max(state.invulnerable, 2.5); player.flinch(); hud.flash('Slipped!', 800, 'slip'); sound.hit(); }
-    if (ev.dust) { player.dust(0.3); hud.flash('Dusty!', 700, 'dust'); sound.lane(1); }
+    if (ev.pickups) {
+      state.score += ev.pickups * SCORE_PICKUP; sound.pickup();
+      const wasDirty = player.dirt > 0 || player.dull > 0;
+      player.clean(0.25 * ev.pickups); state.packs += ev.pickups;
+      const spotless = wasDirty && player.dirt <= 0 && player.dull <= 0;
+      hud.flash(spotless ? line('spotless') : line('pack'), spotless ? 1000 : 750, spotless ? 'bonus' : 'pack', `+${ev.pickups * SCORE_PICKUP}`);
+    }
+    if (ev.bonus) { state.score += 50 * ev.bonus; player.dirt = 0; player.dull = 0; player.clean(0); state.boostT = 4; state.slipT = 0; hud.flash('Speed Up!', 1100, 'bonus', '+50 · Diva Clean'); sound.pickup(); sound.pickup(); }
+    if (ev.slip) { state.slipT = 2.5; state.boostT = 0; state.invulnerable = Math.max(state.invulnerable, 2.5); player.flinch(); hud.flash(line('slip'), 900, 'slip', 'Slowing down'); sound.hit(); }
+    if (ev.dust) { player.dust(0.3); hud.flash(line('dust'), 900, 'dust', 'Grab Diva to clean up'); sound.lane(1); }
     if (ev.bus) {   // running into the bus ends the run
-      sound.hit(); player.flinch(); player.stain(); hud.flash('Bus!', 1200, 'bus');
+      sound.hit(); player.flinch(); player.stain(); hud.flash('Bus!', 1400, 'bus', 'Run over');
       state.lives = 0; hud.update(state); endRun(); return;
     }
     sound.setIntensity((state.speed - SPEED.start) / (SPEED.max - SPEED.start));
@@ -380,7 +412,7 @@ function frame() {
       sound.hit();
       player.flinch();
       player.stain();
-      hud.flash('Stained!', 700, 'stain');
+      hud.flash(line('stain'), 900, 'stain', state.lives > 0 ? `${state.lives} shirt${state.lives > 1 ? 's' : ''} left` : '');
       if (state.lives <= 0) endRun();
     }
     player.body.visible = state.invulnerable <= 0 || Math.floor(state.invulnerable * 10) % 2 === 0;

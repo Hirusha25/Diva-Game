@@ -65,8 +65,9 @@ export class Hud {
   }
 
   /** kind: pack | bonus | stain | dust | bus (colour of the pop-up) */
-  flash(text, ms = 700, kind = 'pack') {
+  flash(text, ms = 700, kind = 'pack', sub = '') {
     this.toast.textContent = text;
+    if (sub) { const s = document.createElement('small'); s.textContent = sub; this.toast.append(s); }
     this.toast.className = `toast t-${kind}`;
     void this.toast.offsetWidth;
     this.toast.classList.add('show');

@@ -181,6 +181,14 @@ export class Spawner {
   /**
    * @returns {{pickups:number, hits:number}} events this frame
    */
+  /** not running (game over / lobby): items and buses just ride along with the road */
+  drift(dt, distance) {
+    this.time += dt;
+    for (const it of this.items) it.mesh.position.z += distance;
+    for (const b of this.buses) { b.mesh.position.z += distance; updateBus(b.mesh, dt); }
+    this.sparkles.update(dt);
+  }
+
   update(dt, distance, player) {
     this.time += dt;
     this.nextSpawnIn -= distance;
