@@ -71,8 +71,22 @@ export class Spawner {
     this.nextSpawnIn = 20;
   }
 
-  _spawnPattern() {
-    const z = SPAWN_Z;
+  /**
+   * Fill the road ahead at the start of a run, so there is something to do
+   * from the first second: a pack and an easy obstacle close by, then the
+   * normal patterns spaced out up to where new ones appear.
+   */
+  start() {
+    const L = () => Math.floor(Math.random() * LANE_COUNT);
+    const a = L(), b = (a + 1 + Math.floor(Math.random() * 2)) % LANE_COUNT;
+    this._spawn('pack', 1, -22);                 // straight ahead: the first catch
+    this._spawn('pack', a, -34);
+    this._spawn('stain', b, -46);                // first obstacle: one lane, easy to dodge
+    for (let z = -72; z > SPAWN_Z + 10; z -= 26 + Math.random() * 10) this._spawnPattern(z);
+    this.nextSpawnIn = 18;
+  }
+
+  _spawnPattern(z = SPAWN_Z) {
     const r = Math.random();
     // rare bonus: the flower bubble, floating a little higher over a lane
     if (this.bonusMap && Math.random() < 0.09) this._spawn('bonus', Math.floor(Math.random() * LANE_COUNT), z - 12);

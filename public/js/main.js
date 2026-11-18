@@ -286,6 +286,7 @@ function startRun() {
   state.runStart = performance.now();
   player.reset();
   spawner.reset();
+  spawner.start();
   player.group.visible = true;
   for (const [k, el] of Object.entries(hud.screens)) if (k !== 'cover') el.classList.add('hidden');
   hud.hud.classList.remove('hidden');
