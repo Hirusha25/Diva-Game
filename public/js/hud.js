@@ -67,15 +67,17 @@ export class Hud {
 
   /** writes text into el, with "Diva" (and "Fresh") set in the Diva logo's colours and slant */
   _branded(el, text) {
-    for (const part of String(text).split(/(Diva Fresh|Diva)/)) {
+    const parts = String(text).split(/(Diva Fresh|Diva)/);
+    parts.forEach((part, i) => {
       if (part === 'Diva' || part === 'Diva Fresh') {
         // a white logo badge: red "Diva" (+ blue "FRESH"), so the brand stands out from the rest of the line
         const badge = document.createElement('span'); badge.className = 'dwb';
         const w = document.createElement('span'); w.className = 'dw'; w.textContent = 'Diva'; badge.append(w);
         if (part === 'Diva Fresh') { const f = document.createElement('span'); f.className = 'dw-fresh'; f.textContent = 'FRESH'; badge.append(f); }
+        if (/^[!?.,]/.test(parts[i + 1] || '')) badge.classList.add('before-punct');
         el.append(badge);
       } else if (part) el.append(part);
-    }
+    });
   }
 
   /** shrink a title until its text fits the space it sits in (long titles on the banner) */

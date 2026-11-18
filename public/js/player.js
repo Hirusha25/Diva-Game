@@ -62,7 +62,7 @@ export class Player {
     // shirt dirt: 1 = muddy (as modelled), 0 = clean. Diva packs wash it,
     // stains bring it back (see clean() / stain()).
     this.dirt = 1; this.dirtShown = 1; this.shine = 0; this.twinkleT = 0;
-    this.shirtU = { uDirt: { value: 1 }, uShine: { value: 0 }, uDull: { value: 0 }, uCleanMap: { value: cleanMap }, uOutfitMap: { value: outfitMap } };
+    this.shirtU = { uDirt: { value: 1 }, uShine: { value: 0 }, uDull: { value: 0 }, uExtra: { value: 0 }, uCleanMap: { value: cleanMap }, uOutfitMap: { value: outfitMap } };
     if (outfitMap) { outfitMap.flipY = false; outfitMap.colorSpace = THREE.NoColorSpace; }
     this.dull = 0;
     this.body = model ? this._rigged(model) : this._placeholderBody();
@@ -121,7 +121,7 @@ export class Player {
     U.uCleanMap.value.flipY = false;          // glTF texture convention
     mat.onBeforeCompile = (sh) => {
       Object.assign(sh.uniforms, U);
-      sh.fragmentShader = 'uniform sampler2D uCleanMap; uniform sampler2D uOutfitMap; uniform float uDirt; uniform float uShine; uniform float uDull;\n' + sh.fragmentShader
+      sh.fragmentShader = 'uniform sampler2D uCleanMap; uniform sampler2D uOutfitMap; uniform float uDirt; uniform float uShine; uniform float uDull; uniform float uExtra;\n' + sh.fragmentShader
         .replace('#include <map_fragment>', `#include <map_fragment>
           vec4 cleanTx = texture2D(uCleanMap, vMapUv);
           diffuseColor.rgb = mix(diffuseColor.rgb, cleanTx.rgb, cleanTx.a * (1.0 - uDirt));
@@ -131,7 +131,30 @@ export class Player {
           float outfitK = texture2D(uOutfitMap, vMapUv).r;
           float grain = fract(sin(dot(floor(vMapUv * 900.0), vec2(12.9898, 78.233))) * 43758.5453);
           vec3 dustCol = vec3(dl) * vec3(0.9, 0.82, 0.7) * 0.72 + vec3(0.1, 0.08, 0.06) - grain * 0.09;
-          diffuseColor.rgb = mix(diffuseColor.rgb, dustCol, uDull * mix(0.5, 0.9, outfitK));`)
+          diffuseColor.rgb = mix(diffuseColor.rgb, dustCol, uDull * mix(0.5, 0.9, outfitK));
+          // extra mud from repeated stains: splatters (big blobs + small specks) on the outfit, more as uExtra grows
+          if (uExtra > 0.001) {
+            float splat = 0.0;
+            for (int L = 0; L < 2; L++) {
+              float sc = L == 0 ? 14.0 : 38.0;
+              vec2 g = vMapUv * sc; vec2 cell = floor(g);
+              for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
+                vec2 c = cell + vec2(float(i), float(j));
+                float h1 = fract(sin(dot(c, vec2(127.1, 311.7))) * 43758.5453);
+                float h2 = fract(sin(dot(c, vec2(269.5, 183.3))) * 43758.5453);
+                float h3 = fract(sin(dot(c, vec2(419.2, 371.9))) * 43758.5453);
+                if (h3 > uExtra * (L == 0 ? 0.75 : 0.9)) continue;          // more blobs switch on as the mud builds up
+                vec2 ctr = c + vec2(h1, h2);
+                float r = (L == 0 ? 0.32 : 0.22) * (0.55 + 0.6 * h1);
+                vec2 d = g - ctr; d.x *= 0.8 + 0.5 * h2;
+                float an = atan(d.y, d.x); float wob = 1.0 + 0.1 * sin(an * 3.0 + h3 * 20.0) + 0.06 * sin(an * 7.0 + h1 * 9.0);
+                splat = max(splat, smoothstep(r * wob, r * wob * 0.7, length(d)));
+              }
+            }
+            float m = splat * outfitK;
+            vec3 mud = vec3(0.21, 0.075, 0.018) * (0.75 + 0.4 * grain);   // the model's own mud brown (linear)
+            diffuseColor.rgb = mix(diffuseColor.rgb, mud, m * 0.92);
+          }`)
         .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
           totalEmissiveRadiance += diffuseColor.rgb * uShine;`);
     };
@@ -141,6 +164,8 @@ export class Player {
 
   /** a Diva pack: wash part of the dirt away, flash and sparkle */
   clean(amount = 0.25) {
+    // extra mud washes off first, then the original stains
+    if ((this.extra || 0) > 0) { this.extra = Math.max(0, this.extra - amount * 2); amount = 0; }
     this.dirt = Math.max(0, this.dirt - amount); this.dull = Math.max(0, this.dull - 0.34);   // ~3 packs wash the dust off
     this.shine = 1;
     const chest = new THREE.Vector3(0, RUNNER_SCALE * 1.25, 0.2);
@@ -150,7 +175,9 @@ export class Player {
 
   /** hit a stain: the mud comes back */
   stain() {
-    // all the original mud comes straight back (the model's own stains)
+    // all the original mud comes straight back (the model's own stains); if he
+    // was already muddy, extra mud splatters build up on the outfit
+    if (this.dirt >= 0.99) this.extra = Math.min(1, (this.extra || 0) + 0.34);
     this.dirt = 1; this.shine = 0; this.dirtShown = Math.max(this.dirtShown, 0.85);
     this.mud.burst(new THREE.Vector3(0, RUNNER_SCALE * 0.9, 0.3), 16, 0x5a3212, 2.4, 0.5);   // mud splashes up onto him
   }
@@ -175,6 +202,8 @@ export class Player {
         this.dust3.twinkle(new THREE.Vector3((Math.random() - 0.5) * RUNNER_SCALE * 0.7, RUNNER_SCALE * (0.5 + Math.random() * 1.0), 0.3), 0.35 + 0.35 * this.dull); }
     }
     this.shirtU.uDull.value = this.dullShown;
+    this.extraShown = (this.extraShown || 0) + ((this.extra || 0) - (this.extraShown || 0)) * Math.min(1, dt * 6);
+    this.shirtU.uExtra.value = this.extraShown;
     this.dirtShown += (this.dirt - this.dirtShown) * Math.min(1, dt * (this.dirt > this.dirtShown ? 14 : 5));
     this.shine = Math.max(0, this.shine - dt * 2.2);
     const spotless = this.dirtShown < 0.05;
@@ -209,7 +238,7 @@ export class Player {
 
   reset() {
     this.lane = 1; this.x = 0; this.vx = 0; this.lean = 0; this.jumpT = -1; this.height = 0; this.hitT = -1;
-    this.dirt = this.dirtShown = 1; this.shine = 0; this.dull = this.dullShown = 0;
+    this.dirt = this.dirtShown = 1; this.shine = 0; this.dull = this.dullShown = 0; this.extra = this.extraShown = 0;
     this.group.position.set(0, 0, 0);
   }
 
