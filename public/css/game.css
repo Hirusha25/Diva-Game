@@ -258,10 +258,6 @@ img.layer { width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
   margin: 0 auto; max-width: 440px; text-align: center; pointer-events: none; font: 700 14px/1.25 "Nunito", system-ui, sans-serif; color: #fff; }
 .screen.cover > .reg-error:not(:empty) { padding: 10px 14px; border-radius: 12px; background: #d7263d; box-shadow: 0 4px 14px rgba(0,0,0,.3); animation: err-in .2s ease-out; }
 @keyframes err-in { from { opacity: 0; transform: translateY(-8px); } }
-.consent-sheet { text-align: left; max-width: 440px; }
-.consent-sheet p, .consent-sheet li { font-size: 14px; line-height: 1.45; }
-.consent-sheet ul { padding-left: 20px; margin: 6px 0; }
-.consent-sheet .btn { display: block; margin: 14px auto 0; }
 @media (prefers-reduced-motion: reduce) { .cover.reg .reg .layer, .screen.cover > .reg-error { animation: none; } }
 
 /* ---------- Loading screen: poster road scene, logo, the runner running ---------- */
@@ -324,3 +320,21 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 .shirt-meter.full .sm-clean { animation: sm-glow 1s ease-in-out infinite alternate; }
 @keyframes sm-glow { to { box-shadow: 0 0 22px rgba(160,230,255,1), 0 3px 8px rgba(0,0,0,.3); transform: scale(1.08); } }
 .screen.pause { align-items: center; background: rgba(5, 30, 80, .55); }
+
+/* ---------- Full consent: same panel, banner, card boxes and button as the form ---------- */
+.stage .consent-view { display: none; }
+.cover.reg.cv-open .consent-view { display: contents; }
+.cover.reg.cv-open .reg { display: none; }
+.consent-view .layer { animation: reg-in .3s ease-out backwards; }
+.cv-banner { display: flex; align-items: center; justify-content: flex-start; padding-left: 9%; padding-bottom: .7cqh; box-sizing: border-box; }
+.cv-banner h2 { margin: 0; color: #fff; font: 400 2.75cqh/1 "Lilita One", "Trebuchet MS", sans-serif; letter-spacing: .01em; font-style: italic;
+  -webkit-text-stroke: .5cqh #0b3a9e; paint-order: stroke fill; text-shadow: 0 .35cqh 0 #0b3a9e; white-space: nowrap; }
+.cv-body { position: absolute; left: 18.5%; right: 18.5%; top: 41.2%; bottom: 13.3%; overflow-y: auto; overscroll-behavior: contain;
+  display: flex; flex-direction: column; gap: 1.1cqh; padding: .4cqh .3cqh 1cqh; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
+.cv-card { flex: none; padding: 1.5cqh 1.8cqh 1.6cqh; border-radius: 1.6cqh; animation: reg-in .32s ease-out backwards;
+  background: var(--card-plain) center / 100% 100% no-repeat; }
+.cv-card h3 { margin: 0 0 .6cqh; font: 400 1.5cqh/1.1 "Lilita One", "Trebuchet MS", sans-serif; color: #0b3a9e; text-transform: uppercase; letter-spacing: .03em; }
+.cv-card p { margin: 0; font: 600 1.35cqh/1.45 "Nunito", "Trebuchet MS", system-ui, sans-serif; color: #4b5563; }
+.cv-ok span { position: absolute; left: 12%; right: 26%; top: 0; bottom: 20%; display: flex; align-items: center; justify-content: center;
+  color: #fff; font: 400 2.9cqh/1 "Lilita One", "Trebuchet MS", sans-serif; font-style: italic; -webkit-text-stroke: .45cqh #0b3a9e; paint-order: stroke fill; text-shadow: 0 .3cqh 0 #0b3a9e; }
+@media (prefers-reduced-motion: reduce) { .consent-view .layer, .cv-card { animation: none; } }

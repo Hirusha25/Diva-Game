@@ -42,7 +42,7 @@ if (inline) {
     'assets/textures/props2/bus.webp', 'assets/textures/props2/smoke.webp', 'assets/ui/flower-bubble.webp', 'assets/ui/shirt-clean.webp', 'assets/ui/shirt-dirty.webp',
     'assets/textures/stains/mud-1.webp', 'assets/textures/stains/mud-2.webp', 'assets/textures/stains/sand-1.webp',
     'assets/textures/busstop/poster.webp', 'assets/textures/busstop/sign.webp', 'assets/textures/busstop/roof.webp',
-    'assets/ui/reg/panel.webp', 'assets/ui/reg/header.webp', 'assets/ui/reg/fieldName.webp', 'assets/ui/reg/fieldPhone.webp', 'assets/ui/reg/divider.webp', 'assets/ui/reg/male.webp', 'assets/ui/reg/female.webp', 'assets/ui/reg/card.webp', 'assets/ui/reg/tick.webp', 'assets/ui/reg/submit.webp',
+    'assets/ui/reg/panel.webp', 'assets/ui/reg/header.webp', 'assets/ui/reg/fieldName.webp', 'assets/ui/reg/fieldPhone.webp', 'assets/ui/reg/divider.webp', 'assets/ui/reg/male.webp', 'assets/ui/reg/female.webp', 'assets/ui/reg/card.webp', 'assets/ui/reg/banner.webp', 'assets/ui/reg/cardPlain.webp', 'assets/ui/reg/button.webp', 'assets/ui/reg/tick.webp', 'assets/ui/reg/submit.webp',
     'assets/textures/cloud-1.webp', 'assets/textures/cloud-2.webp', 'assets/textures/cloud-3.webp', 'assets/textures/cloud-4.webp',
   ];
   for (const f of textures) {

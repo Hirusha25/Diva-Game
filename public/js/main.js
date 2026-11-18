@@ -103,7 +103,7 @@ function showLobby() {
   }
   $('pc-avatar').classList.toggle('hidden', !signedIn);
   showPlayerCard(false);
-  hud.screens.cover.classList.remove('leaving', 'reg');
+  hud.screens.cover.classList.remove('leaving', 'reg', 'cv-open');
   hud.show('cover');
 }
 
@@ -154,8 +154,38 @@ for (const card of document.querySelectorAll('.reg .consent')) {
   card.addEventListener('click', (e) => { if (!e.target.closest('.consent-link')) toggle(); });
   card.addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); } });
 }
-$('btn-read-consent').addEventListener('click', (e) => { e.stopPropagation(); sound.tap(); hud.show('consent'); });
-$('btn-consent-close').addEventListener('click', () => { hud.show('cover'); });
+// Full consent text, shown on the registration poster in the same panel / banner / card boxes.
+// DRAFT wording: replace with Hemas' approved text.
+const CONSENT_TEXT = {
+  game: { title: 'Game Consent', sections: [
+    ['What we collect', 'Your name, contact number and gender, and your game results (scores, distance, Diva packs collected).'],
+    ['Why we use it', 'To register you and verify your number, run the game and show your name on the leaderboard, and contact you if you win to deliver your gift.'],
+    ['How long we keep it', 'Only for this game, and only for as long as the campaign needs it.'],
+    ['Your choices', 'You can ask Hemas Manufacturing (Private) Limited to see, correct or delete your data at any time.'],
+  ] },
+  marketing: { title: 'Marketing Consent', sections: [
+    ['Optional', 'You can play and win without ticking this box.'],
+    ['What we use', 'Your name, contact number, gender and game activity.'],
+    ['Why we use it', 'To send you personalised offers and news about Diva and other Hemas products by SMS or phone.'],
+    ['Change your mind', 'You can stop these messages at any time by replying STOP or contacting Hemas Manufacturing (Private) Limited.'],
+  ] },
+};
+function showConsent(kind) {
+  const c = CONSENT_TEXT[kind]; if (!c) return;
+  $('cv-title').textContent = c.title;
+  const body = $('cv-body'); body.textContent = '';
+  c.sections.forEach(([h, t], i) => {
+    const card = document.createElement('section'); card.className = 'cv-card'; card.style.animationDelay = `${0.05 + i * 0.06}s`;
+    const h3 = document.createElement('h3'); h3.textContent = h; const p = document.createElement('p'); p.textContent = t;
+    card.append(h3, p); body.append(card);
+  });
+  body.scrollTop = 0;
+  hud.screens.cover.classList.add('cv-open');
+}
+for (const link of document.querySelectorAll('.consent-link')) {
+  link.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); sound.tap(); showConsent(link.dataset.read); });
+}
+$('btn-consent-close').addEventListener('click', () => { sound.tap(); hud.screens.cover.classList.remove('cv-open'); });
 const checked = (id) => $(id).getAttribute('aria-checked') === 'true';
 
 function showOtp(phone, resendIn) {

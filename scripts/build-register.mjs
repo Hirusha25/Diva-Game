@@ -60,5 +60,20 @@ for (const [key, n, textEnd] of [['fieldName', 8, 0.93], ['fieldPhone', 7, 0.93]
   meta.tick = { card1: { x: box.left / t.w, y: (box.top - 1) / 800 }, card2: { x: (128 - 8) / t.w, y: (1014 - 881 - 8) / 800 }, w: box.width / t.w, h: box.height / 800 };
 }
 
+// blank versions for the consent viewer: banner without "Register Now",
+// card without the checkbox, button without "Submit" (text is drawn in HTML)
+async function blank(src, out, x0f, x1f, y0f, y1f, fromRight = false, width = 1000) {
+  const { data, info } = await sharp(src).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const W = info.width, H = info.height, C = 4, x0 = Math.round(W * x0f), x1 = Math.round(W * x1f);
+  const src0 = fromRight ? x1 : x0 - 1, src1 = fromRight ? Math.min(W - 1, x1 + 1) : x0 - 1;
+  for (let y = Math.round(H * y0f); y < Math.round(H * y1f); y++) for (let x = x0; x < x1; x++) {
+    const sx = fromRight ? x1 + 2 : (x0 - 2); for (let c = 0; c < C; c++) data[(y * W + x) * C + c] = data[(y * W + Math.max(0, Math.min(W - 1, sx))) * C + c]; }
+  await sharp(data, { raw: { width: W, height: H, channels: C } }).resize({ width }).webp({ quality: 88, alphaQuality: 92 }).toFile(`${OUT}/${out}.webp`);
+  console.log(out.padEnd(10), await kb(`${OUT}/${out}.webp`));
+}
+await blank(`${OUT}/header.webp`, 'banner', 0.07, 0.845, 0.1, 0.64);
+await blank(`${OUT}/banner.webp`, 'banner', 0.22, 0.31, 0.6, 0.72);   // the descender of the 'g'
+await blank(`${OUT}/card.webp`, 'cardPlain', 0.025, 0.17, 0.08, 0.66, true);
+await blank(`${OUT}/submit.webp`, 'button', 0.12, 0.745, 0.12, 0.62);
 await writeFile(`${OUT}/register.json`, JSON.stringify(meta, null, 2));
 console.log('wrote', `${OUT}/register.json`);

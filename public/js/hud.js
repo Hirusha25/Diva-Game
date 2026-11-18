@@ -7,7 +7,7 @@ export class Hud {
     this.distance = this.$('hud-distance');
     this.lives = this.$('hud-lives');
     this.toast = this.$('hud-toast');
-    this.screens = { loading: this.$('screen-loading'), cover: this.$('screen-cover'), consent: this.$('screen-consent'), otp: this.$('screen-otp'), over: this.$('screen-over'), pause: this.$('screen-pause') };
+    this.screens = { loading: this.$('screen-loading'), cover: this.$('screen-cover'), otp: this.$('screen-otp'), over: this.$('screen-over'), pause: this.$('screen-pause') };
     this.loadBar = this.$('load-bar');
     this.loadText = this.$('load-text');
     this._toastTimer = 0;
@@ -21,7 +21,7 @@ export class Hud {
   show(name) {
     // Consent / OTP are sheets that sit on top of the cover (registration
     // itself is a mode of the cover poster: see main.js showRegister).
-    const sheet = name === 'consent' || name === 'otp';
+    const sheet = name === 'otp';
     for (const [k, el] of Object.entries(this.screens)) el.classList.toggle('hidden', !(k === name || (sheet && k === 'cover')));
     this.hud.classList.toggle('hidden', name !== null);
   }
@@ -40,6 +40,8 @@ export class Hud {
       // CSS custom properties resolve URLs against the stylesheet, so pass an absolute URL.
       if (key === 'start' || key === 'submit') el.style.setProperty('--start-img', `url("${new URL(images[key], document.baseURI).href}")`);   // the shine is masked to the button's own shape
     }
+    // card box behind each section of the full consent text
+    if (images.cardPlain) this.screens.cover.style.setProperty('--card-plain', `url("${new URL(images.cardPlain, document.baseURI).href}")`);
     // ticked-box overlays inside the consent cards (fractions of the card)
     for (const el of this.screens.cover.querySelectorAll('[data-tick]')) {
       const t = meta.tick, p = t[el.dataset.tick];

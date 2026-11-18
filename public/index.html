@@ -82,18 +82,26 @@
           <span class="tick" data-tick="card1"></span>
           <div class="consent-text">
             <div class="consent-head"><h3>Game management consent</h3><span class="pill">Required</span></div>
-            <p>I consent to Hemas Manufacturing (Private) Limited collecting and processing my personal data to manage my participation in this game. <button type="button" class="consent-link" id="btn-read-consent">Read full consent</button></p>
+            <p>I consent to Hemas Manufacturing (Private) Limited collecting and processing my personal data to manage my participation in this game. <button type="button" class="consent-link" id="btn-read-consent" data-read="game">Read full consent</button></p>
           </div>
         </div>
         <div class="layer consent" data-layer="card2" data-img="card" id="consent-marketing" role="checkbox" aria-checked="false" tabindex="0" aria-label="Personalised services and marketing (optional)">
           <span class="tick" data-tick="card2"></span>
           <div class="consent-text">
             <div class="consent-head"><h3>Personalized services &amp; marketing</h3><span class="pill">Optional</span></div>
-            <p>I consent to Hemas Manufacturing (Private) Limited using my personal data to send me personalised offers and news about its products.</p>
+            <p>I consent to Hemas Manufacturing (Private) Limited using my personal data to send me personalised offers and news about its products. <button type="button" class="consent-link" data-read="marketing">Read full consent</button></p>
           </div>
         </div>
         <button type="submit" class="layer tap start" data-layer="submit" id="btn-register" aria-label="Submit"></button>
       </form>
+
+      <!-- Full consent text, on the same panel, banner, cards and button as the form -->
+      <div class="consent-view" id="consent-view" role="dialog" aria-modal="true" aria-labelledby="cv-title">
+        <img class="layer" data-layer="panel" alt="" draggable="false">
+        <div class="layer cv-banner" data-layer="header" data-img="banner"><h2 id="cv-title">Game Consent</h2></div>
+        <div class="cv-body" id="cv-body"></div>
+        <button type="button" class="layer tap start cv-ok" data-layer="submit" data-img="button" id="btn-consent-close"><span>Got it</span></button>
+      </div>
     </div>
     <!-- Returning player: a round button (initial + best badge); tapping it opens the card -->
     <button type="button" class="pc-avatar hidden" id="pc-avatar" aria-label="Player" aria-expanded="false" aria-controls="player-card">
@@ -105,21 +113,6 @@
     </div>
     <button type="button" class="reg-back" id="btn-back-cover" aria-label="Back">&#8249;</button>
     <p class="reg-error" id="reg-error" role="alert"></p>
-  </div>
-
-  <!-- Consent text (sheet over the registration screen) -->
-  <div id="screen-consent" class="screen sheet hidden">
-    <div class="card consent-sheet">
-      <h2 class="subtitle">Game management consent</h2>
-      <p>By registering for Diva Fresh Run, I consent to Hemas Manufacturing (Private) Limited collecting and processing the personal data I provide here (my name, contact number and gender) and my game results, in order to:</p>
-      <ul>
-        <li>register me and verify my contact number;</li>
-        <li>run the game, keep my scores and show my name on the leaderboard;</li>
-        <li>contact me if I win, and deliver my gift.</li>
-      </ul>
-      <p>My data is used only for this game and kept only for as long as the campaign requires. I can ask Hemas to access, correct or delete it at any time.</p>
-      <button type="button" class="btn btn-start" id="btn-consent-close">OK</button>
-    </div>
   </div>
 
   <!-- OTP (sheet) -->

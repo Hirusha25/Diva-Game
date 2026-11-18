@@ -67,7 +67,7 @@ export async function loadAssets(onProgress = () => {}) {
     glow: 'assets/ui/glow.webp', hcb: 'assets/ui/hcb.webp', logo: 'assets/ui/logo.webp',
     tagline: 'assets/ui/tagline.webp', heroes: 'assets/ui/heroes.webp', ribbon: 'assets/ui/ribbon.webp', start: 'assets/ui/start.webp',
     // registration screen (scripts/build-register.mjs)
-    panel: 'assets/ui/reg/panel.webp', header: 'assets/ui/reg/header.webp', fieldName: 'assets/ui/reg/fieldName.webp', fieldPhone: 'assets/ui/reg/fieldPhone.webp', divider: 'assets/ui/reg/divider.webp', male: 'assets/ui/reg/male.webp', female: 'assets/ui/reg/female.webp', card: 'assets/ui/reg/card.webp', tick: 'assets/ui/reg/tick.webp', submit: 'assets/ui/reg/submit.webp',
+    panel: 'assets/ui/reg/panel.webp', header: 'assets/ui/reg/header.webp', fieldName: 'assets/ui/reg/fieldName.webp', fieldPhone: 'assets/ui/reg/fieldPhone.webp', divider: 'assets/ui/reg/divider.webp', male: 'assets/ui/reg/male.webp', female: 'assets/ui/reg/female.webp', card: 'assets/ui/reg/card.webp', banner: 'assets/ui/reg/banner.webp', cardPlain: 'assets/ui/reg/cardPlain.webp', button: 'assets/ui/reg/button.webp', tick: 'assets/ui/reg/tick.webp', submit: 'assets/ui/reg/submit.webp',
   };
   const treeMeta = await loadJson('assets/textures/trees.json');
   const cloudMeta = await loadJson('assets/textures/clouds.json');
