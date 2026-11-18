@@ -49,10 +49,10 @@ html, body {
 .toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 .toast { text-align: center; }
 .toast .dwb { display: inline-flex; align-items: baseline; gap: .12em; margin: 0 .12em; padding: .06em .3em .1em .26em; border-radius: .32em;
-  background: linear-gradient(#ffffff, #eef5ff); vertical-align: .02em; transform: rotate(-4deg);
+  background: linear-gradient(#ffffff, #eef5ff); vertical-align: .02em;
   box-shadow: 0 0 0 .07em var(--diva-gold), 0 0 0 .14em var(--diva-blue-dark), 0 .16em 0 .14em var(--diva-blue-dark), 0 0 22px 6px rgba(255,255,255,.75);
   animation: dw-pop .45s cubic-bezier(.3,1.7,.5,1) both; }
-@keyframes dw-pop { from { transform: rotate(-4deg) scale(.4); } to { transform: rotate(-4deg) scale(1); } }
+@keyframes dw-pop { from { transform: scale(.4); } to { transform: scale(1); } }
 .toast .dw { color: var(--diva-logo-red); font-style: italic; font-size: 1.12em; letter-spacing: .01em; -webkit-text-stroke: 0; text-shadow: 0 .05em 0 #a52a17; }
 .toast .dw-fresh { color: var(--diva-blue); font-style: italic; font-size: .55em; letter-spacing: .06em; -webkit-text-stroke: 0; text-shadow: none; }
 .toast small .dwb { box-shadow: 0 0 0 .07em var(--diva-gold), 0 0 0 .13em var(--diva-blue-dark), 0 0 12px 3px rgba(255,255,255,.7); }
