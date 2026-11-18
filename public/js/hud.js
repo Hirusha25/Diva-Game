@@ -69,8 +69,11 @@ export class Hud {
   _branded(el, text) {
     for (const part of String(text).split(/(Diva Fresh|Diva)/)) {
       if (part === 'Diva' || part === 'Diva Fresh') {
-        const w = document.createElement('span'); w.className = 'dw'; w.textContent = 'Diva'; el.append(w);
-        if (part === 'Diva Fresh') { const f = document.createElement('span'); f.className = 'dw dw-fresh'; f.textContent = 'FRESH'; el.append(f); }
+        // a white logo badge: red "Diva" (+ blue "FRESH"), so the brand stands out from the rest of the line
+        const badge = document.createElement('span'); badge.className = 'dwb';
+        const w = document.createElement('span'); w.className = 'dw'; w.textContent = 'Diva'; badge.append(w);
+        if (part === 'Diva Fresh') { const f = document.createElement('span'); f.className = 'dw-fresh'; f.textContent = 'FRESH'; badge.append(f); }
+        el.append(badge);
       } else if (part) el.append(part);
     }
   }
