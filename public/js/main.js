@@ -204,6 +204,7 @@ function showConsent(kind) {
   });
   body.scrollTop = 0;
   hud.screens.cover.classList.add('cv-open');
+  requestAnimationFrame(() => hud.fitText($('cv-title')));
 }
 for (const link of document.querySelectorAll('.consent-link')) {
   link.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); sound.tap(); showConsent(link.dataset.read); });
@@ -351,7 +352,7 @@ try {
   hud.setProgress(1, 'Ready');
   showLobby();
   window.__gameReady = true;       // hook for automated screenshots
-  window.__game = { state, startRun, endRun, player, spawner, world, camera, showLobby, showRegister, api, sound };
+  window.__game = { flash: (...a) => hud.flash(...a), state, startRun, endRun, player, spawner, world, camera, showLobby, showRegister, api, sound };
 } catch (err) {
   hud.setProgress(1, 'Failed to load: ' + err.message);
   console.error(err);
@@ -397,7 +398,7 @@ function frame() {
       const spotless = wasDirty && player.dirt <= 0 && player.dull <= 0;
       hud.flash(spotless ? line('spotless') : line('pack'), spotless ? 1000 : 750, spotless ? 'bonus' : 'pack', `+${ev.pickups * SCORE_PICKUP}`);
     }
-    if (ev.bonus) { state.score += 50 * ev.bonus; player.dirt = 0; player.dull = 0; player.clean(0); state.boostT = 4; state.slipT = 0; hud.flash('Speed Up!', 1100, 'bonus', '+50 · Diva Clean'); sound.pickup(); sound.pickup(); }
+    if (ev.bonus) { state.score += 50 * ev.bonus; player.dirt = 0; player.dull = 0; player.clean(0); state.boostT = 4; state.slipT = 0; hud.flash('Speed Up!', 1100, 'bonus', '+50  Diva Clean'); sound.pickup(); sound.pickup(); }
     if (ev.slip) { state.slipT = 2.5; state.boostT = 0; state.invulnerable = Math.max(state.invulnerable, 2.5); player.flinch(); hud.flash(line('slip'), 900, 'slip', 'Slowing down'); sound.hit(); }
     if (ev.dust) { player.dust(0.3); hud.flash(line('dust'), 900, 'dust', 'Grab Diva to clean up'); sound.lane(1); }
     if (ev.bus) {   // running into the bus ends the run

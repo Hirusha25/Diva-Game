@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800&display=swap');
 :root {
+  --diva-logo-red: #e8452c; --diva-blue: #1d5fc4; --diva-blue-dark: #0d3a8f; --diva-sky: #3d9be9; --diva-gold: #f6c33a;
   --diva-red: #e3001b;
   --diva-blue: #0a4fb5;
   --diva-sky: #37a7f5;
@@ -37,13 +38,18 @@ html, body {
 }
 .toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 .toast { text-align: center; }
+.toast .dw { display: inline-block; color: var(--diva-logo-red); font-style: italic; letter-spacing: .01em; padding: 0 .06em 0 .02em;
+  -webkit-text-stroke: 7px #fff; paint-order: stroke fill; text-shadow: 0 4px 0 var(--diva-blue-dark), 0 6px 12px rgba(0,0,0,.3); }
+.toast .dw-fresh { color: var(--diva-blue); font-size: .6em; vertical-align: .08em; letter-spacing: .06em; margin-left: .2em; -webkit-text-stroke-width: 4px; text-shadow: 0 2px 0 var(--diva-blue-dark); }
+.toast small .dw { -webkit-text-stroke-width: 5px; }
 .toast small { display: block; margin-top: 6px; font-size: 19px; letter-spacing: .02em; color: #fff; -webkit-text-stroke-width: 5px; }
-.toast.t-pack { color: var(--diva-yellow); }
-.toast.t-bonus { color: #7fe0ff; font-size: 46px; }
-.toast.t-stain { color: #ff8a4a; -webkit-text-stroke-color: #6b2a0c; text-shadow: 0 4px 0 #6b2a0c, 0 7px 14px rgba(0,0,0,.35); }
-.toast.t-slip { color: #ffe14a; -webkit-text-stroke-color: #8a5a00; text-shadow: 0 4px 0 #8a5a00, 0 7px 14px rgba(0,0,0,.35); }
-.toast.t-dust { color: #e9e2d6; -webkit-text-stroke-color: #5a5248; text-shadow: 0 4px 0 #5a5248, 0 7px 14px rgba(0,0,0,.35); }
-.toast.t-bus { color: #fff; -webkit-text-stroke-color: #c0141c; text-shadow: 0 4px 0 #c0141c, 0 7px 14px rgba(0,0,0,.35); font-size: 46px; }
+.toast.t-pack { color: #fff; -webkit-text-stroke-color: var(--diva-blue-dark); text-shadow: 0 4px 0 var(--diva-blue-dark), 0 7px 14px rgba(0,0,0,.35); }
+.toast.t-pack small { color: var(--diva-gold); }
+.toast.t-bonus { color: var(--diva-gold); -webkit-text-stroke-color: var(--diva-blue-dark); text-shadow: 0 4px 0 var(--diva-blue-dark), 0 7px 14px rgba(0,0,0,.35); font-size: 46px; }
+.toast.t-stain { color: #fff; -webkit-text-stroke-color: var(--diva-logo-red); text-shadow: 0 4px 0 #a52a17, 0 7px 14px rgba(0,0,0,.35); }
+.toast.t-slip { color: var(--diva-gold); -webkit-text-stroke-color: var(--diva-blue-dark); text-shadow: 0 4px 0 var(--diva-blue-dark), 0 7px 14px rgba(0,0,0,.35); }
+.toast.t-dust { color: #fff; -webkit-text-stroke-color: var(--diva-blue-dark); text-shadow: 0 4px 0 var(--diva-blue-dark), 0 7px 14px rgba(0,0,0,.35); }
+.toast.t-bus { color: #fff; -webkit-text-stroke-color: var(--diva-logo-red); text-shadow: 0 4px 0 #a52a17, 0 7px 14px rgba(0,0,0,.35); font-size: 46px; }
 
 /* Screens */
 .screen {
@@ -53,7 +59,7 @@ html, body {
 }
 .card { width: min(420px, 100%); text-align: center; color: #fff; }
 .title {
-  margin: 0 0 18px; font-size: 44px; line-height: .95; font-weight: 900; color: var(--diva-red);
+  margin: 0 0 18px; font-size: 44px; line-height: .95; font-weight: 900; color: var(--diva-logo-red);
   -webkit-text-stroke: 1.5px #fff; text-shadow: 0 4px 0 rgba(0,0,0,.25);
 }
 .title span { display: block; font-size: 26px; color: var(--diva-yellow); -webkit-text-stroke: 1px var(--ink); }
@@ -328,8 +334,8 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 .cover.reg.cv-open .consent-view { display: contents; }
 .cover.reg.cv-open .reg { display: none; }
 .consent-view .layer { animation: reg-in .3s ease-out backwards; }
-.cv-banner { display: flex; align-items: center; justify-content: flex-start; padding-left: 9%; padding-bottom: .7cqh; box-sizing: border-box; }
-.cv-banner h2 { margin: 0; color: #fff; font: 400 2.75cqh/1 "Lilita One", "Trebuchet MS", sans-serif; letter-spacing: .01em; font-style: italic;
+.cv-banner { box-sizing: border-box; }
+.cv-banner h2 { position: absolute; left: 8%; right: 23%; top: 0; bottom: 10%; display: flex; align-items: center; justify-content: center; margin: 0; overflow: visible; color: #fff; font: 400 2.75cqh/1 "Lilita One", "Trebuchet MS", sans-serif; letter-spacing: .01em; font-style: italic;
   -webkit-text-stroke: .5cqh #0b3a9e; paint-order: stroke fill; text-shadow: 0 .35cqh 0 #0b3a9e; white-space: nowrap; }
 .cv-body { position: absolute; left: 18.5%; right: 18.5%; top: 41.2%; bottom: 13.3%; overflow-y: auto; overscroll-behavior: contain;
   display: flex; flex-direction: column; gap: 1.1cqh; padding: .4cqh .3cqh 1cqh; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
@@ -353,7 +359,7 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 .screen.pause .subtitle, #screen-over .subtitle, #screen-otp .subtitle {
   position: absolute; left: 50%; top: -34px; transform: translateX(-50%); width: min(310px, 92%); aspect-ratio: 800 / 182; margin: 0;
   display: flex; align-items: center; padding: 0 22% 2.5% 9%; box-sizing: border-box; background: var(--ui-banner) center / 100% 100% no-repeat;
-  color: #fff; font: 400 26px/1 "Lilita One", "Trebuchet MS", sans-serif; font-style: italic; white-space: nowrap; justify-content: center;
+  color: #fff; font: 400 26px/1 "Lilita One", "Trebuchet MS", sans-serif; font-style: italic; white-space: nowrap; justify-content: center; overflow: hidden;
   -webkit-text-stroke: 5px #0b3a9e; paint-order: stroke fill; text-shadow: 0 3px 0 #0b3a9e; }
 #screen-over .board { max-height: 26vh; }
 .screen.pause .hint, #screen-over .hint, #screen-otp .hint { color: #36507e; text-shadow: none; font: 700 14px/1.4 "Nunito", system-ui, sans-serif; margin: 2px 0 14px; }
@@ -384,18 +390,19 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 .screen.pause { background: rgba(5, 30, 80, .45); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
 
 /* ---------- Swipe hint at the start of a run ---------- */
-.swipe-hint { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 22%); transform: translateX(-50%); width: min(300px, 82vw);
-  padding: 14px 18px 12px; border-radius: 22px; text-align: center; pointer-events: none;
-  background: linear-gradient(#eef6fe, #d6e9fa); border: 4px solid #29c5f6; box-shadow: 0 0 0 3px rgba(255,255,255,.9), 0 0 18px rgba(41,197,246,.5), 0 10px 22px rgba(0,0,0,.3);
+.swipe-hint { position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 22%); transform: translateX(-50%);
+  display: flex; align-items: center; gap: 10px; padding: 7px 16px 7px 10px; border-radius: 99px; pointer-events: none; white-space: nowrap;
+  background: linear-gradient(var(--diva-sky), var(--diva-blue) 55%, var(--diva-blue-dark)); border: 3px solid var(--diva-gold); box-shadow: 0 0 0 2px #fff, 0 6px 14px rgba(0,0,0,.3);
   animation: sh-in .35s ease-out; transition: opacity .3s, transform .3s; }
-@keyframes sh-in { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%); } }
-.swipe-hint.out { opacity: 0; transform: translateX(-50%) translateY(14px); }
-.sh-track { position: relative; height: 54px; margin: 0 auto 4px; width: 200px; }
-.sh-hand { position: absolute; left: 50%; top: 4px; font-size: 40px; line-height: 1; transform: translateX(-50%); animation: sh-swipe 1.6s ease-in-out infinite; filter: drop-shadow(0 3px 2px rgba(0,0,0,.25)); }
-.sh-arrow { position: absolute; top: 2px; font: 400 44px/1 "Lilita One", sans-serif; color: #29c5f6; -webkit-text-stroke: 3px #0b3a9e; paint-order: stroke fill; animation: sh-blink 1.6s ease-in-out infinite; }
-.sh-arrow.l { left: 6px; } .sh-arrow.r { right: 6px; animation-delay: .8s; }
-@keyframes sh-swipe { 0%,100% { transform: translateX(-120%) rotate(-12deg); } 50% { transform: translateX(20%) rotate(12deg); } }
+@keyframes sh-in { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%); } }
+.swipe-hint.out { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+.sh-track { position: relative; flex: none; width: 74px; height: 30px; }
+.sh-hand { position: absolute; left: 50%; top: 2px; font-size: 22px; line-height: 1; transform: translateX(-50%); animation: sh-swipe 1.6s ease-in-out infinite; }
+.sh-arrow { position: absolute; top: 0; font: 400 26px/1 "Lilita One", sans-serif; color: var(--diva-logo-red); -webkit-text-stroke: 3px #fff; paint-order: stroke fill; animation: sh-blink 1.6s ease-in-out infinite; }
+.sh-arrow.l { left: 0; } .sh-arrow.r { right: 0; animation-delay: .8s; }
+@keyframes sh-swipe { 0%,100% { transform: translateX(-85%) rotate(-12deg); } 50% { transform: translateX(-15%) rotate(12deg); } }
 @keyframes sh-blink { 0%,100% { opacity: .35; } 25% { opacity: 1; } 50% { opacity: .35; } }
-.sh-title { margin: 0; font: 400 26px/1.05 "Lilita One", "Trebuchet MS", sans-serif; color: #0b3a9e; letter-spacing: .02em; }
-.sh-sub { margin: 4px 0 0; font: 700 13px/1.3 "Nunito", system-ui, sans-serif; color: #36507e; }
+.sh-text { text-align: left; }
+.sh-title { margin: 0; font: 400 17px/1.05 "Lilita One", "Trebuchet MS", sans-serif; color: #fff; text-shadow: 0 2px 0 var(--diva-blue-dark); letter-spacing: .02em; }
+.sh-sub { margin: 2px 0 0; font: 700 11px/1.2 "Nunito", system-ui, sans-serif; color: var(--diva-gold); }
 @media (prefers-reduced-motion: reduce) { .sh-hand, .sh-arrow { animation: none; } }

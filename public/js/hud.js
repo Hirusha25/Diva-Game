@@ -19,6 +19,7 @@ export class Hud {
   }
 
   show(name) {
+    requestAnimationFrame(() => { for (const t of document.querySelectorAll('.screen:not(.hidden) .card > .subtitle')) this.fitText(t); });
     // Consent / OTP are sheets that sit on top of the cover (registration
     // itself is a mode of the cover poster: see main.js showRegister).
     const sheet = name === 'otp';
@@ -64,10 +65,33 @@ export class Hud {
     this.lives.textContent = `${Math.max(0, lives)}/${this.maxLives || lives}`;
   }
 
+  /** writes text into el, with "Diva" (and "Fresh") set in the Diva logo's colours and slant */
+  _branded(el, text) {
+    for (const part of String(text).split(/(Diva Fresh|Diva)/)) {
+      if (part === 'Diva' || part === 'Diva Fresh') {
+        const w = document.createElement('span'); w.className = 'dw'; w.textContent = 'Diva'; el.append(w);
+        if (part === 'Diva Fresh') { const f = document.createElement('span'); f.className = 'dw dw-fresh'; f.textContent = 'FRESH'; el.append(f); }
+      } else if (part) el.append(part);
+    }
+  }
+
+  /** shrink a title until its text fits the space it sits in (long titles on the banner) */
+  fitText(el) {
+    el.style.fontSize = '';
+    // the space: the element's own content box if it is a block, else its parent's
+    const box = getComputedStyle(el).display === 'flex' ? el : el.parentElement;
+    const cs = getComputedStyle(box);
+    const avail = box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const r = document.createRange(); r.selectNodeContents(el);
+    let size = parseFloat(getComputedStyle(el).fontSize); const floor = size * 0.6;
+    for (let i = 0; i < 14 && r.getBoundingClientRect().width > avail && size > floor; i++) { size *= 0.95; el.style.fontSize = `${size}px`; }
+  }
+
   /** kind: pack | bonus | stain | dust | bus (colour of the pop-up) */
   flash(text, ms = 700, kind = 'pack', sub = '') {
-    this.toast.textContent = text;
-    if (sub) { const s = document.createElement('small'); s.textContent = sub; this.toast.append(s); }
+    this.toast.textContent = '';
+    this._branded(this.toast, text);
+    if (sub) { const s = document.createElement('small'); this._branded(s, sub); this.toast.append(s); }
     this.toast.className = `toast t-${kind}`;
     void this.toast.offsetWidth;
     this.toast.classList.add('show');
