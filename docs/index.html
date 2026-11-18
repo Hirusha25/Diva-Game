@@ -48,7 +48,7 @@ html, body {
 }
 .toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 .toast { text-align: center; }
-.toast .dwb { display: inline-flex; align-items: baseline; gap: .12em; margin: 0 .12em; padding: .06em .3em .1em .26em; border-radius: .32em;
+.toast .dwb { display: inline-flex; align-items: baseline; gap: .12em; margin: 0 .3em 0 .12em; padding: .06em .3em .1em .26em; border-radius: .32em;
   background: linear-gradient(#ffffff, #eef5ff); vertical-align: .02em;
   box-shadow: 0 0 0 .07em var(--diva-gold), 0 0 0 .14em var(--diva-blue-dark), 0 .16em 0 .14em var(--diva-blue-dark), 0 0 22px 6px rgba(255,255,255,.75);
   animation: dw-pop .45s cubic-bezier(.3,1.7,.5,1) both; }
@@ -355,7 +355,7 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 .cv-body { position: absolute; left: 18.5%; right: 18.5%; top: 41.2%; bottom: 13.3%; overflow-y: auto; overscroll-behavior: contain;
   display: flex; flex-direction: column; gap: 1.1cqh; padding: .4cqh .3cqh 1cqh; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
 .cv-card { flex: none; padding: 1.5cqh 1.8cqh 1.6cqh; border-radius: 1.6cqh; animation: reg-in .32s ease-out backwards;
-  background: var(--card-plain) center / 100% 100% no-repeat; }
+  background: linear-gradient(rgba(29,95,196,.13), rgba(13,58,143,.2)), var(--card-plain) center / 100% 100% no-repeat; box-shadow: inset 0 1px 3px rgba(13,58,143,.18); }
 .cv-card h3 { margin: 0 0 .6cqh; font: 400 1.5cqh/1.1 "Lilita One", "Trebuchet MS", sans-serif; color: #0b3a9e; text-transform: uppercase; letter-spacing: .03em; }
 .cv-card p { margin: 0; font: 600 1.35cqh/1.45 "Nunito", "Trebuchet MS", system-ui, sans-serif; color: #4b5563; }
 .cv-ok span { position: absolute; left: 12%; right: 26%; top: 0; bottom: 20%; display: flex; align-items: center; justify-content: center;
@@ -391,7 +391,7 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 .screen.pause .link:active, #screen-over .link:active, #screen-otp .link:active { transform: translateY(2px); box-shadow: none; }
 .screen.pause .link[disabled], #screen-otp .link[disabled] { opacity: .55; }
 /* score rows as the registration card boxes */
-#screen-over .final { margin: 0 0 8px; padding: 12px 16px; border-radius: 14px; background: var(--card-plain) center / 100% 100% no-repeat;
+#screen-over .final { margin: 0 0 8px; padding: 12px 16px; border-radius: 14px; background: linear-gradient(rgba(29,95,196,.13), rgba(13,58,143,.2)), var(--card-plain) center / 100% 100% no-repeat; box-shadow: inset 0 1px 3px rgba(13,58,143,.18);
   font: 400 24px/1 "Lilita One", "Trebuchet MS", sans-serif; color: #0b3a9e; }
 #screen-over .final .label { font: 800 12px/1 "Nunito", system-ui, sans-serif; color: #36507e; opacity: 1; }
 #screen-over .board li { color: #0b3a9e; }
