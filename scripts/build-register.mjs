@@ -71,9 +71,45 @@ async function blank(src, out, x0f, x1f, y0f, y1f, fromRight = false, width = 10
   await sharp(data, { raw: { width: W, height: H, channels: C } }).resize({ width }).webp({ quality: 88, alphaQuality: 92 }).toFile(`${OUT}/${out}.webp`);
   console.log(out.padEnd(10), await kb(`${OUT}/${out}.webp`));
 }
-await blank(`${OUT}/header.webp`, 'banner', 0.07, 0.845, 0.1, 0.64);
-await blank(`${OUT}/banner.webp`, 'banner', 0.22, 0.31, 0.6, 0.72);   // the descender of the 'g'
+// Banner / button: rebuild the blue body under the text row by row, blending
+// between clean blue on either side of the text; the flower, leaves and the
+// yellow / red swoosh are kept exactly as drawn.
+async function clearText(src, out, o) {
+  const { data, info } = await sharp(src).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const W = info.width, H = info.height, px = (x, y) => (y * W + x) * 4;
+  // flower: light pixels joined to its yellow centre (so a letter touching a petal is not kept)
+  const petal = new Uint8Array(W * H);
+  { const light = (i) => Math.min(data[i], data[i + 1], data[i + 2]) > 140 || (data[i] > 190 && data[i + 1] > 140 && data[i + 2] < 140);
+    const st = [];
+    for (let y = 0; y < H; y++) for (let x = Math.round(o.flowerX * W); x < W; x++) { const i = px(x, y); if (data[i] > 200 && data[i + 1] > 150 && data[i + 2] < 110 && data[i + 3] > 200) st.push(y * W + x); }
+    while (st.length) { const v = st.pop(); if (petal[v]) continue; const x = v % W, y = (v / W) | 0; if (!light(px(x, y))) continue; petal[v] = 1;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const xx = x + dx, yy = y + dy; if (xx >= 0 && yy >= 0 && xx < W && yy < H) st.push(yy * W + xx); } }
+    // grow 2 px so the petal's soft edge stays
+    for (let it = 0; it < 2; it++) { const nx = Uint8Array.from(petal); for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) { const v = y * W + x; if (!petal[v] && (petal[v - 1] || petal[v + 1] || petal[v - W] || petal[v + W])) nx[v] = 1; } petal.set(nx); } }
+  const keep = (x, y) => { const i = px(x, y), r = data[i], g = data[i + 1], b = data[i + 2];
+    return petal[y * W + x] ||
+           (x < o.flowerX * W && r > 170 && g > 130 && b < 120) ||   // yellow swoosh
+           (r > 160 && g < 110 && b < 130) ||                        // red swoosh
+           (g > r + 25 && g > b + 10);                               // leaves
+  };
+  const body = (x, y) => { const i = px(x, y), r = data[i], g = data[i + 1], b = data[i + 2]; return b > 140 && b > r + 60 && data[i + 3] > 200; };
+  const sample = (y, xa, xb) => { let n = 0; const c = [0, 0, 0];
+    for (let x = Math.round(xa * W); x < Math.round(xb * W); x++) if (body(x, y)) { const i = px(x, y); c[0] += data[i]; c[1] += data[i + 1]; c[2] += data[i + 2]; n++; }
+    return n ? c.map((v) => v / n) : null; };
+  let lastL = null, lastR = null;
+  for (let y = Math.round(o.y0 * H); y < Math.round(o.y1 * H); y++) {
+    const L = sample(y, o.l0, o.l1) || lastL, R = sample(y, o.r0, o.r1) || L || lastR; lastL = L; lastR = R; if (!L) continue;
+    const xa = Math.round(o.x0 * W), xb = Math.round(o.x1 * W);
+    for (let x = xa; x < xb; x++) { if (keep(x, y)) continue;
+      const t = (x - xa) / (xb - xa), i = px(x, y);
+      const f = Math.min(1, Math.min(x - xa, xb - x) / (0.025 * W));   // feather the left/right edges into the original
+      for (let c = 0; c < 3; c++) data[i + c] = Math.round((L[c] * (1 - t) + R[c] * t) * f + data[i + c] * (1 - f)); data[i + 3] = 255; }
+  }
+  await sharp(data, { raw: { width: W, height: H, channels: 4 } }).blur(0.4).webp({ quality: 90, alphaQuality: 92 }).toFile(`${OUT}/${out}.webp`);
+  console.log(out.padEnd(10), await kb(`${OUT}/${out}.webp`));
+}
+await clearText(`${OUT}/header.webp`, 'banner', { y0: 0.12, y1: 0.8, x0: 0.06, x1: 0.86, l0: 0.035, l1: 0.065, r0: 0.84, r1: 0.88, flowerX: 0.76 });
+await clearText(`${OUT}/submit.webp`, 'button', { y0: 0.12, y1: 0.8, x0: 0.16, x1: 0.8, l0: 0.1, l1: 0.16, r0: 0.75, r1: 0.79, flowerX: 0.74 });
 await blank(`${OUT}/card.webp`, 'cardPlain', 0.025, 0.17, 0.08, 0.66, true);
-await blank(`${OUT}/submit.webp`, 'button', 0.12, 0.745, 0.12, 0.62);
 await writeFile(`${OUT}/register.json`, JSON.stringify(meta, null, 2));
 console.log('wrote', `${OUT}/register.json`);

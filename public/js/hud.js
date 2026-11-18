@@ -41,7 +41,9 @@ export class Hud {
       if (key === 'start' || key === 'submit') el.style.setProperty('--start-img', `url("${new URL(images[key], document.baseURI).href}")`);   // the shine is masked to the button's own shape
     }
     // card box behind each section of the full consent text
-    if (images.cardPlain) this.screens.cover.style.setProperty('--card-plain', `url("${new URL(images.cardPlain, document.baseURI).href}")`);
+    // shared UI art for every panel screen (pause, game over, code entry, consent)
+    const abs = (u) => `url("${new URL(u, document.baseURI).href}")`;
+    for (const [v, k] of [['--card-plain', 'cardPlain'], ['--ui-banner', 'banner'], ['--ui-button', 'button']]) if (images[k]) document.documentElement.style.setProperty(v, abs(images[k]));
     // ticked-box overlays inside the consent cards (fractions of the card)
     for (const el of this.screens.cover.querySelectorAll('[data-tick]')) {
       const t = meta.tick, p = t[el.dataset.tick];

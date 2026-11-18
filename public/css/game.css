@@ -338,3 +338,45 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 .cv-ok span { position: absolute; left: 12%; right: 26%; top: 0; bottom: 20%; display: flex; align-items: center; justify-content: center;
   color: #fff; font: 400 2.9cqh/1 "Lilita One", "Trebuchet MS", sans-serif; font-style: italic; -webkit-text-stroke: .45cqh #0b3a9e; paint-order: stroke fill; text-shadow: 0 .3cqh 0 #0b3a9e; }
 @media (prefers-reduced-motion: reduce) { .consent-view .layer, .cv-card { animation: none; } }
+
+/* ---------- Panel screens (pause, game over, code entry) in the game's UI ----------
+   Same pieces as the registration screen: glassy panel with the cyan rim, the
+   blue flower banner as the title, card boxes, the blue flower button. */
+.screen.pause, #screen-over, #screen-otp { align-items: center; padding: 20px 18px calc(env(safe-area-inset-bottom) + 20px); }
+.screen.pause .card, #screen-over .card, #screen-otp .card {
+  position: relative; width: min(380px, 100%); padding: 46px 20px 22px; margin-top: 30px; color: #0b3a9e; overflow: visible;
+  max-height: calc(100% - 40px); border-radius: 28px; background: linear-gradient(#eef6fe, #d6e9fa);
+  border: 4px solid #29c5f6; box-shadow: 0 0 0 3px rgba(255,255,255,.9), 0 0 22px rgba(41,197,246,.55), 0 14px 30px rgba(0,0,0,.35);
+  animation: sheet .3s ease-out; }
+.screen.pause .subtitle, #screen-over .subtitle, #screen-otp .subtitle {
+  position: absolute; left: 50%; top: -34px; transform: translateX(-50%); width: min(310px, 92%); aspect-ratio: 800 / 182; margin: 0;
+  display: flex; align-items: center; padding: 0 22% 2.5% 9%; box-sizing: border-box; background: var(--ui-banner) center / 100% 100% no-repeat;
+  color: #fff; font: 400 26px/1 "Lilita One", "Trebuchet MS", sans-serif; font-style: italic; white-space: nowrap; justify-content: center;
+  -webkit-text-stroke: 5px #0b3a9e; paint-order: stroke fill; text-shadow: 0 3px 0 #0b3a9e; }
+#screen-over .board { max-height: 26vh; }
+.screen.pause .hint, #screen-over .hint, #screen-otp .hint { color: #36507e; text-shadow: none; font: 700 14px/1.4 "Nunito", system-ui, sans-serif; margin: 2px 0 14px; }
+.screen.pause .btn-start, #screen-over .btn-start, #screen-otp .btn-start {
+  display: block; width: min(280px, 92%); margin: 6px auto 0; aspect-ratio: 720 / 181; padding: 0 24% 3% 8%; border: 0; border-radius: 0;
+  background: var(--ui-button) center / 100% 100% no-repeat; box-shadow: none; filter: drop-shadow(0 6px 8px rgba(0,0,0,.25));
+  color: #fff; font: 400 26px/1 "Lilita One", "Trebuchet MS", sans-serif; font-style: italic; letter-spacing: .01em; text-transform: none;
+  -webkit-text-stroke: 5px #0b3a9e; paint-order: stroke fill; text-shadow: 0 3px 0 #0b3a9e; animation: pulse 1.6s ease-in-out infinite; }
+.screen.pause .btn-start:active, #screen-over .btn-start:active, #screen-otp .btn-start:active { animation: none; transform: scale(.94); box-shadow: none; }
+.screen.pause .row, #screen-over .row, #screen-otp .row { margin-top: 14px; gap: 10px; flex-wrap: wrap; }
+.screen.pause .link, #screen-over .link, #screen-otp .link {
+  padding: 8px 22px 7px; border-radius: 99px; border: 2px solid #29c5f6; background: #fff; color: #0b3a9e; text-decoration: none; text-shadow: none;
+  font: 400 16px/1 "Lilita One", "Trebuchet MS", sans-serif; letter-spacing: .03em; box-shadow: 0 3px 0 rgba(11,58,158,.25); }
+.screen.pause .link:active, #screen-over .link:active, #screen-otp .link:active { transform: translateY(2px); box-shadow: none; }
+.screen.pause .link[disabled], #screen-otp .link[disabled] { opacity: .55; }
+/* score rows as the registration card boxes */
+#screen-over .final { margin: 0 0 8px; padding: 12px 16px; border-radius: 14px; background: var(--card-plain) center / 100% 100% no-repeat;
+  font: 400 24px/1 "Lilita One", "Trebuchet MS", sans-serif; color: #0b3a9e; }
+#screen-over .final .label { font: 800 12px/1 "Nunito", system-ui, sans-serif; color: #36507e; opacity: 1; }
+#screen-over .board li { color: #0b3a9e; }
+#screen-over .board li:nth-child(odd) { background: rgba(11,58,158,.07); }
+#screen-over .board .rank { color: #e3262e; }
+/* code entry field in the same style as the registration fields */
+#screen-otp .field span { color: #36507e; text-shadow: none; }
+#screen-otp .field input { border: 3px solid #29c5f6; border-radius: 99px; background: #fff; color: #0b3a9e; text-align: center;
+  font: 400 26px/1 "Lilita One", sans-serif; letter-spacing: .3em; box-shadow: 0 0 0 2px rgba(255,255,255,.9); }
+#screen-otp .error { color: #d7263d; text-shadow: none; }
+.screen.pause { background: rgba(5, 30, 80, .45); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }

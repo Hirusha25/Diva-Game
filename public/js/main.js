@@ -194,7 +194,7 @@ function showOtp(phone, resendIn) {
   $('otp-phone').textContent = phone.startsWith('94') ? '0' + phone.slice(2) : phone;
   $('otp-code').value = '';
   hud.error('otp-error', '');
-  hud.busy('btn-verify', false, 'VERIFY');
+  hud.busy('btn-verify', false, 'Verify');
   startResendCountdown(resendIn);
   hud.show('otp');
   setTimeout(() => $('otp-code').focus(), 50);
@@ -237,14 +237,14 @@ $('form-otp').addEventListener('submit', async (e) => {
   e.preventDefault();
   const code = $('otp-code').value.trim();
   if (code.length < 4) return hud.error('otp-error', 'Enter the 4-digit code from the SMS');
-  hud.busy('btn-verify', true, 'CHECKING…');
+  hud.busy('btn-verify', true, 'Checking…');
   try {
     const r = await api.verify(pendingPhone, code);
     me = r.player;
     startRun();
   } catch (err) {
     hud.error('otp-error', err.message);
-    hud.busy('btn-verify', false, 'VERIFY');
+    hud.busy('btn-verify', false, 'Verify');
   }
 });
 
