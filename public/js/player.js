@@ -341,15 +341,17 @@ export class Player {
     this._phase = phase;
     const run = 1 - air;
     const tilt = 0.05 * run;
-    const roll = 0.03 * Math.cos(phase) * run;
+    // the pelvis drops on the swinging side and the hips swing with the legs
+    const roll = 0.075 * Math.cos(phase) * run;
     const s = Math.sin(phase), c = Math.cos(phase);
     const legL = [0, 1, 2].map((k) => this._gaitAt(k, phase)), legR = [0, 1, 2].map((k) => this._gaitAt(k, phase + Math.PI));
 
     B.hips.position.y = this.hipsRestY;
-    const yaw = 0.14 * s * run;
+    const yaw = 0.17 * s * run;
     B.hips.rotation.set(tilt, yaw, roll);
+    this._sway = 0.022 * RUNNER_SCALE * Math.cos(phase) * run;   // weight shifts over the foot on the ground
     // shoulders turn clearly against the hips and the torso sways with each step (reference style)
-    const spYaw = -0.12 * s * run, spRoll = -0.04 * c * run, chYaw = -0.17 * s * run, chRoll = -0.04 * c * run;
+    const spYaw = -0.13 * s * run, spRoll = -0.06 * c * run, chYaw = -0.18 * s * run, chRoll = -0.02 * c * run;
     B.spine.rotation.set(0.16 * run + 0.1 * air - 0.25 * hit, spYaw, spRoll);
     B.chest.rotation.set(0.08 * run, chYaw, chRoll);
     B.neck.rotation.set(-0.13 * run, 0.12 * s * run, 0.02 * c * run);
@@ -371,18 +373,18 @@ export class Player {
     // Everything is a smooth function of the phase.
     const shYaw = yaw + spYaw + chYaw, shRoll = roll + spRoll + chRoll;
     const arm = (a, side) => {   // a: this arm's phase; side +1 left, -1 right
-      const f = Math.sin(a) + 0.16 * Math.sin(2 * a + 0.5);            // +1 forward … −1 back
+      const f = Math.sin(a);                                           // +1 forward … −1 back (even, pendulum-like)
       const lag = Math.sin(a - 0.6);                                   // forearm follow-through
-      const wrist = Math.sin(a - 1.2);                                 // wrist follows the forearm
+      const wrist = Math.sin(a - 0.9);                                 // wrist follows the forearm, gently
       const fwd = (1 + Math.sin(a)) / 2;                               // 1 at the front of the swing
       return {
         swing: 0.2 - 0.66 * f,
         across: side * (-0.06 * fwd),                                  // in towards the chest in front
         lift: 0.04 * fwd,                                              // shoulder rises a little in front
         out: 0.12 + 0.05 * (1 - fwd),                                  // arms held a little out from the body, wider behind
-        elbow: -1.42 - 0.22 * lag + 0.05 * Math.cos(2 * a),            // about a right angle, folding as it comes forward
-        hand: -0.12 + 0.16 * wrist,
-        handRoll: side * 0.06 * Math.sin(a - 0.9),
+        elbow: -1.42 - 0.18 * lag,                                     // about a right angle, folding a little as it comes forward
+        hand: -0.12 + 0.07 * wrist,
+        handRoll: side * 0.03 * Math.sin(a - 0.9),
       };
     };
     const aL = arm(phase - 3.0, 1), aR = arm(phase - 3.0 + Math.PI, -1);
@@ -443,6 +445,7 @@ export class Player {
       const leanT = THREE.MathUtils.clamp(-this.vx * 0.022, -0.2, 0.2);
       this.lean += (leanT - this.lean) * Math.min(1, dt * 10);
       this.body.rotation.z = this.lean;
+      this.body.position.x = this._sway || 0;   // side-to-side weight shift
       this.body.rotation.x = 0;
     } else {
       this.body.position.y = this.isAirborne ? 0 : Math.abs(Math.sin(this.runTime)) * 0.08;

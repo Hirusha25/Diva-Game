@@ -461,9 +461,27 @@ const clock = new THREE.Clock();
 const camTarget = new THREE.Vector3();
 const camPos = new THREE.Vector3(0, 3.6, 7.0);
 
+// Frame pacing: phones deliver frames unevenly; a frame time that jumps
+// between 16 and 33 ms makes the run stutter. The time step is smoothed, and
+// the render resolution adapts so the game holds a steady frame rate.
+let dtSmooth = 1 / 60, perfT = 0, perfN = 0, pixelRatio = Math.min(window.devicePixelRatio, 2);
+function adaptResolution(rawDt) {
+  perfT += rawDt; perfN++;
+  if (perfT < 2) return;
+  const avg = perfT / perfN; perfT = 0; perfN = 0;
+  const maxPR = Math.min(window.devicePixelRatio, 2);
+  let next = pixelRatio;
+  if (avg > 1 / 45 && pixelRatio > 1) next = Math.max(1, pixelRatio - 0.25);          // too slow: draw fewer pixels
+  else if (avg < 1 / 58 && pixelRatio < maxPR) next = Math.min(maxPR, pixelRatio + 0.25);   // plenty of headroom: sharpen again
+  if (next !== pixelRatio) { pixelRatio = next; renderer.setPixelRatio(pixelRatio); resize(); }
+}
+
 function frame() {
   requestAnimationFrame(frame);
-  const dt = Math.min(clock.getDelta(), 0.05);
+  const raw = Math.min(clock.getDelta(), 0.05);
+  dtSmooth += (raw - dtSmooth) * 0.2;                 // even out frame-time jitter
+  const dt = Math.abs(raw - dtSmooth) > 0.03 ? raw : dtSmooth;   // a real pause (tab switch) is not smoothed away
+  if (state.mode === 'running') adaptResolution(raw);
   if (!world) return;
   if (state.mode === 'lobby' || state.mode === 'register' || state.mode === 'otp') return;   // static poster: no 3D work, saves battery
   if (state.paused) return;
