@@ -279,22 +279,23 @@ export class Player {
   }
 
   /**
-   * Pose the skeleton. phase: stride phase; air: 0..1 jump tuck; hit: 0..1 flinch.
-   * A sprint cycle: each leg drives the knee up in front, plants, pushes back,
-   * then kicks the heel up behind as it recovers. Every curve is smooth in the
-   * phase. Afterwards the body is lowered/raised so the lower foot meets the
-   * road, which gives the natural bounce of running (down on each landing, up
-   * through push-off).
+   * Smooth leg curves: the approved keyframed run (with its stance leg-solve)
+   * sampled once and reduced to its first five harmonics. A truncated Fourier
+   * series is smooth everywhere, so no joint can snap or stall.
    */
-  _pose(phase, air, hit) {
-    const B = this.bones; if (!B) return;
-    const run = 1 - air;
-    // Body height over the stride (model units): lowest as a foot passes under
-    // the body, highest in the flight between steps.
-    const bodyY = run * (-0.008 - 0.007 * Math.cos(2 * (phase - 3.45)));   // a light, even bounce (no crouch on each step)
-    const tilt = 0.05 * run;                // pelvis tilt (hips rotation.x below)
-    const roll = 0.04 * Math.cos(phase) * run;   // pelvis roll (hips rotation.z below)
-    const leg = (ph, side) => {           // ph: this leg's phase; side: +1 left, -1 right
+  _buildGait() {
+    const N = 256, H = 5, bodyY = -0.008, tilt = 0.05;
+    const samples = [[], [], []];
+    for (let i = 0; i < N; i++) { const ph = (i / N) * Math.PI * 2; const v = this._legRaw(ph, 1, bodyY - 0.007 * Math.cos(2 * (ph - 3.45)), tilt, 0.04 * Math.cos(ph)); for (let k = 0; k < 3; k++) samples[k].push(v[k]); }
+    this.gait = samples.map((arr) => { const c = { a0: arr.reduce((x, y) => x + y, 0) / N, a: [], b: [] };
+      for (let h = 1; h <= H; h++) { let sa = 0, sb = 0; arr.forEach((v, i) => { const t = (i / N) * Math.PI * 2 * h; sa += v * Math.cos(t); sb += v * Math.sin(t); }); c.a.push(2 * sa / N); c.b.push(2 * sb / N); }
+      return c; });
+  }
+
+  _gaitAt(k, ph) { const c = this.gait[k]; let v = c.a0; for (let h = 0; h < c.a.length; h++) v += c.a[h] * Math.cos((h + 1) * ph) + c.b[h] * Math.sin((h + 1) * ph); return v; }
+
+  /** the original keyframed leg (with stance IK), only sampled once to build the smooth curves */
+  _legRaw(ph, side, bodyY, tilt, roll) {
       const thigh = loopSpline(THIGH, ph);
       const kneeKey = loopSpline(KNEE, ph);
       const st = stanceWeight(ph);
@@ -318,46 +319,49 @@ export class Player {
       }
       const foot = st * (footWorld - tilt - thigh - knee) + (1 - st) * loopSpline(FOOT_SWING, ph);
       return [thigh, knee, foot];
-    };
-    this._bodyY = bodyY;
-    const [tL, kL, fL] = leg(phase, 1), [tR, kR, fR] = leg(phase + Math.PI, -1);
+    }
+
+  /**
+   * Pose the skeleton. phase: stride phase; air: 0..1 jump tuck; hit: 0..1 flinch.
+   * Every joint follows a smooth periodic curve of the phase; the body height
+   * then comes from the planted foot (a soft minimum over both feet), which
+   * gives an even, natural bounce with no pops.
+   */
+  _pose(phase, air, hit) {
+    const B = this.bones; if (!B) return;
+    if (!this.gait) this._buildGait();
+    this._phase = phase;
+    const run = 1 - air;
+    const tilt = 0.05 * run;
+    const roll = 0.03 * Math.cos(phase) * run;
     const s = Math.sin(phase), c = Math.cos(phase);
+    const legL = [0, 1, 2].map((k) => this._gaitAt(k, phase)), legR = [0, 1, 2].map((k) => this._gaitAt(k, phase + Math.PI));
 
-    // pelvis twists with the legs; shoulders counter-twist (very visible from behind)
     B.hips.position.y = this.hipsRestY;
-    const yaw = 0.13 * s * run;                       // hips swing with the legs
+    const yaw = 0.1 * s * run;
     B.hips.rotation.set(tilt, yaw, roll);
-    // shoulders counter-twist against the hips and the torso rocks with each step
-    const spYaw = -0.1 * s * run, spRoll = -0.025 * c * run, chYaw = -0.13 * s * run, chRoll = -0.025 * c * run;
-    const pulse = 0;   // no forward bow on each landing: the torso holds a steady lean
-    B.spine.rotation.set(0.17 * run + pulse + 0.1 * air - 0.25 * hit, spYaw, spRoll);   // leaning into the run
-    B.chest.rotation.set(0.1 * run, chYaw, chRoll);
-    B.neck.rotation.set(-0.15 * run - pulse * 0.6, 0.16 * s * run, 0.03 * c * run);   // head stays facing ahead
-    B.head.rotation.set(-0.18 * run - pulse * 0.4 + 0.2 * hit, 0.14 * s * run, 0.04 * c * run);
+    const spYaw = -0.08 * s * run, spRoll = -0.02 * c * run, chYaw = -0.11 * s * run, chRoll = -0.02 * c * run;
+    B.spine.rotation.set(0.16 * run + 0.1 * air - 0.25 * hit, spYaw, spRoll);
+    B.chest.rotation.set(0.08 * run, chYaw, chRoll);
+    B.neck.rotation.set(-0.13 * run, 0.12 * s * run, 0.02 * c * run);
+    B.head.rotation.set(-0.15 * run + 0.2 * hit, 0.1 * s * run, 0.02 * c * run);
 
-    // thighs undo the pelvis yaw and roll, so each leg swings straight
-    // forward and back (no sideways swing of the feet)
-    B.thigh_L.rotation.set(run * tL + air * -1.0, -yaw, -roll);
-    B.thigh_R.rotation.set(run * tR + air * -0.55, -yaw, -roll);
-    B.shin_L.rotation.set(run * kL + air * 1.5, 0, 0);
-    B.shin_R.rotation.set(run * kR + air * 0.9, 0, 0);
-    B.foot_L.rotation.set(run * fL + air * 0.3, 0, 0);
-    B.foot_R.rotation.set(run * fR + air * 0.3, 0, 0);
+    B.thigh_L.rotation.set(run * legL[0] + air * -1.0, -yaw, -roll);
+    B.thigh_R.rotation.set(run * legR[0] + air * -0.55, -yaw, -roll);
+    B.shin_L.rotation.set(run * legL[1] + air * 1.5, 0, 0);
+    B.shin_R.rotation.set(run * legR[1] + air * 0.9, 0, 0);
+    B.foot_L.rotation.set(run * legL[2] + air * 0.3, 0, 0);
+    B.foot_R.rotation.set(run * legR[2] + air * 0.3, 0, 0);
 
-    // arms: a sprinter's pump, exactly opposite the legs (left arm forward as
-    // the right knee drives up). Shaped sine: quick through the middle, a
-    // brief hold at each end, so the arms punch rather than float. Front:
-    // glove up by the chin, elbow tight; back: glove past the hip, elbow open.
-    // The upper arms undo the shoulder twist/roll so they never cross the body.
-    const raw = Math.sin(phase - 3.0);                                  // +1: left arm forward
-    const aw = Math.sign(raw) * Math.abs(raw) ** 0.6;
+    // arms: an even swing opposite the legs, elbows bent (tighter in front,
+    // more open behind), back swing passing beside the hip. All smooth.
+    const aw = Math.sin(phase - 3.0);                   // +1: left arm forward
     const shYaw = yaw + spYaw + chYaw, shRoll = roll + spRoll + chRoll;
-    const swingL = 0.2 - 0.85 * aw, swingR = 0.2 + 0.85 * aw;          // -0.65 forward … +1.05 back
-    const elbow = (f) => -1.3 - 0.12 * Math.max(0, f) + 0.35 * Math.max(0, -f);   // ~85° in front (glove at chest, not the face), opens behind
-    const out = (f) => 0.1 * Math.max(0, -f);                                       // back swing passes beside the hip, not behind it
-    // the arms go with a quarter of the shoulder turn (they hang from the shoulders) but never swing across the body
-    B.upperarm_L.rotation.set(run * swingL + air * -1.1 + hit * 0.4, -0.75 * shYaw * run, 0.2 + out(aw) - 0.75 * shRoll + air * 0.3);
-    B.upperarm_R.rotation.set(run * swingR + air * -1.1 + hit * 0.4, -0.75 * shYaw * run, -0.2 - out(-aw) - 0.75 * shRoll - air * 0.3);
+    const swing = (f) => 0.2 - 0.8 * f;
+    const elbow = (f) => -1.2 - 0.22 * f;
+    const out = (f) => 0.05 * (1 - f);
+    B.upperarm_L.rotation.set(run * swing(aw) + air * -1.1 + hit * 0.4, -0.75 * shYaw * run, 0.2 + out(aw) - 0.75 * shRoll + air * 0.3);
+    B.upperarm_R.rotation.set(run * swing(-aw) + air * -1.1 + hit * 0.4, -0.75 * shYaw * run, -0.2 - out(-aw) - 0.75 * shRoll - air * 0.3);
     B.forearm_L.rotation.set(run * elbow(aw) + air * -1.3, 0, -0.08);
     B.forearm_R.rotation.set(run * elbow(-aw) + air * -1.3, 0, 0.08);
     B.hand_L.rotation.set(-0.1, 0, 0);
@@ -366,15 +370,18 @@ export class Player {
     this._ground(run);
   }
 
-  /** Place the body at the stride height; lift it if a foot would sink into the road. */
+  /** body height: a light even bounce, softly lifted whenever a foot would dip below the road */
   _ground(run) {
     if (!this.footPts) return;
     this.body.position.y = 0;
     this.group.updateMatrixWorld(true);
-    let min = Infinity;
-    for (const [bone, pts] of this.footPts) for (const p of pts) { this._v.copy(p).applyMatrix4(bone.matrixWorld); min = Math.min(min, this._v.y); }
-    const sink = -(min - this.group.position.y);              // > 0: a foot is below the road
-    this.body.position.y = Math.max(this._bodyY * RUNNER_SCALE, sink * run);
+    const low = this.footPts.map(([bone, pts]) => Math.min(...pts.map((p) => this._v.copy(p).applyMatrix4(bone.matrixWorld).y)) - this.group.position.y);
+    const sink = -Math.min(low[0], low[1]);                            // > 0: a foot would be below the road
+    const ph = this._phase ?? 0;
+    const bob = RUNNER_SCALE * (-0.0135 - 0.006 * Math.cos(2 * (ph - 3.45)));   // light, even bounce, lowest as each foot is under him
+    const k = 0.012;                                                   // smooth maximum: lift only as much as needed, softly
+    const lift = k * Math.log(Math.exp(bob / k) + Math.exp(sink / k));
+    this.body.position.y = lift * run;
   }
 
   update(dt, speed) {
