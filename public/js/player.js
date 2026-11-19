@@ -273,6 +273,7 @@ export class Player {
   flinch() { this.hitT = 0; }
 
   reset() {
+    this._spr = null;
     this.lane = 1; this.x = 0; this.vx = 0; this.lean = 0; this.jumpT = -1; this.height = 0; this.hitT = -1;
     this.grime = 0.25; this._applyGrime(); this.dirtShown = this.dirt; this.grimeShown = this.grime; this.shine = 0; this.dull = this.dullShown = 0; this.extraShown = this.tintShown = 0;   // starts with a few stains to wash
     this.group.position.set(0, 0, 0);
@@ -375,12 +376,12 @@ export class Player {
         across: side * (-0.06 * fwd),                                  // in towards the chest in front
         lift: 0.04 * fwd,                                              // shoulder rises a little in front
         out: 0.12 + 0.05 * (1 - fwd),                                  // arms held a little out from the body, wider behind
-        elbow: -1.42 - 0.18 * lag,                                     // about a right angle, folding a little as it comes forward
+        elbow: -1.42 - 0.28 * lag,                                     // about a right angle, folding a little as it comes forward
         hand: -0.12 + 0.07 * wrist,
         handRoll: side * 0.03 * Math.sin(a - 0.9),
       };
     };
-    const aL = arm(phase - 3.0, 1), aR = arm(phase - 3.0 + Math.PI, -1);
+    const aL = arm(phase - 2.55, 1), aR = arm(phase - 2.55 + Math.PI, -1);   // a touch ahead: the loose-arm spring brings it back in time with the legs
     B.upperarm_L.rotation.set(run * aL.swing + air * -1.1 + hit * 0.4, (-0.75 * shYaw + aL.across) * run, 0.2 + (aL.out + aL.lift) * run - 0.75 * shRoll + air * 0.3);
     B.upperarm_R.rotation.set(run * aR.swing + air * -1.1 + hit * 0.4, (-0.75 * shYaw + aR.across) * run, -0.2 - (aR.out + aR.lift) * run - 0.75 * shRoll - air * 0.3);
     B.forearm_L.rotation.set(run * aL.elbow + air * -1.3, 0, -0.08);
@@ -389,6 +390,28 @@ export class Player {
     B.hand_R.rotation.set(run * aR.hand - 0.1 * air, 0, run * aR.handRoll);
 
     this._ground(run);
+  }
+
+  /**
+   * Loose arms: each arm joint follows its posed angle through a soft,
+   * slightly bouncy spring (shoulder stiffest, wrist loosest), so the arms
+   * lag a touch, carry their weight and settle at each end of the swing
+   * instead of tracking the curve rigidly.
+   */
+  _looseArms(dt) {
+    const B = this.bones; if (!B || dt <= 0) return;
+    const spec = { upperarm: [31, 0.62], forearm: [24, 0.5], hand: [18, 0.45] };   // [natural freq (rad/s), damping]: well above the arm swing, so it only adds a loose lag and settle
+    this._spr = this._spr || {};
+    const h = Math.min(dt, 1 / 30), steps = Math.max(1, Math.ceil(h / (1 / 120))), sub = h / steps;
+    for (const side of ['L', 'R']) for (const part of ['upperarm', 'forearm', 'hand']) {
+      const bone = B[`${part}_${side}`]; const [w, z] = spec[part];
+      for (const ax of ['x', 'y', 'z']) {
+        const key = `${part}${side}${ax}`, target = bone.rotation[ax];
+        let st = this._spr[key]; if (!st) st = this._spr[key] = { v: target, d: 0 };
+        for (let i = 0; i < steps; i++) { const acc = w * w * (target - st.v) - 2 * z * w * st.d; st.d += acc * sub; st.v += st.d * sub; }
+        bone.rotation[ax] = st.v;
+      }
+    }
   }
 
   /** body height: a light even bounce, softly lifted whenever a foot would dip below the road */
@@ -428,12 +451,13 @@ export class Player {
 
     // Stride rate follows speed (eased, so speed-ups never make the legs jump),
     // capped so the legs never blur.
-    const rate = THREE.MathUtils.clamp(9 + speed * 0.28, 13.5, 16.5);   // ~4.6 steps/s at the start speed, up to ~5.7 at top speed (a sprint)
+    const rate = THREE.MathUtils.clamp(8 + speed * 0.2, 10.8, 13);   // an average running pace: ~3.6 steps/s at the start, ~4.1 at top speed
     this.strideRate += (rate - this.strideRate) * Math.min(1, dt * 3);
     this.runTime += dt * this.strideRate;
 
     if (this.bones) {
       this._pose(this.runTime, air, hit);
+      this._looseArms(dt);
       // lean into lane changes, from the sideways velocity, eased
       const leanT = THREE.MathUtils.clamp(-this.vx * 0.022, -0.2, 0.2);
       this.lean += (leanT - this.lean) * Math.min(1, dt * 10);
