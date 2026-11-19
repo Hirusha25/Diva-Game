@@ -286,14 +286,7 @@ export class Player {
   _buildGait() {
     const N = 256, H = 5, bodyY = -0.008, tilt = 0.05;
     const samples = [[], [], []];
-    // reference style: a strong heel kick behind (the sole flips up toward the
-    // camera on every step) and a little more push-off behind
-    const bump = (ph, c, w) => { let d = ph - c; d = Math.atan2(Math.sin(d), Math.cos(d)); return Math.exp(-(d * d) / (2 * w * w)); };
     for (let i = 0; i < N; i++) { const ph = (i / N) * Math.PI * 2; const v = this._legRaw(ph, 1, bodyY - 0.007 * Math.cos(2 * (ph - 3.45)), tilt, 0.04 * Math.cos(ph));
-      const kick = bump(ph, 5.85, 0.6);
-      v[0] += 0.2 * kick + 0.08 * bump(ph, 4.7, 0.5);   // thigh back a touch as the heel comes up
-      v[1] += 0.8 * kick;                                // knee folds further: heel up towards the shorts
-      v[2] += 0.55 * kick;                               // toes point down/back: the sole shows
       for (let k = 0; k < 3; k++) samples[k].push(v[k]); }
     this.gait = samples.map((arr) => { const c = { a0: arr.reduce((x, y) => x + y, 0) / N, a: [], b: [] };
       for (let h = 1; h <= H; h++) { let sa = 0, sb = 0; arr.forEach((v, i) => { const t = (i / N) * Math.PI * 2 * h; sa += v * Math.cos(t); sb += v * Math.sin(t); }); c.a.push(2 * sa / N); c.b.push(2 * sb / N); }
@@ -342,7 +335,7 @@ export class Player {
     const run = 1 - air;
     const tilt = 0.05 * run;
     // the pelvis drops on the swinging side and the hips swing with the legs
-    const roll = 0.075 * Math.cos(phase) * run;
+    const roll = 0.035 * Math.cos(phase) * run;   // small, as in the approved legs (more makes one leg look long)
     const s = Math.sin(phase), c = Math.cos(phase);
     const legL = [0, 1, 2].map((k) => this._gaitAt(k, phase)), legR = [0, 1, 2].map((k) => this._gaitAt(k, phase + Math.PI));
 
