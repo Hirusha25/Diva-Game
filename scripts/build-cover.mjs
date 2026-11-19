@@ -33,7 +33,10 @@ for (const [key, n, width, role] of LAYERS) {
   const { info } = trimmed;
   const left = -info.trimOffsetLeft, top = -info.trimOffsetTop;
   const out = `${OUT}/${key}.webp`;
-  await sharp(trimmed.data).resize({ width: Math.min(width, info.width) }).webp({ quality: 86, alphaQuality: 92 }).toFile(out);
+  if (info.width < width) {   // small source (e.g. the 2026 logo): upscale 2x with Lanczos + light sharpening, high quality
+    await sharp(trimmed.data).resize({ width: Math.min(width, info.width * 2), kernel: 'lanczos3' }).sharpen({ sigma: 0.8, m1: 0.6, m2: 1.2 })
+      .webp({ quality: 95, alphaQuality: 95, smartSubsample: true }).toFile(out);
+  } else await sharp(trimmed.data).resize({ width: Math.min(width, info.width) }).webp({ quality: 86, alphaQuality: 92 }).toFile(out);
   let cx = left / frame.width;
   if (CENTRED.has(key)) {   // alpha-weighted centre of the artwork → 50 %
     const { data, info: ti } = await sharp(trimmed.data).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
