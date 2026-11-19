@@ -11,9 +11,12 @@ const OUT = 'public/assets/ui';
 await mkdir(OUT, { recursive: true });
 const kb = async (f) => ((await stat(f)).size / 1024).toFixed(0) + ' KB';
 
+// centred: the layer is moved so its visible artwork is centred on the poster
+// (phones crop the poster's sides, which makes off-centre art obvious)
+const CENTRED = new Set(['logo', 'hcb', 'tagline', 'start']);
 const LAYERS = [
   // key        file  export width  role
-  ['logo',     3, 1100, 'Diva Fresh Run logo'],
+  ['logo',     'logo-2026.webp', 1100, 'Diva Fresh Run logo (2026)'],
   ['hcb',      4,  520, 'hcb logo'],
   ['glow',     5, 1100, 'sun glow'],
   ['heroes',   6, 1100, 'boy + girl with stain badges'],
@@ -24,16 +27,22 @@ const LAYERS = [
 
 const meta = {};
 for (const [key, n, width, role] of LAYERS) {
-  const src = `assets/raw/new/${n}.png`;
+  const src = typeof n === 'string' ? `assets/raw/new/${n}` : `assets/raw/new/${n}.png`;
   const frame = await sharp(src).metadata();
   const trimmed = await sharp(src).trim({ threshold: 8 }).toBuffer({ resolveWithObject: true });
   const { info } = trimmed;
   const left = -info.trimOffsetLeft, top = -info.trimOffsetTop;
   const out = `${OUT}/${key}.webp`;
   await sharp(trimmed.data).resize({ width: Math.min(width, info.width) }).webp({ quality: 86, alphaQuality: 92 }).toFile(out);
+  let cx = left / frame.width;
+  if (CENTRED.has(key)) {   // alpha-weighted centre of the artwork → 50 %
+    const { data, info: ti } = await sharp(trimmed.data).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    let sx = 0, sw = 0; for (let y = 0; y < ti.height; y += 2) for (let x = 0; x < ti.width; x += 2) { const a = data[(y * ti.width + x) * 4 + 3]; if (a > 40) { sx += x * a; sw += a; } }
+    cx = 0.5 - (sx / sw) / frame.width;
+  }
   meta[key] = {
     role,
-    x: left / frame.width, y: top / frame.height,
+    x: cx, y: top / frame.height,
     w: info.width / frame.width, h: info.height / frame.height,
   };
   console.log(key.padEnd(8), role.padEnd(32), `${(meta[key].x * 100).toFixed(1)}%,${(meta[key].y * 100).toFixed(1)}%  ${(meta[key].w * 100).toFixed(1)}x${(meta[key].h * 100).toFixed(1)}%`, await kb(out));

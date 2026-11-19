@@ -214,8 +214,8 @@ img.layer { width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
 /* the registration design shows hcb, logo and tagline smaller and higher (sizes keep each layer's aspect) */
 .stage [data-layer="hcb"], .stage [data-layer="logo"], .stage [data-layer="tagline"] { transition: left .3s, top .3s, width .3s, height .3s; }
 .cover.reg [data-layer="hcb"] { left: 43.8% !important; top: 3.8% !important; width: 12.5% !important; height: 4.88% !important; }
-.cover.reg [data-layer="logo"] { left: 30.8% !important; top: 9.5% !important; width: 37.1% !important; height: 16.03% !important; }
-.cover.reg [data-layer="tagline"] { left: 32.3% !important; top: 24.6% !important; width: 34.3% !important; height: 6.56% !important; }
+.cover.reg [data-layer="logo"] { left: 40.4% !important; top: 8.6% !important; width: 24.7% !important; height: 15% !important; }   /* 2026 logo, 70 % size, artwork centred */
+.cover.reg [data-layer="tagline"] { left: 35.2% !important; top: 24.6% !important; width: 34.3% !important; height: 6.56% !important; }
 .cover.reg [data-layer="heroes"], .cover.reg #btn-start { opacity: 0; pointer-events: none; transition: opacity .25s; }
 .cover.reg .reg .layer { animation: reg-in .35s ease-out backwards; }
 /* SUBMIT pulses and shines like START (after its entrance) */
