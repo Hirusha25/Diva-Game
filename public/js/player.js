@@ -451,7 +451,7 @@ export class Player {
 
     // Stride rate follows speed (eased, so speed-ups never make the legs jump),
     // capped so the legs never blur.
-    const rate = THREE.MathUtils.clamp(8 + speed * 0.2, 10.8, 13);   // an average running pace: ~3.6 steps/s at the start, ~4.1 at top speed
+    const rate = THREE.MathUtils.clamp(8.6 + speed * 0.27, 12.9, 15.8);   // a steady run: ~4.1 steps/s at the start, ~5 at top speed, matched to the road speed
     this.strideRate += (rate - this.strideRate) * Math.min(1, dt * 3);
     this.runTime += dt * this.strideRate;
 
