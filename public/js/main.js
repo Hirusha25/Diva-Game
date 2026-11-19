@@ -104,6 +104,17 @@ function hideHint() {
   h.classList.add('out'); clearTimeout(hintTimer); hintTimer = setTimeout(() => h.classList.add('hidden'), 350);
 }
 
+// ---------------------------------------------- a ruined shirt drops away
+function loseShirt() {
+  state.lives -= 1;
+  sound.hit();
+  hud.update(state);
+  hud.shirtDrop(state.lives);
+  if (state.lives <= 0) { setTimeout(() => { if (state.mode === 'running') endRun(); }, 1100); state.invulnerable = 99; return; }
+  state.invulnerable = 1.8;
+  setTimeout(() => { if (state.mode === 'running') player.freshShirt(); }, 650);   // a fresh white shirt for the next stretch
+}
+
 // ------------------------------------------------------------ pop-up lines
 const LINES = {
   pack: ["It's a Diva!", 'Diva Fresh!', 'So Fresh!', 'Stain Gone!', 'Sparkling!', 'Fresh Catch!', 'Nice One!', 'Diva Power!'],
@@ -248,7 +259,7 @@ $('form-register').addEventListener('submit', async (e) => {
   const btn = $('btn-register'); btn.disabled = true; sound.tap();
   try {
     const r = await api.register(name, phone, { gender: regChoice.gender, consentGame: true, consentMarketing: checked('consent-marketing') });
-    if (r.offline) { me = { name, best: 0 }; return startRun(); }
+    if (r.offline) { me = { name, best: 0 }; return beginRun(); }
     showOtp(r.phone, r.resend_in);
   } catch (err) {
     hud.error('reg-error', err.message);
@@ -265,7 +276,7 @@ $('form-otp').addEventListener('submit', async (e) => {
   try {
     const r = await api.verify(pendingPhone, code);
     me = r.player;
-    startRun();
+    beginRun();
   } catch (err) {
     hud.error('otp-error', err.message);
     hud.busy('btn-verify', false, 'Verify');
@@ -286,10 +297,97 @@ $('btn-resend').addEventListener('click', async () => {
 $('btn-change').addEventListener('click', showRegister);
 $('btn-signout').addEventListener('click', () => { api.signOut(); me = null; showRegister(); });
 // START: signed in → run; otherwise register first, then run straight after the code.
-$('btn-start').addEventListener('click', () => { if (!REQUIRE_REGISTRATION || me) startRun(); else showRegister(); });
+$('btn-start').addEventListener('click', () => { if (!REQUIRE_REGISTRATION || me) beginRun(); else showRegister(); });
 $('btn-retry').addEventListener('click', startRun);
 
 // ------------------------------------------------------------------- game
+// ------------------------------------------------- How to play (trilingual)
+// Sinhala and Tamil: please have them checked by a native speaker before launch.
+const HOWTO = {
+  en: { title: 'How to Play', go: "Let's Run!", ok: 'Got it', items: [
+    ['shirts', '3 white shirts', 'You start your run with 3 clean white shirts.'],
+    ['swipe', 'Swipe to move', 'Swipe left or right to change lanes. Swipe up to jump.'],
+    ['pack', 'Grab Diva packs', '+10 points, and every pack washes your shirt cleaner.'],
+    ['mud', 'Dodge mud & dust', 'Mud, sand and bus smoke make your shirt dirtier and dirtier.'],
+    ['ruined', 'Ruined shirt = 1 shirt lost', 'When the shirt is fully dirty you lose it and get a fresh one.'],
+    ['banana', 'Banana peels', 'Slip on one and you slow down for a moment.'],
+    ['bubble', 'Flower bubble', '+50, a speed boost and a spotless shirt!'],
+    ['bus', 'Never hit the bus', 'Running into a parked bus ends your run.'],
+    ['trophy', 'Score is what matters', 'Lose all 3 shirts and the run is over. Beat your best!'],
+  ] },
+  si: { title: 'ක්‍රීඩා කරන ආකාරය', go: 'දුවමු!', ok: 'හරි', items: [
+    ['shirts', 'සුදු ෂර්ට් 3ක්', 'ඔබ ධාවනය අරඹන්නේ පිරිසිදු සුදු ෂර්ට් 3ක් සමඟයි.'],
+    ['swipe', 'ස්වයිප් කර චලනය වන්න', 'මංතීරු මාරු කිරීමට වමට හෝ දකුණට ස්වයිප් කරන්න. පැනීමට ඉහළට ස්වයිප් කරන්න.'],
+    ['pack', 'Diva පැකට් එකතු කරන්න', 'ලකුණු +10ක් සහ සෑම පැකට්ටුවකින්ම ෂර්ට් එක තවත් පිරිසිදු වේ.'],
+    ['mud', 'මඩ සහ දූවිලි මගහරින්න', 'මඩ, වැලි සහ බස් දුම ඔබේ ෂර්ට් එක ක්‍රමයෙන් අපිරිසිදු කරයි.'],
+    ['ruined', 'නරක් වූ ෂර්ට් = ෂර්ට් 1ක් අහිමියි', 'ෂර්ට් එක සම්පූර්ණයෙන් අපිරිසිදු වූ විට එය අහිමි වී අලුත් එකක් ලැබේ.'],
+    ['banana', 'කෙසෙල් ලෙලි', 'එකක ලිස්සා ගියොත් මොහොතකට වේගය අඩු වේ.'],
+    ['bubble', 'මල් බුබුල', 'ලකුණු +50, වැඩි වේගය සහ පිරිසිදු ෂර්ට් එකක්!'],
+    ['bus', 'බසයේ හැප්පෙන්න එපා', 'නවතා ඇති බසයක හැප්පුණොත් ධාවනය අවසන් වේ.'],
+    ['trophy', 'වැදගත් වන්නේ ලකුණුයි', 'ෂර්ට් 3ම අහිමි වූ විට ධාවනය අවසන්. ඔබේ හොඳම ලකුණු ඉක්මවන්න!'],
+  ] },
+  ta: { title: 'விளையாடும் முறை', go: 'ஓடுவோம்!', ok: 'சரி', items: [
+    ['shirts', '3 வெள்ளை சட்டைகள்', 'உங்கள் ஓட்டத்தை 3 சுத்தமான வெள்ளை சட்டைகளுடன் தொடங்குவீர்கள்.'],
+    ['swipe', 'ஸ்வைப் செய்து நகருங்கள்', 'பாதையை மாற்ற இடது அல்லது வலது பக்கம் ஸ்வைப் செய்யுங்கள். குதிக்க மேலே ஸ்வைப் செய்யுங்கள்.'],
+    ['pack', 'Diva பொதிகளை சேகரியுங்கள்', '+10 புள்ளிகள், ஒவ்வொரு பொதியும் சட்டையை மேலும் சுத்தமாக்கும்.'],
+    ['mud', 'சேறு, தூசியை தவிருங்கள்', 'சேறு, மணல், பஸ் புகை உங்கள் சட்டையை படிப்படியாக அழுக்காக்கும்.'],
+    ['ruined', 'பாழான சட்டை = 1 சட்டை இழப்பு', 'சட்டை முழுவதும் அழுக்கானால் அதை இழந்து புதிய சட்டை கிடைக்கும்.'],
+    ['banana', 'வாழைப்பழத் தோல்', 'அதில் வழுக்கினால் சிறிது நேரம் வேகம் குறையும்.'],
+    ['bubble', 'பூ குமிழி', '+50 புள்ளிகள், கூடுதல் வேகம், சுத்தமான சட்டை!'],
+    ['bus', 'பஸ்ஸில் மோதாதீர்கள்', 'நிறுத்தப்பட்ட பஸ்ஸில் மோதினால் ஓட்டம் முடிந்துவிடும்.'],
+    ['trophy', 'புள்ளிகளே முக்கியம்', '3 சட்டைகளையும் இழந்தால் ஓட்டம் முடியும். உங்கள் சிறந்த புள்ளிகளை முறியடியுங்கள்!'],
+  ] },
+};
+const HT_ICON = {
+  shirts: '<img src="assets/ui/shirt-clean.webp" alt=""><img src="assets/ui/shirt-clean.webp" alt=""><img src="assets/ui/shirt-clean.webp" alt="">',
+  swipe: '<span class="ht-swipe"><b>&#8249;</b><i>&#9757;&#65039;</i><b>&#8250;</b></span>',
+  pack: '<img src="assets/textures/packs/pack-rose.webp" alt="">',
+  mud: '<img src="assets/textures/stains/mud-1.webp" alt="">',
+  ruined: '<img src="assets/ui/shirt-dirty.webp" alt=""><span class="ht-x">&#10005;</span>',
+  banana: '<img src="assets/textures/props2/banana.webp" alt="">',
+  bubble: '<img src="assets/ui/flower-bubble.webp" alt="">',
+  bus: '<img src="assets/textures/props2/bus.webp" alt=""><span class="ht-x">&#10005;</span>',
+  trophy: '<span class="ht-emoji">&#127942;</span>',
+};
+let howtoLang = (() => { try { return localStorage.getItem('diva.lang') || 'en'; } catch { return 'en'; } })();
+let howtoThen = null;   // what the main button does
+function renderHowto() {
+  const t = HOWTO[howtoLang] || HOWTO.en;
+  $('ht-title').textContent = t.title;
+  $('btn-howto-go').textContent = howtoThen === 'run' ? t.go : t.ok;
+  for (const b of document.querySelectorAll('.ht-lang [data-lang]')) b.setAttribute('aria-selected', String(b.dataset.lang === howtoLang));
+  const list = $('ht-list'); list.textContent = ''; list.lang = howtoLang;
+  t.items.forEach(([icon, head, text], i) => {
+    const row = document.createElement('div'); row.className = `ht-item ht-${icon}`; row.style.animationDelay = `${0.04 * i}s`;
+    const ic = document.createElement('div'); ic.className = 'ht-icon'; ic.innerHTML = HT_ICON[icon];
+    const tx = document.createElement('div'); tx.className = 'ht-text';
+    const h = document.createElement('h3'); h.textContent = head; const p = document.createElement('p'); p.textContent = text;
+    tx.append(h, p); row.append(ic, tx); list.append(row);
+  });
+  requestAnimationFrame(() => hud.fitText($('ht-title')));
+}
+function showHowto(then) {
+  howtoThen = then; renderHowto();
+  $('screen-howto').classList.remove('hidden'); $('ht-list').scrollTop = 0;
+}
+for (const b of document.querySelectorAll('.ht-lang [data-lang]')) b.addEventListener('click', () => {
+  howtoLang = b.dataset.lang; try { localStorage.setItem('diva.lang', howtoLang); } catch { /* private mode */ }
+  sound.tap(); renderHowto();
+});
+$('btn-howto-go').addEventListener('click', () => {
+  sound.tap(); $('screen-howto').classList.add('hidden');
+  try { localStorage.setItem('diva.howto', '1'); } catch { /* private mode */ }
+  if (howtoThen === 'run') startRun();
+  else if (howtoThen === 'pause') hud.screens.pause.classList.remove('hidden');
+});
+$('btn-help').addEventListener('click', () => { sound.tap(); showHowto('cover'); });
+$('btn-pause-howto').addEventListener('click', () => { sound.tap(); hud.screens.pause.classList.add('hidden'); showHowto('pause'); });
+/** START: the first time on this device, show How to play first */
+function beginRun() {
+  let seen = false; try { seen = localStorage.getItem('diva.howto') === '1'; } catch { /* private mode */ }
+  if (seen) startRun(); else showHowto('run');
+}
+
 function startRun() {
   // Fade the poster out over the live 3D world.
   const cover = hud.screens.cover;
@@ -393,14 +491,15 @@ function frame() {
     const ev = spawner.update(dt, step, player);
     if (ev.pickups) {
       state.score += ev.pickups * SCORE_PICKUP; sound.pickup();
-      const wasDirty = player.dirt > 0 || player.dull > 0;
-      player.clean(0.25 * ev.pickups); state.packs += ev.pickups;
-      const spotless = wasDirty && player.dirt <= 0 && player.dull <= 0;
-      hud.flash(spotless ? line('spotless') : line('pack'), spotless ? 1000 : 750, spotless ? 'bonus' : 'pack', `+${ev.pickups * SCORE_PICKUP}`);
+      const wasDirty = player.grime > 0 || player.dull > 0;
+      player.clean(0.12 * ev.pickups); state.packs += ev.pickups;
+      const spotless = wasDirty && player.grime <= 0 && player.dull <= 0;
+      if (spotless) hud.celebrate(line('spotless'));
+      else hud.flash(line('pack'), 750, 'pack', `+${ev.pickups * SCORE_PICKUP}`);
     }
-    if (ev.bonus) { state.score += 50 * ev.bonus; player.dirt = 0; player.dull = 0; player.extra = 0; player.clean(0); state.boostT = 4; state.slipT = 0; hud.flash('Speed Up!', 1100, 'bonus', '+50  Diva Clean'); sound.pickup(); sound.pickup(); }
-    if (ev.slip) { state.slipT = 2.5; state.boostT = 0; state.invulnerable = Math.max(state.invulnerable, 2.5); player.flinch(); hud.flash(line('slip'), 900, 'slip', 'Slowing down'); sound.hit(); }
-    if (ev.dust) { player.dust(0.3); hud.flash(line('dust'), 900, 'dust', 'Grab Diva to clean up'); sound.lane(1); }
+    if (ev.bonus) { state.score += 50 * ev.bonus; player.freshShirt(); state.boostT = 4; state.slipT = 0; hud.flash('Speed Up!', 1100, 'bonus', '+50  Diva Clean'); sound.pickup(); sound.pickup(); }
+    if (ev.slip) { state.slipT = 2.5; state.boostT = 0; player.flinch(); hud.flash(line('slip'), 900, 'slip', 'Slowing down'); sound.hit(); }
+    if (ev.dust) { sound.lane(1); if (player.dust()) { loseShirt(); return; } hud.flash(line('dust'), 900, 'dust', 'Grab Diva to clean up'); }
     if (ev.bus) {   // running into the bus ends the run
       sound.hit(); player.flinch(); player.stain(); hud.flash('Bus!', 1400, 'bus', 'Run over');
       state.lives = 0; hud.update(state); endRun(); return;
@@ -408,15 +507,15 @@ function frame() {
     sound.setIntensity((state.speed - SPEED.start) / (SPEED.max - SPEED.start));
     if (state.invulnerable > 0) state.invulnerable -= dt;
     else if (ev.hits) {
-      state.lives -= 1;
-      state.invulnerable = INVULNERABLE_TIME;
-      sound.hit();
-      player.flinch();
-      player.stain();
-      hud.flash(line('stain'), 900, 'stain', state.lives > 0 ? `${state.lives} shirt${state.lives > 1 ? 's' : ''} left` : '');
-      if (state.lives <= 0) endRun();
+      // obstacles make the shirt dirtier; a fully dirty shirt is lost
+      state.invulnerable = 0.6;   // one puddle counts once (no blinking)
+      sound.hit(); player.flinch();
+      if (player.stain()) { loseShirt(); return; }
+      const g = player.grime;
+      if (g >= 0.7) hud.flash('Almost Ruined!', 1100, 'stain', 'Grab Diva now!');
+      else hud.flash(line('stain'), 900, 'stain', g >= 0.45 ? 'Shirt getting dirtier' : 'Grab Diva to clean up');
     }
-    player.body.visible = state.invulnerable <= 0 || Math.floor(state.invulnerable * 10) % 2 === 0;
+    player.body.visible = true;   // no blinking
     state.clean = player.cleanliness;
     hud.update(state);
   }
@@ -425,7 +524,7 @@ function frame() {
   const lead = state.mode === 'running' ? player.x * 0.55 : 0;
   camPos.x += (lead - camPos.x) * Math.min(1, dt * 6);
   // the camera rides the runner's bounce a little: the run reads as moving forward
-  camPos.y = 3.6 + player.height * 0.3 + (state.mode === 'running' && player.body ? player.body.position.y * 0.35 : 0);
+  camPos.y = 3.6 + player.height * 0.3;   // steady camera: no bob with his steps
   camera.position.copy(camPos);
   camTarget.set(lead * 0.6, 1.3, -9);
   camera.lookAt(camTarget);

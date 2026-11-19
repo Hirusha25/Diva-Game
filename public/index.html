@@ -38,6 +38,11 @@
       <div class="sm-icon sm-dirty"><img src="assets/ui/shirt-dirty.webp" alt="Muddy shirt"></div>
     </div>
     <div id="hud-toast" class="toast"></div>
+    <div id="shirt-drop" class="shirt-drop hidden" aria-live="assertive">
+      <img class="sd-shirt" src="assets/ui/shirt-dirty.webp" alt="">
+      <p class="sd-title">2 Shirts Left!!</p>
+      <p class="sd-sub">Shirt ruined!</p>
+    </div>
     <div id="swipe-hint" class="swipe-hint hidden" aria-live="polite">
       <div class="sh-track"><span class="sh-arrow l">&#8249;</span><span class="sh-hand">&#9757;&#65039;</span><span class="sh-arrow r">&#8250;</span></div>
       <div class="sh-text"><p class="sh-title">Swipe to move</p>
@@ -48,7 +53,7 @@
     <div class="card"><h2 class="subtitle">Paused</h2>
       <p class="hint">Take a breather. Your run is waiting.</p>
       <button type="button" class="btn btn-start" id="btn-resume">Resume</button>
-      <div class="row"><button type="button" class="link" id="btn-pause-home">Home</button></div></div>
+      <div class="row"><button type="button" class="link" id="btn-pause-howto">How to Play</button><button type="button" class="link" id="btn-pause-home">Home</button></div></div>
   </div>
 
   <!-- Loading -->
@@ -118,7 +123,23 @@
       <button type="button" id="btn-signout" class="pc-change">Change player</button>
     </div>
     <button type="button" class="reg-back" id="btn-back-cover" aria-label="Back">&#8249;</button>
+    <button type="button" class="help-btn" id="btn-help" aria-label="How to play">?</button>
     <p class="reg-error" id="reg-error" role="alert"></p>
+  </div>
+
+
+  <!-- How to play (trilingual) -->
+  <div id="screen-howto" class="screen howto hidden">
+    <div class="card">
+      <h2 class="subtitle" id="ht-title">How to Play</h2>
+      <div class="ht-lang" role="tablist" aria-label="Language">
+        <button type="button" role="tab" data-lang="en" aria-selected="true">English</button>
+        <button type="button" role="tab" data-lang="si" aria-selected="false">සිංහල</button>
+        <button type="button" role="tab" data-lang="ta" aria-selected="false">தமிழ்</button>
+      </div>
+      <div class="ht-list" id="ht-list"></div>
+      <button type="button" class="btn btn-start" id="btn-howto-go">Let's Run!</button>
+    </div>
   </div>
 
   <!-- OTP (sheet) -->

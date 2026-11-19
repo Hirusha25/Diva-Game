@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800&family=Noto+Sans+Sinhala:wght@600;800&family=Noto+Sans+Tamil:wght@600;800&display=swap');
 :root {
   --diva-logo-red: #e8452c; --diva-blue: #1d5fc4; --diva-blue-dark: #0d3a8f; --diva-sky: #3d9be9; --diva-gold: #f6c33a;
   --diva-red: #e3001b;
@@ -214,7 +214,7 @@ img.layer { width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
 /* the registration design shows hcb, logo and tagline smaller and higher (sizes keep each layer's aspect) */
 .stage [data-layer="hcb"], .stage [data-layer="logo"], .stage [data-layer="tagline"] { transition: left .3s, top .3s, width .3s, height .3s; }
 .cover.reg [data-layer="hcb"] { left: 43.8% !important; top: 3.8% !important; width: 12.5% !important; height: 4.88% !important; }
-.cover.reg [data-layer="logo"] { left: 40.4% !important; top: 8.6% !important; width: 24.7% !important; height: 15% !important; }   /* 2026 logo, 70 % size, artwork centred */
+.cover.reg [data-layer="logo"] { left: 40.4% !important; top: 9.2% !important; width: 24.4% !important; height: 14.8% !important; }   /* 2026 logo, 70 % size, artwork centred */
 .cover.reg [data-layer="tagline"] { left: 35.2% !important; top: 24.6% !important; width: 34.3% !important; height: 6.56% !important; }
 .cover.reg [data-layer="heroes"], .cover.reg #btn-start { opacity: 0; pointer-events: none; transition: opacity .25s; }
 .cover.reg .reg .layer { animation: reg-in .35s ease-out backwards; }
@@ -356,25 +356,25 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 /* ---------- Panel screens (pause, game over, code entry) in the game's UI ----------
    Same pieces as the registration screen: glassy panel with the cyan rim, the
    blue flower banner as the title, card boxes, the blue flower button. */
-.screen.pause, #screen-over, #screen-otp { align-items: center; padding: 20px 18px calc(env(safe-area-inset-bottom) + 20px); }
-.screen.pause .card, #screen-over .card, #screen-otp .card {
+.screen.pause, #screen-over, #screen-otp, #screen-howto { align-items: center; padding: 20px 18px calc(env(safe-area-inset-bottom) + 20px); }
+.screen.pause .card, #screen-over .card, #screen-otp .card, #screen-howto .card {
   position: relative; width: min(380px, 100%); padding: 46px 20px 22px; margin-top: 30px; color: #0b3a9e; overflow: visible;
   max-height: calc(100% - 40px); border-radius: 28px; background: linear-gradient(#eef6fe, #d6e9fa);
   border: 4px solid #29c5f6; box-shadow: 0 0 0 3px rgba(255,255,255,.9), 0 0 22px rgba(41,197,246,.55), 0 14px 30px rgba(0,0,0,.35);
   animation: sheet .3s ease-out; }
-.screen.pause .subtitle, #screen-over .subtitle, #screen-otp .subtitle {
+.screen.pause .subtitle, #screen-over .subtitle, #screen-otp .subtitle, #screen-howto .subtitle {
   position: absolute; left: 50%; top: -34px; transform: translateX(-50%); width: min(310px, 92%); aspect-ratio: 800 / 182; margin: 0;
   display: flex; align-items: center; padding: 0 22% 2.5% 9%; box-sizing: border-box; background: var(--ui-banner) center / 100% 100% no-repeat;
   color: #fff; font: 400 26px/1 "Lilita One", "Trebuchet MS", sans-serif; font-style: italic; white-space: nowrap; justify-content: center; overflow: hidden;
   -webkit-text-stroke: 5px #0b3a9e; paint-order: stroke fill; text-shadow: 0 3px 0 #0b3a9e; }
 #screen-over .board { max-height: 26vh; }
 .screen.pause .hint, #screen-over .hint, #screen-otp .hint { color: #36507e; text-shadow: none; font: 700 14px/1.4 "Nunito", system-ui, sans-serif; margin: 2px 0 14px; }
-.screen.pause .btn-start, #screen-over .btn-start, #screen-otp .btn-start {
+.screen.pause .btn-start, #screen-over .btn-start, #screen-otp .btn-start, #screen-howto .btn-start {
   display: block; width: min(280px, 92%); margin: 6px auto 0; aspect-ratio: 720 / 181; padding: 0 24% 3% 8%; border: 0; border-radius: 0;
   background: var(--ui-button) center / 100% 100% no-repeat; box-shadow: none; filter: drop-shadow(0 6px 8px rgba(0,0,0,.25));
   color: #fff; font: 400 26px/1 "Lilita One", "Trebuchet MS", sans-serif; font-style: italic; letter-spacing: .01em; text-transform: none;
   -webkit-text-stroke: 5px #0b3a9e; paint-order: stroke fill; text-shadow: 0 3px 0 #0b3a9e; animation: pulse 1.6s ease-in-out infinite; }
-.screen.pause .btn-start:active, #screen-over .btn-start:active, #screen-otp .btn-start:active { animation: none; transform: scale(.94); box-shadow: none; }
+.screen.pause .btn-start:active, #screen-over .btn-start:active, #screen-otp .btn-start:active, #screen-howto .btn-start:active { animation: none; transform: scale(.94); box-shadow: none; }
 .screen.pause .row, #screen-over .row, #screen-otp .row { margin-top: 14px; gap: 10px; flex-wrap: wrap; }
 .screen.pause .link, #screen-over .link, #screen-otp .link {
   padding: 8px 22px 7px; border-radius: 99px; border: 2px solid #29c5f6; background: #fff; color: #0b3a9e; text-decoration: none; text-shadow: none;
@@ -412,3 +412,61 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 .sh-title { margin: 0; font: 400 17px/1.05 "Lilita One", "Trebuchet MS", sans-serif; color: #fff; text-shadow: 0 2px 0 var(--diva-blue-dark); letter-spacing: .02em; }
 .sh-sub { margin: 2px 0 0; font: 700 11px/1.2 "Nunito", system-ui, sans-serif; color: var(--diva-gold); }
 @media (prefers-reduced-motion: reduce) { .sh-hand, .sh-arrow { animation: none; } }
+
+/* ---------- A ruined shirt drops away ---------- */
+.shirt-drop { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-bottom: 18vh; pointer-events: none; }
+.shirt-drop::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 42%, rgba(232,69,44,.0) 30%, rgba(165,20,10,.45)); opacity: 0; }
+.shirt-drop.go::before { animation: sd-flash 1.8s ease-out; }
+.sd-shirt { width: min(42vw, 190px); filter: drop-shadow(0 10px 14px rgba(0,0,0,.4)); opacity: 0; }
+.shirt-drop.go .sd-shirt { animation: sd-fall 1.8s cubic-bezier(.3,.1,.6,1) forwards; }
+.sd-title { position: relative; margin: 6px 0 0; white-space: nowrap; font: 400 44px/1 "Lilita One", "Trebuchet MS", sans-serif; color: #fff;
+  -webkit-text-stroke: 8px var(--diva-logo-red); paint-order: stroke fill; text-shadow: 0 5px 0 #a52a17, 0 8px 18px rgba(0,0,0,.4); opacity: 0; }
+.sd-sub { position: relative; margin: 10px 0 0; font: 400 18px/1.2 "Lilita One", "Trebuchet MS", sans-serif; color: #fff;
+  -webkit-text-stroke: 5px var(--diva-blue-dark); paint-order: stroke fill; opacity: 0; }
+.shirt-drop.go .sd-title { animation: sd-punch 1.8s cubic-bezier(.3,1.6,.5,1) forwards; }
+.shirt-drop.go .sd-sub { animation: sd-punch 1.8s .12s cubic-bezier(.3,1.6,.5,1) forwards; }
+@keyframes sd-fall { 0% { opacity: 0; transform: translateY(-40px) scale(.7) rotate(0); } 15% { opacity: 1; transform: translateY(0) scale(1.08) rotate(-6deg); }
+  35% { transform: translateY(0) scale(1) rotate(6deg); } 55% { opacity: 1; transform: translateY(10px) rotate(-4deg); } 100% { opacity: 0; transform: translateY(46vh) rotate(38deg) scale(.8); } }
+@keyframes sd-punch { 0% { opacity: 0; transform: scale(.3); } 12% { opacity: 1; transform: scale(1.12); } 22% { transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: scale(1); } }
+@keyframes sd-flash { 0% { opacity: 0; } 10% { opacity: 1; } 100% { opacity: 0; } }
+.pill.shirts.hurt { animation: pill-hurt .7s ease-out; }
+@keyframes pill-hurt { 0%,100% { transform: none; background: rgba(10,79,181,.85); } 15% { transform: scale(1.25) rotate(-6deg); background: var(--diva-logo-red); } 30% { transform: scale(1.15) rotate(5deg); } 45% { transform: scale(1.2) rotate(-3deg); background: var(--diva-logo-red); } }
+/* shirt meter warns when nearly ruined, cheers when spotless */
+.shirt-meter.danger .sm-dirty { animation: sm-danger .6s ease-in-out infinite alternate; }
+@keyframes sm-danger { to { box-shadow: 0 0 0 4px var(--diva-logo-red), 0 0 18px 6px rgba(232,69,44,.8); transform: scale(1.1); } }
+.shirt-meter.cheer .sm-clean { animation: sm-cheer .9s cubic-bezier(.3,1.6,.5,1); }
+@keyframes sm-cheer { 30% { transform: scale(1.35); box-shadow: 0 0 26px 8px rgba(160,230,255,1); } }
+@media (prefers-reduced-motion: reduce) { .shirt-drop.go .sd-shirt { animation-duration: .01s; } }
+
+/* ---------- How to play ---------- */
+#screen-howto { z-index: 40; background: rgba(5, 30, 80, .5); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+#screen-howto .card { width: min(400px, 100%); max-height: calc(100% - 50px); display: flex; flex-direction: column; padding: 44px 14px 18px; }
+.ht-lang { flex: none; display: flex; gap: 4px; margin: 0 auto 10px; padding: 4px; border-radius: 99px; background: rgba(13,58,143,.12); }
+.ht-lang button { flex: 1; min-width: 84px; padding: 7px 10px 6px; border: 0; border-radius: 99px; cursor: pointer; background: transparent; color: var(--diva-blue-dark);
+  font: 800 14px/1.1 "Nunito", "Noto Sans Sinhala", "Noto Sans Tamil", system-ui, sans-serif; }
+.ht-lang button[aria-selected="true"] { background: linear-gradient(var(--diva-sky), var(--diva-blue)); color: #fff; box-shadow: 0 2px 0 var(--diva-blue-dark), inset 0 0 0 2px var(--diva-gold); }
+.ht-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 8px; padding: 2px 2px 10px; text-align: left; }
+.ht-item { display: grid; grid-template-columns: 64px 1fr; gap: 10px; align-items: center; padding: 8px 12px 8px 8px; border-radius: 16px;
+  background: linear-gradient(rgba(29,95,196,.1), rgba(13,58,143,.16)), var(--card-plain) center / 100% 100% no-repeat; animation: reg-in .3s ease-out backwards; }
+.ht-icon { position: relative; width: 64px; height: 52px; display: flex; align-items: center; justify-content: center; }
+.ht-icon img { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 2px 2px rgba(0,0,0,.2)); }
+.ht-shirts .ht-icon img { width: 26px; margin: 0 -5px; }
+.ht-shirts .ht-icon img:nth-child(2) { transform: translateY(-6px) scale(1.15); z-index: 1; }
+.ht-x { position: absolute; right: 0; bottom: 0; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--diva-logo-red); color: #fff; font: 800 13px/1 system-ui; border: 2px solid #fff; }
+.ht-swipe { display: flex; align-items: center; gap: 2px; font: 400 26px/1 "Lilita One", sans-serif; color: var(--diva-logo-red); }
+.ht-swipe i { font-style: normal; font-size: 24px; animation: ht-wiggle 1.4s ease-in-out infinite; display: inline-block; }
+@keyframes ht-wiggle { 0%,100% { transform: translateX(-5px) rotate(-10deg); } 50% { transform: translateX(5px) rotate(10deg); } }
+.ht-emoji { font-size: 36px; }
+.ht-text h3 { margin: 0 0 2px; font: 400 16px/1.15 "Lilita One", "Noto Sans Sinhala", "Noto Sans Tamil", "Trebuchet MS", sans-serif; color: var(--diva-blue-dark); }
+.ht-text p { margin: 0; font: 700 12.5px/1.35 "Nunito", "Noto Sans Sinhala", "Noto Sans Tamil", system-ui, sans-serif; color: #36507e; }
+.ht-list:lang(si) h3, .ht-list:lang(ta) h3 { font-family: "Noto Sans Sinhala", "Noto Sans Tamil", sans-serif; font-weight: 800; font-size: 14.5px; }
+.ht-list:lang(si) p, .ht-list:lang(ta) p { font-family: "Noto Sans Sinhala", "Noto Sans Tamil", sans-serif; font-weight: 600; font-size: 12px; line-height: 1.45; }
+.ht-ruined h3 { color: var(--diva-logo-red); }
+#screen-howto .subtitle { font-family: "Lilita One", "Noto Sans Sinhala", "Noto Sans Tamil", sans-serif; }
+#btn-howto-go { flex: none; margin-top: 10px; font-family: "Lilita One", "Noto Sans Sinhala", "Noto Sans Tamil", sans-serif; }
+/* "?" on the cover, under the sound button */
+.screen.cover > .help-btn { position: absolute; z-index: 4; right: calc(12px + env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 60px);
+  width: 40px; height: 40px; padding: 0; border-radius: 50%; border: 2px solid #fff; cursor: pointer; background: rgba(10, 79, 181, .9); color: #fff;
+  font: 400 22px/36px "Lilita One", sans-serif; box-shadow: 0 3px 0 rgba(0,0,0,.25); }
+.screen.cover.reg > .help-btn { display: none; }

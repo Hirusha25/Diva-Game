@@ -51,4 +51,10 @@ for (const [key, n, width, role] of LAYERS) {
 await sharp('assets/raw/new/1.png').resize({ width: 1242 }).webp({ quality: 80 }).toFile(`${OUT}/cover-bg.webp`);
 console.log('bg       poster background'.padEnd(42), await kb(`${OUT}/cover-bg.webp`));
 meta.frame = { aspect: 2048 / 3126 };
+// the 2026 logo is taller than the old one: fit it between the hcb logo and
+// the tagline (small gaps) so nothing overlaps, keeping it centred
+{ const L = meta.logo, top = meta.hcb.y + meta.hcb.h + 0.006, bottom = meta.tagline.y - 0.004;
+  const k = Math.min(1, (bottom - top) / L.h), cxArt = L.x + (0.5 - L.x) ;   // art centre is at 50 % already
+  const offset = 0.5 - L.x;                                                     // art centre relative to the layer's left
+  L.w *= k; L.h *= k; L.y = top; L.x = 0.5 - offset * k; void cxArt; }
 await writeFile(`${OUT}/cover.json`, JSON.stringify(meta, null, 2));

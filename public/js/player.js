@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { LANE_WIDTH, LANE_COUNT, LANE_SWITCH_SPEED, JUMP } from './config.js';
 import { Sparkles, glowTexture, additive } from './fx.js';
 
-const MODEL_HEIGHT = (typeof window !== 'undefined' && window.__DIVA_RUNNER_H) || 3.2;   // metres, feet to top of hair (larger than life so he reads well on a phone)
+const MODEL_HEIGHT = (typeof window !== 'undefined' && window.__DIVA_RUNNER_H) || 2.95;   // metres, feet to top of hair (larger than life so he reads well on a phone)
 const RUNNER_SCALE = MODEL_HEIGHT / 2;     // the rigged model is 2 units tall, feet at y = -1
 const SIZE = MODEL_HEIGHT / 1.55;          // relative to the original size (shadow etc.)
 
@@ -61,8 +61,8 @@ export class Player {
 
     // shirt dirt: 1 = muddy (as modelled), 0 = clean. Diva packs wash it,
     // stains bring it back (see clean() / stain()).
-    this.dirt = 1; this.dirtShown = 1; this.shine = 0; this.twinkleT = 0;
-    this.shirtU = { uDirt: { value: 1 }, uShine: { value: 0 }, uDull: { value: 0 }, uExtra: { value: 0 }, uCleanMap: { value: cleanMap }, uOutfitMap: { value: outfitMap } };
+    this.grime = 0.25; this.dirt = 0.83; this.dirtShown = 0.83; this.grimeShown = 0.25; this.extra = 0; this.tint = 0; this.shine = 0; this.twinkleT = 0;
+    this.shirtU = { uDirt: { value: 1 }, uShine: { value: 0 }, uDull: { value: 0 }, uExtra: { value: 0 }, uTint: { value: 0 }, uCleanMap: { value: cleanMap }, uOutfitMap: { value: outfitMap } };
     if (outfitMap) { outfitMap.flipY = false; outfitMap.colorSpace = THREE.NoColorSpace; }
     this.dull = 0;
     this.body = model ? this._rigged(model) : this._placeholderBody();
@@ -121,7 +121,7 @@ export class Player {
     U.uCleanMap.value.flipY = false;          // glTF texture convention
     mat.onBeforeCompile = (sh) => {
       Object.assign(sh.uniforms, U);
-      sh.fragmentShader = 'uniform sampler2D uCleanMap; uniform sampler2D uOutfitMap; uniform float uDirt; uniform float uShine; uniform float uDull; uniform float uExtra;\n' + sh.fragmentShader
+      sh.fragmentShader = 'uniform sampler2D uCleanMap; uniform sampler2D uOutfitMap; uniform float uDirt; uniform float uShine; uniform float uDull; uniform float uExtra; uniform float uTint;\n' + sh.fragmentShader
         .replace('#include <map_fragment>', `#include <map_fragment>
           vec4 cleanTx = texture2D(uCleanMap, vMapUv);
           // progressive wash: each patch of the shirt has its own turn, so stains vanish
@@ -164,6 +164,11 @@ export class Player {
             float m = splat * outfitK;
             vec3 mud = vec3(0.21, 0.075, 0.018) * (0.75 + 0.4 * grain);   // the model's own mud brown (linear)
             diffuseColor.rgb = mix(diffuseColor.rgb, mud, m * 0.92);
+          }
+          // the last stage: the whole white shirt (and shorts) turns a grimy brown
+          if (uTint > 0.001) {
+            vec3 grimy = diffuseColor.rgb * vec3(0.62, 0.48, 0.33) * (0.85 + 0.25 * grain);
+            diffuseColor.rgb = mix(diffuseColor.rgb, grimy, uTint * outfitK);
           }`)
         .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
           totalEmissiveRadiance += diffuseColor.rgb * uShine;`);
@@ -172,36 +177,54 @@ export class Player {
     mat.needsUpdate = true;
   }
 
-  /** a Diva pack: wash part of the dirt away, flash and sparkle */
-  clean(amount = 0.25) {
-    // extra mud washes off first, then the original stains
-    if ((this.extra || 0) > 0) { this.extra = Math.max(0, this.extra - 0.34); amount = 0; }   // one layer of extra mud per pack
-    this.dirt = Math.max(0, this.dirt - amount); this.dull = Math.max(0, this.dull - 0.34);   // ~3 packs wash the dust off
+  /**
+   * Shirt grime, 0 (spotless) … 1 (ruined). It drives three stages on the
+   * outfit: the stains (0–0.3), extra mud splatters (0.3–0.7) and a grimy
+   * brown tint over the whole shirt (0.6–1). Obstacles add grime, Diva packs
+   * wash it off; at 1 the shirt is ruined (main.js drops a shirt).
+   */
+  _applyGrime() {
+    const g = this.grime;
+    this.dirt = Math.min(1, g / 0.3);
+    this.extra = Math.max(0, Math.min(1, (g - 0.3) / 0.4));
+    this.tint = Math.max(0, Math.min(1, (g - 0.6) / 0.4));
+  }
+
+  /** a Diva pack: wash a stage of grime away, flash and sparkle */
+  clean(amount = 0.12) {
+    this.grime = Math.max(0, this.grime - amount); this._applyGrime();
+    this.dull = Math.max(0, this.dull - 0.34);
     this.shine = 1;
     const chest = new THREE.Vector3(0, RUNNER_SCALE * 1.25, 0.2);
     this.sparkles.burst(chest, 8, 0xffffff, 1.6, 0.45);
-    if (this.dirt === 0) this.sparkles.burst(chest, 16, 0xffe680, 2.6, 0.7);
+    if (this.grime === 0) this.sparkles.burst(chest, 16, 0xffe680, 2.6, 0.7);
   }
 
-  /** hit a stain: the mud comes back */
-  stain() {
-    // all the original mud comes straight back (the model's own stains); if he
-    // was already muddy, extra mud splatters build up on the outfit
-    if (this.dirt >= 0.99) this.extra = Math.min(1, (this.extra || 0) + 0.34);
-    this.dirt = 1; this.shine = 0; this.dirtShown = Math.max(this.dirtShown, 0.85);
+  /** an obstacle: more grime. Returns true when the shirt is ruined. */
+  stain(amount = 0.28) {
+    this.grime = Math.min(1, this.grime + amount); this._applyGrime(); this.shine = 0;
     this.mud.burst(new THREE.Vector3(0, RUNNER_SCALE * 0.9, 0.3), 16, 0x5a3212, 2.4, 0.5);   // mud splashes up onto him
+    return this.grime >= 1;
   }
 
-  /** ran through bus smoke: he goes dusty all over and stays so until Diva packs wash it off */
-  dust(amount = 0.3) {
-    this.dirt = Math.min(1, this.dirt + amount); this.shine = 0; this.dull = 1; this.dustT = 0;
+  /** a fresh white shirt (after one is ruined, or the flower bonus) */
+  freshShirt() {
+    this.grime = 0; this._applyGrime(); this.dull = 0; this.shine = 1;
+    this.dirtShown = this.extraShown = this.tintShown = 0;
+    this.sparkles.burst(new THREE.Vector3(0, RUNNER_SCALE * 1.25, 0.2), 18, 0xffffff, 2.6, 0.6);
+  }
+
+  /** ran through bus smoke: dusty all over (until Diva packs wash it off), and some grime */
+  dust(amount = 0.18) {
+    this.grime = Math.min(1, this.grime + amount); this._applyGrime(); this.shine = 0; this.dull = 1; this.dustT = 0;
     this.dust3 = this.dust3 || new Sparkles(this.group, 18, true);
     this.dust3.keepColor = true; for (const it of this.dust3.items) it.s.material.color.set(0x8a7d6c);
     this.dust3.burst(new THREE.Vector3(0, RUNNER_SCALE * 1.2, 0.3), 14, 0x8a7d6c, 1.4, 0.6);
+    return this.grime >= 1;
   }
 
   /** 0 = muddy … 1 = spotless, as shown on screen (for the shirt meter) */
-  get cleanliness() { return 1 - Math.max(this.dirtShown, (this.dullShown || 0) * 0.85); }
+  get cleanliness() { return 1 - Math.max(this.grimeShown ?? this.grime, (this.dullShown || 0) * 0.3); }
 
   _updateShirt(dt) {
     // the dust stays until packs wash it off (shown easing in/out); dust keeps drifting off him meanwhile
@@ -214,6 +237,9 @@ export class Player {
     this.shirtU.uDull.value = this.dullShown;
     this.extraShown = (this.extraShown || 0) + ((this.extra || 0) - (this.extraShown || 0)) * Math.min(1, dt * 6);
     this.shirtU.uExtra.value = this.extraShown;
+    this.tintShown = (this.tintShown || 0) + ((this.tint || 0) - (this.tintShown || 0)) * Math.min(1, dt * 5);
+    this.shirtU.uTint.value = this.tintShown;
+    this.grimeShown = (this.grimeShown ?? this.grime) + (this.grime - (this.grimeShown ?? this.grime)) * Math.min(1, dt * 6);
     this.dirtShown += (this.dirt - this.dirtShown) * Math.min(1, dt * (this.dirt > this.dirtShown ? 14 : 5));
     this.shine = Math.max(0, this.shine - dt * 2.2);
     const spotless = this.dirtShown < 0.05;
@@ -248,7 +274,7 @@ export class Player {
 
   reset() {
     this.lane = 1; this.x = 0; this.vx = 0; this.lean = 0; this.jumpT = -1; this.height = 0; this.hitT = -1;
-    this.dirt = this.dirtShown = 1; this.shine = 0; this.dull = this.dullShown = 0; this.extra = this.extraShown = 0;
+    this.grime = 0.25; this._applyGrime(); this.dirtShown = this.dirt; this.grimeShown = this.grime; this.shine = 0; this.dull = this.dullShown = 0; this.extraShown = this.tintShown = 0;   // starts with a few stains to wash
     this.group.position.set(0, 0, 0);
   }
 
@@ -265,7 +291,7 @@ export class Player {
     const run = 1 - air;
     // Body height over the stride (model units): lowest as a foot passes under
     // the body, highest in the flight between steps.
-    const bodyY = run * (-0.02 - 0.025 * Math.cos(2 * (phase - 3.45)));
+    const bodyY = run * (-0.008 - 0.007 * Math.cos(2 * (phase - 3.45)));   // a light, even bounce (no crouch on each step)
     const tilt = 0.05 * run;                // pelvis tilt (hips rotation.x below)
     const roll = 0.04 * Math.cos(phase) * run;   // pelvis roll (hips rotation.z below)
     const leg = (ph, side) => {           // ph: this leg's phase; side: +1 left, -1 right
@@ -302,9 +328,9 @@ export class Player {
     const yaw = 0.13 * s * run;                       // hips swing with the legs
     B.hips.rotation.set(tilt, yaw, roll);
     // shoulders counter-twist against the hips and the torso rocks with each step
-    const spYaw = -0.12 * s * run, spRoll = -0.045 * c * run, chYaw = -0.16 * s * run, chRoll = -0.045 * c * run;
-    const pulse = 0.05 * Math.cos(2 * (phase - 3.45)) * run;   // dips forward as each foot lands
-    B.spine.rotation.set(0.26 * run + pulse + 0.1 * air - 0.25 * hit, spYaw, spRoll);   // leaning into the run
+    const spYaw = -0.1 * s * run, spRoll = -0.025 * c * run, chYaw = -0.13 * s * run, chRoll = -0.025 * c * run;
+    const pulse = 0;   // no forward bow on each landing: the torso holds a steady lean
+    B.spine.rotation.set(0.17 * run + pulse + 0.1 * air - 0.25 * hit, spYaw, spRoll);   // leaning into the run
     B.chest.rotation.set(0.1 * run, chYaw, chRoll);
     B.neck.rotation.set(-0.15 * run - pulse * 0.6, 0.16 * s * run, 0.03 * c * run);   // head stays facing ahead
     B.head.rotation.set(-0.18 * run - pulse * 0.4 + 0.2 * hit, 0.14 * s * run, 0.04 * c * run);
@@ -374,7 +400,7 @@ export class Player {
 
     // Stride rate follows speed (eased, so speed-ups never make the legs jump),
     // capped so the legs never blur.
-    const rate = THREE.MathUtils.clamp(9.5 + speed * 0.3, 14, 18);   // ~4.6 steps/s at the start speed, up to ~5.7 at top speed (a sprint)
+    const rate = THREE.MathUtils.clamp(9 + speed * 0.28, 13.5, 16.5);   // ~4.6 steps/s at the start speed, up to ~5.7 at top speed (a sprint)
     this.strideRate += (rate - this.strideRate) * Math.min(1, dt * 3);
     this.runTime += dt * this.strideRate;
 

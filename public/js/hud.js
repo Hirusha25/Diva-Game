@@ -61,6 +61,7 @@ export class Hud {
     if (pk.textContent !== String(packs)) { pk.textContent = packs; const pill = pk.parentElement; pill.classList.remove('bump'); void pill.offsetWidth; pill.classList.add('bump'); }
     this.$('sm-fill').style.height = `${Math.round(clean * 100)}%`;
     this.$('shirt-meter').classList.toggle('full', clean > 0.97);
+    this.$('shirt-meter').classList.toggle('danger', clean < 0.32);
     this.distance.textContent = `${Math.floor(distance)} m`;
     this.lives.textContent = `${Math.max(0, lives)}/${this.maxLives || lives}`;
   }
@@ -90,6 +91,22 @@ export class Hud {
     const r = document.createRange(); r.selectNodeContents(el);
     let size = parseFloat(getComputedStyle(el).fontSize); const floor = size * 0.6;
     for (let i = 0; i < 14 && r.getBoundingClientRect().width > avail && size > floor; i++) { size *= 0.95; el.style.fontSize = `${size}px`; }
+  }
+
+  /** a ruined shirt drops away: big falling shirt + "2 Shirts Left!!" */
+  shirtDrop(left) {
+    const el = this.$('shirt-drop');
+    el.querySelector('.sd-title').textContent = left <= 0 ? 'No Shirts Left!' : left === 1 ? 'Last Shirt!!' : `${left} Shirts Left!!`;
+    el.querySelector('.sd-sub').textContent = left <= 0 ? 'Run over' : 'Shirt ruined! Grab Diva to keep it clean';
+    el.classList.remove('hidden', 'go'); void el.offsetWidth; el.classList.add('go');
+    const pill = this.lives.parentElement; pill.classList.remove('hurt'); void pill.offsetWidth; pill.classList.add('hurt');
+    clearTimeout(this._dropT); this._dropT = setTimeout(() => el.classList.add('hidden'), 1900);
+  }
+
+  /** the shirt came back spotless: a bigger sparkling pop-up */
+  celebrate(text) {
+    this.flash(text, 1300, 'bonus', 'Diva Clean');
+    const m = this.$('shirt-meter'); m.classList.remove('cheer'); void m.offsetWidth; m.classList.add('cheer');
   }
 
   /** kind: pack | bonus | stain | dust | bus (colour of the pop-up) */
