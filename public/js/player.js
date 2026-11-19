@@ -286,7 +286,15 @@ export class Player {
   _buildGait() {
     const N = 256, H = 5, bodyY = -0.008, tilt = 0.05;
     const samples = [[], [], []];
-    for (let i = 0; i < N; i++) { const ph = (i / N) * Math.PI * 2; const v = this._legRaw(ph, 1, bodyY - 0.007 * Math.cos(2 * (ph - 3.45)), tilt, 0.04 * Math.cos(ph)); for (let k = 0; k < 3; k++) samples[k].push(v[k]); }
+    // reference style: a strong heel kick behind (the sole flips up toward the
+    // camera on every step) and a little more push-off behind
+    const bump = (ph, c, w) => { let d = ph - c; d = Math.atan2(Math.sin(d), Math.cos(d)); return Math.exp(-(d * d) / (2 * w * w)); };
+    for (let i = 0; i < N; i++) { const ph = (i / N) * Math.PI * 2; const v = this._legRaw(ph, 1, bodyY - 0.007 * Math.cos(2 * (ph - 3.45)), tilt, 0.04 * Math.cos(ph));
+      const kick = bump(ph, 5.85, 0.6);
+      v[0] += 0.2 * kick + 0.08 * bump(ph, 4.7, 0.5);   // thigh back a touch as the heel comes up
+      v[1] += 0.8 * kick;                                // knee folds further: heel up towards the shorts
+      v[2] += 0.55 * kick;                               // toes point down/back: the sole shows
+      for (let k = 0; k < 3; k++) samples[k].push(v[k]); }
     this.gait = samples.map((arr) => { const c = { a0: arr.reduce((x, y) => x + y, 0) / N, a: [], b: [] };
       for (let h = 1; h <= H; h++) { let sa = 0, sb = 0; arr.forEach((v, i) => { const t = (i / N) * Math.PI * 2 * h; sa += v * Math.cos(t); sb += v * Math.sin(t); }); c.a.push(2 * sa / N); c.b.push(2 * sb / N); }
       return c; });
@@ -338,9 +346,10 @@ export class Player {
     const legL = [0, 1, 2].map((k) => this._gaitAt(k, phase)), legR = [0, 1, 2].map((k) => this._gaitAt(k, phase + Math.PI));
 
     B.hips.position.y = this.hipsRestY;
-    const yaw = 0.1 * s * run;
+    const yaw = 0.14 * s * run;
     B.hips.rotation.set(tilt, yaw, roll);
-    const spYaw = -0.08 * s * run, spRoll = -0.02 * c * run, chYaw = -0.11 * s * run, chRoll = -0.02 * c * run;
+    // shoulders turn clearly against the hips and the torso sways with each step (reference style)
+    const spYaw = -0.12 * s * run, spRoll = -0.04 * c * run, chYaw = -0.17 * s * run, chRoll = -0.04 * c * run;
     B.spine.rotation.set(0.16 * run + 0.1 * air - 0.25 * hit, spYaw, spRoll);
     B.chest.rotation.set(0.08 * run, chYaw, chRoll);
     B.neck.rotation.set(-0.13 * run, 0.12 * s * run, 0.02 * c * run);
@@ -367,11 +376,11 @@ export class Player {
       const wrist = Math.sin(a - 1.2);                                 // wrist follows the forearm
       const fwd = (1 + Math.sin(a)) / 2;                               // 1 at the front of the swing
       return {
-        swing: 0.22 - 0.78 * f,
-        across: side * (-0.1 * fwd),                                   // in towards the chest in front
+        swing: 0.2 - 0.66 * f,
+        across: side * (-0.06 * fwd),                                  // in towards the chest in front
         lift: 0.04 * fwd,                                              // shoulder rises a little in front
-        out: 0.06 * (1 - fwd),                                         // beside the hip behind
-        elbow: -1.22 - 0.26 * lag + 0.05 * Math.cos(2 * a),
+        out: 0.12 + 0.05 * (1 - fwd),                                  // arms held a little out from the body, wider behind
+        elbow: -1.42 - 0.22 * lag + 0.05 * Math.cos(2 * a),            // about a right angle, folding as it comes forward
         hand: -0.12 + 0.16 * wrist,
         handRoll: side * 0.06 * Math.sin(a - 0.9),
       };
