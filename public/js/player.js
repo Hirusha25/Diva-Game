@@ -353,19 +353,36 @@ export class Player {
     B.foot_L.rotation.set(run * legL[2] + air * 0.3, 0, 0);
     B.foot_R.rotation.set(run * legR[2] + air * 0.3, 0, 0);
 
-    // arms: an even swing opposite the legs, elbows bent (tighter in front,
-    // more open behind), back swing passing beside the hip. All smooth.
-    const aw = Math.sin(phase - 3.0);                   // +1: left arm forward
+    // arms: a natural running swing with follow-through. Opposite the legs;
+    // the forward drive is a little quicker than the return (second harmonic);
+    // the forearm trails the upper arm and the wrist trails the forearm, so
+    // the elbow folds as the arm comes forward and opens as it drives back;
+    // the hands come slightly in towards the chest in front and pass beside
+    // the hip behind; the shoulders lift a touch with each forward swing.
+    // Everything is a smooth function of the phase.
     const shYaw = yaw + spYaw + chYaw, shRoll = roll + spRoll + chRoll;
-    const swing = (f) => 0.2 - 0.8 * f;
-    const elbow = (f) => -1.2 - 0.22 * f;
-    const out = (f) => 0.05 * (1 - f);
-    B.upperarm_L.rotation.set(run * swing(aw) + air * -1.1 + hit * 0.4, -0.75 * shYaw * run, 0.2 + out(aw) - 0.75 * shRoll + air * 0.3);
-    B.upperarm_R.rotation.set(run * swing(-aw) + air * -1.1 + hit * 0.4, -0.75 * shYaw * run, -0.2 - out(-aw) - 0.75 * shRoll - air * 0.3);
-    B.forearm_L.rotation.set(run * elbow(aw) + air * -1.3, 0, -0.08);
-    B.forearm_R.rotation.set(run * elbow(-aw) + air * -1.3, 0, 0.08);
-    B.hand_L.rotation.set(-0.1, 0, 0);
-    B.hand_R.rotation.set(-0.1, 0, 0);
+    const arm = (a, side) => {   // a: this arm's phase; side +1 left, -1 right
+      const f = Math.sin(a) + 0.16 * Math.sin(2 * a + 0.5);            // +1 forward … −1 back
+      const lag = Math.sin(a - 0.6);                                   // forearm follow-through
+      const wrist = Math.sin(a - 1.2);                                 // wrist follows the forearm
+      const fwd = (1 + Math.sin(a)) / 2;                               // 1 at the front of the swing
+      return {
+        swing: 0.22 - 0.78 * f,
+        across: side * (-0.1 * fwd),                                   // in towards the chest in front
+        lift: 0.04 * fwd,                                              // shoulder rises a little in front
+        out: 0.06 * (1 - fwd),                                         // beside the hip behind
+        elbow: -1.22 - 0.26 * lag + 0.05 * Math.cos(2 * a),
+        hand: -0.12 + 0.16 * wrist,
+        handRoll: side * 0.06 * Math.sin(a - 0.9),
+      };
+    };
+    const aL = arm(phase - 3.0, 1), aR = arm(phase - 3.0 + Math.PI, -1);
+    B.upperarm_L.rotation.set(run * aL.swing + air * -1.1 + hit * 0.4, (-0.75 * shYaw + aL.across) * run, 0.2 + (aL.out + aL.lift) * run - 0.75 * shRoll + air * 0.3);
+    B.upperarm_R.rotation.set(run * aR.swing + air * -1.1 + hit * 0.4, (-0.75 * shYaw + aR.across) * run, -0.2 - (aR.out + aR.lift) * run - 0.75 * shRoll - air * 0.3);
+    B.forearm_L.rotation.set(run * aL.elbow + air * -1.3, 0, -0.08);
+    B.forearm_R.rotation.set(run * aR.elbow + air * -1.3, 0, 0.08);
+    B.hand_L.rotation.set(run * aL.hand - 0.1 * air, 0, run * aL.handRoll);
+    B.hand_R.rotation.set(run * aR.hand - 0.1 * air, 0, run * aR.handRoll);
 
     this._ground(run);
   }
