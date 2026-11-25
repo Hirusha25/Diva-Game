@@ -346,10 +346,10 @@ export class Player {
     this._sway = 0.022 * RUNNER_SCALE * Math.cos(phase) * run;   // weight shifts over the foot on the ground
     // shoulders turn clearly against the hips and the torso sways with each step (reference style)
     const spYaw = -0.13 * s * run, spRoll = -0.06 * c * run, chYaw = -0.18 * s * run, chRoll = -0.02 * c * run;
-    B.spine.rotation.set(0.16 * run + 0.1 * air - 0.25 * hit, spYaw, spRoll);
-    B.chest.rotation.set(0.08 * run, chYaw, chRoll);
-    B.neck.rotation.set(-0.13 * run, 0.12 * s * run, 0.02 * c * run);
-    B.head.rotation.set(-0.15 * run + 0.2 * hit, 0.1 * s * run, 0.02 * c * run);
+    B.spine.rotation.set(0.07 * run + 0.1 * air - 0.25 * hit, spYaw, spRoll);   // upright, like the reference runner (only a slight lean)
+    B.chest.rotation.set(0.03 * run, chYaw, chRoll);
+    B.neck.rotation.set(-0.06 * run, 0.12 * s * run, 0.02 * c * run);
+    B.head.rotation.set(-0.07 * run + 0.2 * hit, 0.1 * s * run, 0.02 * c * run);
 
     B.thigh_L.rotation.set(run * legL[0] + air * -1.0, -yaw, -roll);
     B.thigh_R.rotation.set(run * legR[0] + air * -0.55, -yaw, -roll);

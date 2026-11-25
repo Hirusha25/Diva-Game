@@ -54,14 +54,10 @@ for (const [key, n, width, role] of LAYERS) {
 await sharp('assets/raw/new/1.png').resize({ width: 1242 }).webp({ quality: 80 }).toFile(`${OUT}/cover-bg.webp`);
 console.log('bg       poster background'.padEnd(42), await kb(`${OUT}/cover-bg.webp`));
 meta.frame = { aspect: 2048 / 3126 };
-// the 2026 logo is taller than the old one: fit it between the hcb logo and
-// the tagline (small gaps) so nothing overlaps, keeping it centred
-// as large as fits, centred on its box (the blue panel reads as the logo's
-// edge, so the box is what looks centred), with equal gaps above and below
-// hcb (with its glow) moves up a little to leave an even gap above and
-// below the logo; the tagline stays where the poster has it
-meta.hcb.y -= 0.01; meta.glow.y -= 0.01;
-{ const L = meta.logo, top = meta.hcb.y + meta.hcb.h, bottom = meta.tagline.y;
-  const k = Math.min(1, (bottom - top - 0.018) / L.h);
-  L.w *= k; L.h *= k; L.y = top + (bottom - top - L.h) / 2; L.x = 0.5 - L.w / 2; }
+// the 2026 logo, large as in the client's mock: 2.3x the hcb width, its box
+// centred, starting high (its blue panel tucks up beside hcb, which stays in
+// front), with the tagline just below it
+{ const L = meta.logo, Hc = meta.hcb, T = meta.tagline, k = (Hc.w * 2.3) / L.w;
+  L.w *= k; L.h *= k; L.x = 0.5 - L.w / 2; L.y = Hc.y + 0.3 * Hc.h;
+  T.y = L.y + L.h + 0.006; }
 await writeFile(`${OUT}/cover.json`, JSON.stringify(meta, null, 2));
