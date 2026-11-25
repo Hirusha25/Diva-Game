@@ -355,7 +355,7 @@ function htLayout() {
   cap.classList.remove('swap'); void cap.offsetWidth; cap.classList.add('swap');
   const last = htI === htSlides.length - 1;
   $('btn-howto-go').textContent = last ? (howtoThen === 'run' ? t.go : t.ok) : t.next;
-  $('btn-howto-skip').style.visibility = last ? 'hidden' : '';
+  document.querySelector('#screen-howto .ht-foot').classList.toggle('last', last);
   clearTimeout(htTimer);
   if (htAuto && !last) htTimer = setTimeout(() => htGo(htI + 1), HT_DUR);
 }
