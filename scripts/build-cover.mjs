@@ -63,5 +63,5 @@ meta.frame = { aspect: 2048 / 3126 };
   const kL = (2.41 * u) / (L.w * PW); L.w *= kL; L.h *= kL;
   L.x = (hcx - 0.18 * u) / PW - L.w / 2; L.y = (top + 0.189 * u) / PH;
   const kT = (2.91 * u) / (T.w * PW); T.w *= kT; T.h *= kT;
-  T.x = (hcx - 0.143 * u) / PW - T.w / 2; T.y = (top + 2.443 * u) / PH; }
+  T.x = (hcx - 0.143 * u) / PW - T.w / 2; T.y = (top + 2.443 * u) / PH - 0.012; }   // tagline a little higher, clear of the heroes' hair
 await writeFile(`${OUT}/cover.json`, JSON.stringify(meta, null, 2));

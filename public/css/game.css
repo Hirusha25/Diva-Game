@@ -217,7 +217,7 @@ img.layer { width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
 .stage [data-layer="hcb"], .stage [data-layer="logo"], .stage [data-layer="tagline"] { transition: left .3s, top .3s, width .3s, height .3s; }
 .cover.reg [data-layer="hcb"] { left: 43.8% !important; top: 3% !important; z-index: 2; width: 12.5% !important; height: 4.88% !important; }
 .cover.reg [data-layer="logo"] { left: 32.75% !important; top: 4.55% !important; width: 30.1% !important; height: 18.32% !important; }   /* 2026 logo placed as in the client's mock (see build-cover.mjs) */
-.cover.reg [data-layer="tagline"] { left: 30.06% !important; top: 23% !important; width: 36.4% !important; height: 6.96% !important; }
+.cover.reg [data-layer="tagline"] { left: 30.06% !important; top: 22.2% !important; width: 36.4% !important; height: 6.96% !important; }
 .cover.reg [data-layer="heroes"], .cover.reg #btn-start { opacity: 0; pointer-events: none; transition: opacity .25s; }
 .cover.reg .reg .layer { animation: reg-in .35s ease-out backwards; }
 /* SUBMIT pulses and shines like START (after its entrance) */
