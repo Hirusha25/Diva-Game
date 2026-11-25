@@ -153,6 +153,7 @@ document.addEventListener('pointerdown', (e) => { if (!e.target.closest('#player
 function setPaused(p) {
   if (state.mode !== 'running') return;
   state.paused = p; hud.screens.pause.classList.toggle('hidden', !p);
+  if (p) { for (const k of ['packs', 'score', 'lives']) $(`ps-${k}`).textContent = $(`hud-${k}`).textContent; }   // this run so far
   if (p) sound.stopMusic(); else { sound.startMusic(); clock.getDelta(); }
 }
 $('btn-pause').addEventListener('click', () => { sound.tap(); setPaused(true); });
@@ -364,7 +365,7 @@ function htLayout() {
 function htGo(i) { htI = Math.max(0, Math.min(htSlides.length - 1, i)); htLayout(); }
 function renderHowto() {
   const t = htT();
-  $('ht-title').textContent = t.title; $('btn-howto-skip').textContent = HOWTO.en.skip; $('ht-left').textContent = t.left; $('ht-left').lang = howtoLang;
+  $('ht-title').textContent = HOWTO.en.title;   // title and buttons stay in English; only the instructions change language $('btn-howto-skip').textContent = HOWTO.en.skip; $('ht-left').textContent = t.left; $('ht-left').lang = howtoLang;
   for (const el of document.querySelectorAll('#ht-deck [data-k]')) el.textContent = t.tags[el.dataset.k];
   const lang = document.querySelector('#screen-howto .ht-lang'); lang.style.setProperty('--i', String(HT_LANGS.indexOf(howtoLang)));
   for (const b of lang.querySelectorAll('[data-lang]')) b.setAttribute('aria-selected', String(b.dataset.lang === howtoLang));

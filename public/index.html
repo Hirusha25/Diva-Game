@@ -52,8 +52,13 @@
   <div id="screen-pause" class="screen pause hidden">
     <div class="card"><h2 class="subtitle">Paused</h2>
       <p class="hint">Take a breather. Your run is waiting.</p>
-      <button type="button" class="btn btn-start" id="btn-resume">Resume</button>
-      <div class="row"><button type="button" class="link" id="btn-pause-howto">How to Play</button><button type="button" class="link" id="btn-pause-home">Home</button></div></div>
+      <div class="ps-stats">
+        <div class="ps-stat"><img src="assets/ui/flower-bubble.webp" alt=""><b id="ps-packs">0</b><span>Packs</span></div>
+        <div class="ps-stat"><i class="ps-star">&#9733;</i><b id="ps-score">0</b><span>Score</span></div>
+        <div class="ps-stat"><img src="assets/ui/shirt-clean.webp" alt=""><b id="ps-lives">3/3</b><span>Shirts</span></div>
+      </div>
+      <button type="button" class="btn btn-start ps-resume" id="btn-resume"><i class="ps-play"></i>Resume</button>
+      <div class="row"><button type="button" class="link" id="btn-pause-howto"><i class="ps-ic">?</i>How to Play</button><button type="button" class="link" id="btn-pause-home"><i class="ps-ic">&#8962;</i>Home</button></div></div>
   </div>
 
   <!-- Loading -->
@@ -147,7 +152,7 @@
         <!-- 1: swipe to move -->
         <div class="ht-slide" data-i="0"><div class="ht-scene sc-move">
           <img class="ht-grass" src="assets/ui/grass.webp" alt="">
-          <div class="mv-road"><i class="mv-line l"></i><i class="mv-line r"></i></div>
+          <div class="mv-road"><svg class="mv-lanes" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><line x1="47.4" y1="0" x2="33.3" y2="100"/><line x1="52.6" y1="0" x2="66.7" y2="100"/></svg></div>
           <div class="mv-boy"><img src="assets/ui/runner-run.webp" alt=""></div>
           <span class="mv-arrow l">&#8249;</span><span class="mv-arrow r">&#8250;</span><span class="mv-arrow u">&#8249;</span>
           <span class="mv-hand">&#9757;&#65039;</span>

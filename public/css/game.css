@@ -316,10 +316,11 @@ body:has(#screen-cover:not(.hidden)) .sound-btn, body:has(#screen-loading:not(.h
 .pill.packs img { width: 32px; height: 32px; display: block; }
 .pill.packs.bump { animation: pk-bump .3s ease-out; }
 @keyframes pk-bump { 40% { transform: scale(1.18); } }
-.pause-btn { pointer-events: auto; position: relative; flex: none; width: 46px; height: 46px; padding: 0; border-radius: 14px; cursor: pointer;
+.pause-btn { pointer-events: auto; position: relative; flex: none; width: 40px; height: 40px; padding: 0; border-radius: 50%; cursor: pointer;
   border: 3px solid #ffe08a; background: linear-gradient(#ffb21e, #ff7a00); box-shadow: 0 3px 0 #b44a00, 0 4px 10px rgba(0,0,0,.25); }
-.pause-btn span { position: absolute; top: 11px; bottom: 11px; width: 7px; border-radius: 3px; background: #fff; box-shadow: 0 0 0 2px #e3262e inset; }
-.pause-btn span:first-child { left: 13px; } .pause-btn span:last-child { right: 13px; }
+.pause-btn span { position: absolute; top: 11px; bottom: 11px; width: 5px; border-radius: 3px; background: #fff; box-shadow: 0 1px 0 rgba(150,50,0,.45); }
+.pause-btn span:first-child { left: 12px; } .pause-btn span:last-child { right: 12px; }
+.pause-btn::after { content: ""; position: absolute; left: 6px; right: 6px; top: 3px; height: 40%; border-radius: 50% 50% 40% 40%; background: linear-gradient(rgba(255,255,255,.6), rgba(255,255,255,0)); pointer-events: none; }
 .pause-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #b44a00; }
 .hud .sound-btn { display: none; }
 /* the sound button sits under the pause button during a run */
@@ -485,11 +486,11 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 .ht-scene .ht-grass { left: 0; bottom: 0; width: 100%; height: 54%; object-fit: cover; object-position: 50% 0; }   /* real grass below the horizon */
 /* 1: swipe to move */
 .mv-road { position: absolute; left: -20%; right: -20%; top: 40%; bottom: 0; background: linear-gradient(#6a707b, #454a55); clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%); }
-.mv-line { position: absolute; top: 0; bottom: 0; left: calc(50% - 3px); width: 6px; transform-origin: 50% 0;
-  background: repeating-linear-gradient(to bottom, #fff 0 22px, transparent 22px 44px); background-size: 6px 44px; }
-.mv-line.l { transform: translateX(-10px) skewX(15deg); } .mv-line.r { transform: translateX(10px) skewX(-15deg); }
-.ht-slide.on .mv-line { animation: mv-dash .45s linear infinite; }
-@keyframes mv-dash { to { background-position: 0 44px; } }
+/* lane lines in perspective: from the far end of the road to the bottom, dashes running towards you */
+.mv-lanes { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.mv-lanes line { stroke: #fff; stroke-width: 1.1; stroke-dasharray: 7 6; stroke-linecap: butt; }
+.ht-slide.on .mv-lanes line { animation: mv-dash .45s linear infinite; }
+@keyframes mv-dash { to { stroke-dashoffset: -13; } }
 .mv-boy { position: absolute; left: 50%; bottom: 2%; height: 54%; aspect-ratio: 240 / 360; overflow: hidden; transform: translateX(-50%); filter: drop-shadow(0 6px 4px rgba(0,0,0,.3)); }
 .mv-boy img { left: 0; top: 0; height: 100%; width: auto; }   /* the game's runner: a 12-frame run cycle */
 .ht-slide.on .mv-boy img { animation: mv-sprite .5s steps(12) infinite; }
@@ -605,7 +606,7 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 .ht-cap:lang(si) p, .ht-cap:lang(ta) p { font: 600 13px/1.5 "Noto Sans Sinhala", "Noto Sans Tamil", sans-serif; }
 .ht-foot { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 8px; }   /* button centred, Skip under it */
 .ht-skip { order: 2; flex: none; padding: 6px 16px 2px; border: 0; background: none; cursor: pointer; color: #36507e; font: 800 15px/1 "Nunito", "Noto Sans Sinhala", "Noto Sans Tamil", system-ui, sans-serif; }
-#screen-howto .ht-foot .btn-start { order: 1; width: min(280px, 92%); margin: 0 auto; }
+#screen-howto .ht-foot .btn-start { order: 1; width: min(280px, 92%); margin: 0 auto; padding: 0 14% 3%; text-align: center; justify-content: center; }   /* wording centred on the button */
 .ht-foot.last .ht-skip { visibility: hidden; }   /* keeps the same spacing on the last card */
 @media (max-height: 640px) { .ht-cap { min-height: 0; padding-top: 8px; } .ht-cap h3 { font-size: 22px; } .ht-cap p { font-size: 13px; } }
 @media (prefers-reduced-motion: reduce) { #screen-howto::before, .ht-slide.on * { animation-duration: .01s !important; animation-iteration-count: 1 !important; } }
@@ -616,3 +617,17 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
   width: 40px; height: 40px; padding: 0; border-radius: 50%; border: 2px solid #fff; cursor: pointer; background: rgba(10, 79, 181, .9); color: #fff;
   font: 400 22px/36px "Lilita One", sans-serif; box-shadow: 0 3px 0 rgba(0,0,0,.25); }
 .screen.cover.reg > .help-btn { display: none; }
+
+/* ---------- Pause card: this run's stats, a compact Resume, icon chips ---------- */
+.ps-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0 0 14px; }
+.ps-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 9px 4px 7px; border-radius: 16px;
+  background: linear-gradient(rgba(29,95,196,.1), rgba(13,58,143,.16)), var(--card-plain) center / 100% 100% no-repeat; box-shadow: inset 0 1px 3px rgba(13,58,143,.18); }
+.ps-stat img { width: 30px; height: 30px; object-fit: contain; filter: drop-shadow(0 2px 2px rgba(0,0,0,.2)); }
+.ps-star { width: 30px; height: 30px; display: grid; place-items: center; font-style: normal; font-size: 24px; line-height: 1; color: var(--diva-gold); text-shadow: 0 2px 0 #c98a00; }
+.ps-stat b { font: 400 22px/1 "Lilita One", "Trebuchet MS", sans-serif; color: var(--diva-blue-dark); }
+.ps-stat span { font: 800 10px/1 "Nunito", system-ui, sans-serif; text-transform: uppercase; letter-spacing: .08em; color: #36507e; }
+.screen.pause .btn-start.ps-resume { width: min(230px, 80%); padding: 0 14% 3%; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 24px; }
+.ps-play { flex: none; width: 0; height: 0; border-style: solid; border-width: 9px 0 9px 14px; border-color: transparent transparent transparent #fff; filter: drop-shadow(0 2px 0 #0b3a9e); }
+.screen.pause .link { display: inline-flex; align-items: center; gap: 7px; padding: 7px 16px 6px 7px; }
+.ps-ic { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; font-style: normal; font: 400 15px/1 "Lilita One", sans-serif; color: #fff;
+  background: linear-gradient(var(--diva-sky), var(--diva-blue)); box-shadow: 0 1px 0 var(--diva-blue-dark); }
