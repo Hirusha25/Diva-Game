@@ -56,9 +56,12 @@ console.log('bg       poster background'.padEnd(42), await kb(`${OUT}/cover-bg.w
 meta.frame = { aspect: 2048 / 3126 };
 // the 2026 logo is taller than the old one: fit it between the hcb logo and
 // the tagline (small gaps) so nothing overlaps, keeping it centred
-// at 80 % of the gap (the source art is small, so it stays crisp), centred on
-// its box (the blue panel reads as the logo's edge, so the box is what looks centred)
-{ const L = meta.logo, top = meta.hcb.y + meta.hcb.h + 0.006, bottom = meta.tagline.y - 0.004;
-  const k = Math.min(1, (bottom - top) / L.h) * 0.8;
+// as large as fits, centred on its box (the blue panel reads as the logo's
+// edge, so the box is what looks centred), with equal gaps above and below
+// hcb (with its glow) moves up a little and the tagline down a little, to
+// leave an even gap of about 1.3 % of the poster height around the logo
+meta.hcb.y -= 0.01; meta.glow.y -= 0.01; meta.tagline.y += 0.008;
+{ const L = meta.logo, top = meta.hcb.y + meta.hcb.h, bottom = meta.tagline.y;
+  const k = Math.min(1, (bottom - top - 0.026) / L.h);
   L.w *= k; L.h *= k; L.y = top + (bottom - top - L.h) / 2; L.x = 0.5 - L.w / 2; }
 await writeFile(`${OUT}/cover.json`, JSON.stringify(meta, null, 2));
