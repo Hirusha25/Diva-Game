@@ -121,19 +121,55 @@ export class Hud {
     this._toastTimer = setTimeout(() => this.toast.classList.remove('show'), ms);
   }
 
-  gameOver(score, distance) {
-    this.$('final-score').textContent = Math.floor(score);
-    this.$('final-distance').textContent = `${Math.floor(distance)} m`;
+  /** End of run: show the card straight away (score counts up), the verdict follows from the server. */
+  gameOver(score, distance, packs = 0) {
+    const sc = this.screens.over; sc.dataset.mood = 'pending';
+    this.$('ov-title').textContent = 'Run Over!';
+    this.$('ov-msg').textContent = 'Saving your run…';
+    this.$('ov-packs').textContent = packs;
     this.$('final-best').textContent = '…';
-    this.$('final-rank').textContent = 'Saving your run…';
-    this.$('board').textContent = '';
-    this.show('over');
+    this.$('final-rank').textContent = '';
+    this.$('board').textContent = ''; this.$('ov-confetti').textContent = '';
+    const el = this.$('final-score'), end = Math.floor(score), t0 = performance.now();
+    const tick = (t) => { const k = Math.min(1, (t - t0) / 900); el.textContent = Math.round(end * (1 - Math.pow(1 - k, 3))); if (k < 1 && !sc.classList.contains('hidden')) requestAnimationFrame(tick); };
+    el.textContent = '0'; this.show('over'); requestAnimationFrame(tick);
+    void distance;
   }
 
-  /** Fill the game-over card with the server's answer (or the offline fallback). */
-  result({ best, rank, gift, top = [], myName = '' }) {
+  /**
+   * The verdict: 'winner' (the rank is in a prize band), 'best' (a new personal
+   * best) or 'thanks'. Every outcome thanks the player.
+   */
+  result({ best, rank, gift, gifts = [], top = [], myName = '', newBest = false }) {
+    const sc = this.screens.over;
+    const zone = gifts.reduce((m, g) => Math.max(m, +g.to || 0), 0) || 10;
+    const mood = gift ? 'winner' : newBest ? 'best' : 'thanks';
+    sc.dataset.mood = mood;
     this.$('final-best').textContent = best;
-    this.$('final-rank').textContent = rank ? `You are #${rank} on the leaderboard${gift ? ' · Prize: ' + gift : ''}` : '';
+    const msg = this.$('ov-msg'), title = this.$('ov-title');
+    const bold = (t) => { const b = document.createElement('b'); b.textContent = t; return b; };
+    msg.textContent = '';
+    if (mood === 'winner') {
+      title.textContent = "You're a Winner!";
+      this.$('ov-medal').textContent = `#${rank}`; this.$('ov-gift-name').textContent = gift;
+      msg.append('Thank you for playing ', bold('Diva Fresh Run'), '! You are ', bold(`#${rank}`), ` and in the prize zone. Stay in the top ${zone} until the leaderboard closes!`);
+    } else if (mood === 'best') {
+      title.textContent = 'New Best Score!';
+      msg.append('Thank you for playing! You beat your best score.', rank ? ` You are #${rank}: reach the top ${zone} to win a Diva prize.` : ' Run again to climb even higher!');
+    } else {
+      title.textContent = 'Thank You!';
+      msg.append('Thank you for playing ', bold('Diva Fresh Run'), '!', rank ? ` You are #${rank}. Reach the top ${zone} to win a Diva prize. Run again!` : ' Grab more Diva packs and keep your shirts fresh to score higher.');
+    }
+    this.$('final-rank').textContent = '';   // the message already gives the rank; this line is kept for save errors
+    requestAnimationFrame(() => this.fitText(title));
+    // confetti for a winner (lots) or a new best (some)
+    const cf = this.$('ov-confetti'); cf.textContent = '';
+    const n = mood === 'winner' ? 36 : mood === 'best' ? 20 : 0, cols = ['#e3262e', '#ffd400', '#1d5fc4', '#2fb4ff', '#47d16b', '#ffffff', '#ff8a1e'];
+    for (let i = 0; i < n; i++) {
+      const c = document.createElement('i');
+      c.style.cssText = `left:${Math.random() * 100}%;background:${cols[i % cols.length]};--d:${(1.8 + Math.random() * 1.6).toFixed(2)}s;--del:${(-Math.random() * 3).toFixed(2)}s;--r:${Math.round(360 + Math.random() * 540) * (Math.random() < 0.5 ? -1 : 1)}deg;width:${6 + Math.random() * 5}px;height:${9 + Math.random() * 6}px`;
+      cf.appendChild(c);
+    }
     const ol = this.$('board');
     ol.textContent = '';
     for (const row of top) {

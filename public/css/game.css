@@ -631,3 +631,72 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 .screen.pause .link { display: inline-flex; align-items: center; gap: 7px; padding: 7px 16px 6px 7px; }
 .ps-ic { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; font-style: normal; font: 400 15px/1 "Lilita One", sans-serif; color: #fff;
   background: linear-gradient(var(--diva-sky), var(--diva-blue)); box-shadow: 0 1px 0 var(--diva-blue-dark); }
+
+/* ---------- End of run: winner / new best / thank you ---------- */
+#screen-over { z-index: 40; overflow: hidden; background: radial-gradient(circle at 50% 28%, rgba(61,155,233,.45), rgba(5,30,80,.8) 70%); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+#screen-over::before { content: ""; position: absolute; left: 50%; top: 30%; width: 220vmax; height: 220vmax; margin: -110vmax 0 0 -110vmax; pointer-events: none;
+  background: repeating-conic-gradient(from 0deg, rgba(255,255,255,.07) 0 9deg, transparent 9deg 18deg); animation: ht-rays 60s linear infinite; }
+#screen-over[data-mood="winner"]::before { background: repeating-conic-gradient(from 0deg, rgba(255,214,0,.13) 0 9deg, transparent 9deg 18deg); }
+#screen-over .card { width: min(400px, 100%); display: flex; flex-direction: column; padding: 44px 14px 12px; max-height: calc(100% - 46px); overflow: visible; }
+.ov-scene { position: relative; flex: none; height: clamp(150px, 29vh, 250px); overflow: hidden; border-radius: 24px; background: linear-gradient(#6cc0ff, #cfeeff 55%, #e6f6ff);
+  box-shadow: inset 0 0 0 3px rgba(255,255,255,.9), 0 12px 24px rgba(13,58,143,.3); }
+.ov-scene::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; background: linear-gradient(155deg, rgba(255,255,255,.4), rgba(255,255,255,0) 38%); }
+.ov-scene > * { position: absolute; }
+.ov-scene .ht-grass { left: 0; bottom: 0; width: 100%; height: 50%; object-fit: cover; object-position: 50% 0; }
+/* the runner (the game's run cycle) */
+.ov-runner { left: 50%; bottom: 4%; height: 64%; aspect-ratio: 240 / 360; overflow: hidden; transform: translateX(-50%); filter: drop-shadow(0 6px 4px rgba(0,0,0,.3)); }
+.ov-runner img { position: absolute; left: 0; top: 0; height: 100%; width: auto; animation: mv-sprite .5s steps(12) infinite; }
+.ov-pack { width: 13%; filter: drop-shadow(0 5px 5px rgba(0,0,0,.25)); animation: ov-float 2.6s ease-in-out infinite; }
+.ov-pack.k1 { left: 9%; top: 16%; rotate: -14deg; } .ov-pack.k2 { right: 10%; top: 9%; rotate: 12deg; animation-delay: -.9s; } .ov-pack.k3 { right: 15%; top: 50%; rotate: -6deg; animation-delay: -1.7s; }
+@keyframes ov-float { 50% { translate: 0 -8px; } }
+/* "New Best!" stamp */
+.ov-stamp { left: 50%; top: 9%; white-space: nowrap; color: #fff; font: 400 32px/1 "Lilita One", sans-serif; -webkit-text-stroke: 7px var(--diva-logo-red); paint-order: stroke fill;
+  text-shadow: 0 4px 0 #a52a17, 0 8px 14px rgba(0,0,0,.3); transform: translateX(-50%) rotate(-5deg); animation: ov-stamp .6s .2s cubic-bezier(.3,1.6,.5,1) both, ov-pulse 1.4s 1s ease-in-out infinite; }
+@keyframes ov-stamp { from { opacity: 0; transform: translateX(-50%) rotate(-5deg) scale(2.2); } }
+@keyframes ov-pulse { 50% { scale: 1.07; } }
+/* winner: gold rays, a trophy with the rank medal, the prize */
+.ov-rays { left: 50%; top: 46%; width: 260%; aspect-ratio: 1; margin-left: -130%; transform: translateY(-50%); border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgba(255,255,255,.55) 0 8deg, rgba(255,255,255,0) 8deg 20deg); animation: ov-spin 18s linear infinite; }
+@keyframes ov-spin { to { rotate: 360deg; } }
+.ov-trophy { left: 50%; top: 40%; transform: translate(-50%, -50%); }
+.ov-cup { display: block; font-size: 96px; line-height: 1; filter: drop-shadow(0 8px 10px rgba(150,80,0,.45)); animation: ov-cup 2.2s ease-in-out infinite; }
+@keyframes ov-cup { 50% { translate: 0 -6px; rotate: -3deg; } }
+.ov-medal { position: absolute; right: -16px; bottom: 2px; width: 48px; height: 48px; display: grid; place-items: center; border-radius: 50%; color: #fff;
+  font: 400 19px/1 "Lilita One", sans-serif; -webkit-text-stroke: 4px #a05a00; paint-order: stroke fill;
+  background: radial-gradient(circle at 35% 30%, #ffe680, var(--diva-gold) 45%, #d68a00); border: 3px solid #fff; box-shadow: 0 0 0 2px var(--diva-gold), 0 4px 8px rgba(0,0,0,.3); }
+.ov-gift { left: 50%; bottom: 8px; max-width: 92%; display: flex; align-items: center; gap: 8px; padding: 5px 16px 5px 5px; border-radius: 99px; transform: translateX(-50%);
+  background: rgba(255,255,255,.97); border: 3px solid var(--diva-gold); box-shadow: 0 0 0 3px #fff, 0 6px 14px rgba(150,80,0,.3); animation: ov-stamp .5s .5s cubic-bezier(.3,1.6,.5,1) both; }
+.ov-gift img { flex: none; width: 40px; height: 40px; }
+.ov-gift span { display: flex; flex-direction: column; min-width: 0; text-align: left; }
+.ov-gift small { font: 800 10px/1.1 "Nunito", sans-serif; text-transform: uppercase; letter-spacing: .08em; color: #36507e; }
+.ov-gift b { font: 400 15px/1.15 "Lilita One", sans-serif; color: var(--diva-logo-red); }
+/* confetti */
+.ov-confetti { inset: 0; pointer-events: none; overflow: hidden; }
+.ov-confetti i { position: absolute; top: -14px; width: 8px; height: 12px; border-radius: 2px; animation: ov-fall var(--d, 2.4s) linear var(--del, 0s) infinite; }
+@keyframes ov-fall { 0% { transform: translateY(0) rotate(0); opacity: 1; } 85% { opacity: 1; } 100% { transform: translateY(270px) rotate(var(--r, 540deg)); opacity: 0; } }
+/* which pieces each mood shows */
+#screen-over .ov-trophy, #screen-over .ov-rays, #screen-over .ov-gift, #screen-over .ov-stamp, #screen-over .ov-confetti { display: none; }
+#screen-over[data-mood="winner"] .ov-scene { background: radial-gradient(circle at 50% 45%, #fffbe0, #ffd84a 48%, #f39c00); }
+#screen-over[data-mood="winner"] :is(.ov-trophy, .ov-rays, .ov-confetti) { display: block; }
+#screen-over[data-mood="winner"] .ov-gift { display: flex; }
+#screen-over[data-mood="winner"] :is(.ht-grass, .ov-runner, .ov-pack) { display: none; }
+#screen-over[data-mood="best"] :is(.ov-stamp, .ov-confetti) { display: block; }
+#screen-over[data-mood="best"] .ov-pack { display: none; }
+/* message, stats, rank, leaderboard, buttons */
+.ov-msg { margin: 12px 4px 10px; text-align: center; font: 700 14.5px/1.45 "Nunito", system-ui, sans-serif; color: #36507e; }
+.ov-msg b { color: var(--diva-blue-dark); font-weight: 900; }
+.ov-stats { margin: 0 0 8px; }
+.ov-cup-s { width: 30px; height: 30px; display: grid; place-items: center; font-size: 26px; line-height: 1; filter: drop-shadow(0 2px 1px rgba(150,80,0,.35)); }
+.ov-rank { margin: 2px 0 6px; min-height: 0; text-align: center; font: 400 15px/1.3 "Lilita One", sans-serif; color: var(--diva-blue-dark); }
+.ov-rank:empty { display: none; }
+.ov-board { margin: 0 0 4px; text-align: center; }
+.ov-board summary { display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px 5px; border-radius: 99px; cursor: pointer; list-style: none;
+  border: 2px solid #29c5f6; background: #fff; color: #0b3a9e; font: 400 14px/1 "Lilita One", sans-serif; box-shadow: 0 3px 0 rgba(11,58,158,.2); }
+.ov-board summary::-webkit-details-marker { display: none; }
+.ov-board summary::after { content: "\25BE"; font-size: 12px; transition: transform .2s; }
+.ov-board[open] summary::after { transform: rotate(180deg); }
+.ov-board .board { margin: 8px 0 0; max-height: 20vh; }
+.ov-board:not(:has(li)) { display: none; }
+#screen-over .ht-foot .btn-start { order: 1; width: min(280px, 92%); margin: 0 auto; padding: 0 14% 3%; text-align: center; justify-content: center; }
+@media (max-height: 700px) { .ov-scene { height: clamp(130px, 24vh, 200px); } .ov-msg { margin: 8px 2px 8px; font-size: 13.5px; } }
+@media (prefers-reduced-motion: reduce) { #screen-over::before, .ov-scene * { animation-duration: .01s !important; animation-iteration-count: 1 !important; } }

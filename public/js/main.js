@@ -453,13 +453,23 @@ async function endRun() {
   const score = Math.floor(state.score);
   const distance = state.distance;
   const duration = (performance.now() - state.runStart) / 1000;
-  hud.gameOver(score, distance);
+  hud.gameOver(score, distance, state.packs);
+  let prevBest = me?.best || 0; try { prevBest = Math.max(prevBest, +localStorage.getItem('diva.best') || 0); } catch { /* private mode */ }
+  const newBest = score > 0 && score > prevBest;
+  // review hook: #result=winner | best | thanks shows that outcome with sample data
+  const preview = (location.hash.match(/result=(winner|best|thanks)/) || [])[1];
+  if (preview) {
+    const gifts = [{ from: 1, to: 1 }, { from: 2, to: 3 }, { from: 4, to: 10 }];
+    hud.result(preview === 'winner' ? { best: Math.max(score, prevBest), rank: 2, gift: 'Diva Fresh Hamper', gifts, newBest }
+      : { best: Math.max(score, prevBest), rank: preview === 'best' ? 14 : 27, gifts, newBest: preview === 'best' });
+    return;
+  }
   try {
     const r = await api.submitScore(score, distance, duration);
     if (me) me.best = Math.max(me.best || 0, r.best);
-    hud.result({ best: r.best, rank: r.rank, gift: r.gift, top: r.top, myName: me?.name });
+    hud.result({ best: r.best, rank: r.rank, gift: r.gift, gifts: r.gifts || [], top: r.top, myName: me?.name, newBest });
   } catch (err) {
-    hud.result({ best: Math.max(me?.best || 0, score), rank: null, top: [] });
+    hud.result({ best: Math.max(prevBest, score), rank: null, top: [], newBest });
     $('final-rank').textContent = err.status === 401 ? 'Session expired. Sign in again to save scores.' : 'Could not save this run: ' + err.message;
   }
 }
