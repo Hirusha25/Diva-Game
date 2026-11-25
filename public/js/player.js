@@ -62,7 +62,7 @@ export class Player {
     // shirt dirt: 1 = muddy (as modelled), 0 = clean. Diva packs wash it,
     // stains bring it back (see clean() / stain()).
     this.grime = 0.25; this.dirt = 0.83; this.dirtShown = 0.83; this.grimeShown = 0.25; this.extra = 0; this.tint = 0; this.shine = 0; this.twinkleT = 0;
-    this.shirtU = { uDirt: { value: 1 }, uShine: { value: 0 }, uDull: { value: 0 }, uExtra: { value: 0 }, uTint: { value: 0 }, uCleanMap: { value: cleanMap }, uOutfitMap: { value: outfitMap } };
+    this.shirtU = { uHairPh: { value: 0 }, uHairRun: { value: 0 }, uDirt: { value: 1 }, uShine: { value: 0 }, uDull: { value: 0 }, uExtra: { value: 0 }, uTint: { value: 0 }, uCleanMap: { value: cleanMap }, uOutfitMap: { value: outfitMap } };
     if (outfitMap) { outfitMap.flipY = false; outfitMap.colorSpace = THREE.NoColorSpace; }
     this.dull = 0;
     this.body = model ? this._rigged(model) : this._placeholderBody();
@@ -121,6 +121,21 @@ export class Player {
     U.uCleanMap.value.flipY = false;          // glTF texture convention
     mat.onBeforeCompile = (sh) => {
       Object.assign(sh.uniforms, U);
+      // Hair: the curls bounce, sway and ripple as he runs. Hair is found by its
+      // dark-brown texture colour on the head; roots stay put, tips move most.
+      sh.vertexShader = 'uniform sampler2D map; uniform float uHairPh; uniform float uHairRun;\n' + sh.vertexShader
+        .replace('#include <begin_vertex>', `#include <begin_vertex>
+          {
+            vec3 hc = pow(texture2D(map, uv).rgb, vec3(1.0 / 2.2));   // back to sRGB for the colour test
+            float hairC = step(hc.r, 0.6) * step(hc.g + 0.055, hc.r) * step(hc.r + hc.g + hc.b, 1.3);
+            float w = hairC * smoothstep(0.5, 0.97, position.y) * uHairRun;
+            float ph = uHairPh;
+            vec3 off = vec3(0.021 * sin(ph - 1.0 + position.y * 2.0),          // sway with each stride, lagging the body
+                            -0.026 * sin(2.0 * ph - 1.3),                         // bounce: two per stride, a beat behind the body's bob
+                            0.008 * sin(2.0 * ph - 0.4));                        // a little flop forward and back
+            off += objectNormal * 0.011 * sin(2.0 * ph + position.x * 23.0 + position.z * 19.0 + position.y * 17.0);   // curls ripple
+            transformed += off * w;
+          }`);
       sh.fragmentShader = 'uniform sampler2D uCleanMap; uniform sampler2D uOutfitMap; uniform float uDirt; uniform float uShine; uniform float uDull; uniform float uExtra; uniform float uTint;\n' + sh.fragmentShader
         .replace('#include <map_fragment>', `#include <map_fragment>
           vec4 cleanTx = texture2D(uCleanMap, vMapUv);
@@ -250,6 +265,7 @@ export class Player {
       this.sparkles.twinkle(new THREE.Vector3((Math.random() - 0.5) * RUNNER_SCALE * 0.6, RUNNER_SCALE * (0.95 + Math.random() * 0.55), 0.25), 0.32 + Math.random() * 0.2); } }
     this.sparkles.update(dt); this.mud.update(dt); if (this.dust3) this.dust3.update(dt);
     this.shirtU.uDirt.value = this.dirtShown;
+    this.shirtU.uHairPh.value = this._phase || 0; this.shirtU.uHairRun.value = this.isAirborne ? 0.6 : 1;
     this.shirtU.uShine.value = this.shine * 0.55 + (spotless ? 0.08 : 0);
   }
 
@@ -451,7 +467,7 @@ export class Player {
 
     // Stride rate follows speed (eased, so speed-ups never make the legs jump),
     // capped so the legs never blur.
-    const rate = THREE.MathUtils.clamp(9 + speed * 0.28, 13.5, 16.5);   // a brisk run: ~4.5 steps/s at the start, ~5.3 at top speed, matched to the road speed
+    const rate = THREE.MathUtils.clamp(9.4 + speed * 0.28, 14.5, 17.5);   // a brisk run: ~4.8 steps/s at the start, ~5.6 at top speed, matched to the road speed
     this.strideRate += (rate - this.strideRate) * Math.min(1, dt * 3);
     this.runTime += dt * this.strideRate;
 
