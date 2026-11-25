@@ -627,7 +627,7 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 .ps-stat b { font: 400 22px/1 "Lilita One", "Trebuchet MS", sans-serif; color: var(--diva-blue-dark); }
 .ps-stat span { font: 800 10px/1 "Nunito", system-ui, sans-serif; text-transform: uppercase; letter-spacing: .08em; color: #36507e; }
 .screen.pause .btn-start.ps-resume { width: min(230px, 80%); padding: 0 14% 3%; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 24px; }
-.ps-play { flex: none; width: 0; height: 0; border-style: solid; border-width: 9px 0 9px 14px; border-color: transparent transparent transparent #fff; filter: drop-shadow(0 2px 0 #0b3a9e); }
+.ps-play { flex: none; margin-left: -24px; width: 0; height: 0;   /* hangs to the left, so the word itself is centred */ border-style: solid; border-width: 9px 0 9px 14px; border-color: transparent transparent transparent #fff; filter: drop-shadow(0 2px 0 #0b3a9e); }
 .screen.pause .link { display: inline-flex; align-items: center; gap: 7px; padding: 7px 16px 6px 7px; }
 .ps-ic { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; font-style: normal; font: 400 15px/1 "Lilita One", sans-serif; color: #fff;
   background: linear-gradient(var(--diva-sky), var(--diva-blue)); box-shadow: 0 1px 0 var(--diva-blue-dark); }
@@ -718,7 +718,7 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 .cd-num { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); white-space: nowrap; color: #fff;
   font: 400 128px/1 "Lilita One", "Trebuchet MS", sans-serif; -webkit-text-stroke: 14px var(--diva-blue-dark); paint-order: stroke fill;
   text-shadow: 0 8px 0 var(--diva-blue-dark), 0 14px 26px rgba(0,0,0,.35); }
-.cd-ring { position: absolute; left: -95px; top: -95px; width: 190px; height: 190px; border-radius: 50%;
+.cd-ring { display: none; position: absolute; left: -95px; top: -95px; width: 190px; height: 190px; border-radius: 50%;
   background: radial-gradient(circle, rgba(255,255,255,.95) 0 38%, rgba(160,225,255,.75) 52%, rgba(61,155,233,0) 70%);
   box-shadow: 0 0 0 6px rgba(255,255,255,.8), 0 0 0 12px var(--diva-sky), 0 0 40px 10px rgba(61,155,233,.6); }
 .countdown.beat .cd-num { animation: cd-num .8s cubic-bezier(.3,1.6,.5,1) both; }

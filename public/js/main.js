@@ -496,6 +496,22 @@ async function endRun() {
   }
 }
 
+/**
+ * Prepare every shader and texture on the GPU while the loading screen is up,
+ * so the first seconds of a run do not stutter: spawn a road's worth of items,
+ * show everything (pools included) for one off-screen render, then put it back.
+ */
+async function warmUp() {
+  try {
+    spawner.start(); player.group.visible = true;
+    const shown = []; scene.traverse((o) => { if (!o.visible) { o.visible = true; shown.push(o); } });
+    if (renderer.compileAsync) await renderer.compileAsync(scene, camera); else renderer.compile(scene, camera);
+    renderer.render(scene, camera);
+    for (const o of shown) o.visible = false;
+    spawner.reset(); player.group.visible = false;
+  } catch (err) { console.warn('warm-up skipped', err); }
+}
+
 // ---------------------------------------------------------------------- boot
 try {
   hud.setProgress(0.05, 'Loading world…');
@@ -507,6 +523,8 @@ try {
   spawner = new Spawner(scene, assets.packs, assets.stains, assets.roadProps, world);
   hud.layoutCover(assets.cover.meta, assets.cover.images);
   hud.setProgress(0.95, REQUIRE_REGISTRATION ? 'Signing in…' : 'Ready');
+  hud.setProgress(0.93, 'Getting the road ready…');
+  await warmUp();
   me = REQUIRE_REGISTRATION ? await api.me() : null;
   hud.setProgress(1, 'Ready');
   showLobby();
@@ -527,13 +545,14 @@ const camPos = new THREE.Vector3(0, 3.6, 7.0);
 // the render resolution adapts so the game holds a steady frame rate.
 let dtSmooth = 1 / 60, perfT = 0, perfN = 0, pixelRatio = Math.min(window.devicePixelRatio, 2);
 function adaptResolution(rawDt) {
+  if (performance.now() - state.runStart < 4000) { perfT = 0; perfN = 0; return; }   // ignore the first seconds of a run (warm-up)
   perfT += rawDt; perfN++;
   if (perfT < 2) return;
   const avg = perfT / perfN; perfT = 0; perfN = 0;
-  const maxPR = Math.min(window.devicePixelRatio, 2);
+  const maxPR = Math.min(window.devicePixelRatio, 2), minPR = Math.min(maxPR, 1.5);   // never drops below 1.5 (1 looked pixelated)
   let next = pixelRatio;
-  if (avg > 1 / 45 && pixelRatio > 1) next = Math.max(1, pixelRatio - 0.25);          // too slow: draw fewer pixels
-  else if (avg < 1 / 58 && pixelRatio < maxPR) next = Math.min(maxPR, pixelRatio + 0.25);   // plenty of headroom: sharpen again
+  if (avg > 1 / 38 && pixelRatio > minPR) next = Math.max(minPR, pixelRatio - 0.25);          // clearly too slow: draw fewer pixels
+  else if (avg < 1 / 52 && pixelRatio < maxPR) next = Math.min(maxPR, pixelRatio + 0.25);   // headroom (a 60 Hz screen counts): sharpen again
   if (next !== pixelRatio) { pixelRatio = next; renderer.setPixelRatio(pixelRatio); resize(); }
 }
 
