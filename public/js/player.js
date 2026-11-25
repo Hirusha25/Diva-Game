@@ -130,10 +130,10 @@ export class Player {
             float hairC = step(hc.r, 0.6) * step(hc.g + 0.055, hc.r) * step(hc.r + hc.g + hc.b, 1.3);
             float w = hairC * smoothstep(0.5, 0.97, position.y) * uHairRun;
             float ph = uHairPh;
-            vec3 off = vec3(0.021 * sin(ph - 1.0 + position.y * 2.0),          // sway with each stride, lagging the body
-                            -0.026 * sin(2.0 * ph - 1.3),                         // bounce: two per stride, a beat behind the body's bob
-                            0.008 * sin(2.0 * ph - 0.4));                        // a little flop forward and back
-            off += objectNormal * 0.011 * sin(2.0 * ph + position.x * 23.0 + position.z * 19.0 + position.y * 17.0);   // curls ripple
+            vec3 off = vec3(0.011 * sin(ph - 1.0 + position.y * 2.0),          // sway with each stride, lagging the body
+                            -0.013 * sin(2.0 * ph - 1.3),                         // bounce: two per stride, a beat behind the body's bob
+                            0.004 * sin(2.0 * ph - 0.4));                        // a little flop forward and back
+            off += objectNormal * 0.003 * sin(2.0 * ph + position.x * 9.0 + position.z * 7.0 + position.y * 6.0);   // a soft ripple through the curls
             transformed += off * w;
           }`);
       sh.fragmentShader = 'uniform sampler2D uCleanMap; uniform sampler2D uOutfitMap; uniform float uDirt; uniform float uShine; uniform float uDull; uniform float uExtra; uniform float uTint;\n' + sh.fragmentShader
