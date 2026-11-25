@@ -466,7 +466,17 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 .ht-bars.manual i.now b { animation: none; }
 @keyframes ht-fill { to { width: 100%; } }
 /* the deck: the current card in front, the others turned away to the sides */
-.ht-deck { position: relative; flex: 1 1 auto; min-height: 220px; perspective: 900px; touch-action: pan-y; overflow: hidden; border-radius: 24px; }   /* side cards only peek in at the edges */
+.ht-stage { position: relative; flex: 1 1 auto; min-height: 220px; display: flex; }
+.ht-deck { position: relative; flex: 1 1 auto; perspective: 900px; touch-action: pan-y; overflow: hidden; border-radius: 24px; }   /* side cards only peek in at the edges */
+/* back / forward arrows on either side of the card */
+.ht-nav { position: absolute; z-index: 20; top: 50%; width: 40px; height: 40px; margin-top: -20px; padding: 0 0 4px; border-radius: 50%; cursor: pointer;
+  border: 3px solid #fff; background: linear-gradient(var(--diva-sky), var(--diva-blue)); color: #fff; font: 400 30px/1 "Lilita One", sans-serif;
+  box-shadow: 0 3px 0 var(--diva-blue-dark), 0 4px 10px rgba(0,0,0,.25); transition: opacity .2s, transform .12s; }
+.ht-nav.prev { left: -6px; padding-right: 3px; } .ht-nav.next { right: -6px; padding-left: 3px; }
+.ht-nav:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--diva-blue-dark); }
+.ht-nav[disabled] { opacity: 0; pointer-events: none; }
+/* stains are clipped to the shirt's own shape, so none can stick out */
+.ht-dirt { position: absolute; inset: 0; -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
 .ht-slide { position: absolute; inset: 0 7%; transform-style: preserve-3d; transition: transform .6s cubic-bezier(.25,1.1,.35,1), opacity .45s, filter .45s; }
 .ht-scene { position: absolute; inset: 0; overflow: hidden; border-radius: 24px; background: linear-gradient(#7fcaff, #cfeeff 56%, #a8dca0 57%, #6fbf73);
   box-shadow: inset 0 0 0 3px rgba(255,255,255,.9), 0 12px 24px rgba(13,58,143,.32); }
@@ -479,15 +489,12 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 .mv-line.l { transform: translateX(-10px) skewX(15deg); } .mv-line.r { transform: translateX(10px) skewX(-15deg); }
 .ht-slide.on .mv-line { animation: mv-dash .45s linear infinite; }
 @keyframes mv-dash { to { background-position: 0 44px; } }
-.mv-boy { left: 50%; bottom: 3%; height: 50%; width: auto; transform: translateX(-50%); filter: drop-shadow(0 6px 4px rgba(0,0,0,.3)); }
-.ht-slide.on .mv-boy { animation: mv-lanes 4s ease-in-out infinite, mv-bob .3s ease-in-out infinite alternate; }
-@keyframes mv-lanes { 0%, 14% { transform: translateX(-50%); } 22%, 40% { transform: translateX(-138%); } 48%, 62% { transform: translateX(-50%); } 70%, 82% { transform: translateX(38%); }
-  88% { transform: translateX(-50%); } 92% { transform: translateX(-50%) translateY(-30%); } 97%, 100% { transform: translateX(-50%); } }
-@keyframes mv-bob { to { translate: 0 -3px; } }
-.mv-pack { left: 50%; top: 40%; width: 15%; opacity: 0; filter: drop-shadow(0 4px 4px rgba(0,0,0,.25)); }
-.ht-slide.on .mv-pack { animation: mv-pack 4s linear infinite; }
-@keyframes mv-pack { 0% { opacity: 0; transform: translate(-50%, 0) scale(.3); } 6% { opacity: 1; } 46% { opacity: 1; transform: translate(-50%, 150%) scale(1); }
-  50% { opacity: 0; transform: translate(-50%, 140%) scale(1.5); } 100% { opacity: 0; transform: translate(-50%, 150%) scale(1); } }
+.mv-boy { position: absolute; left: 50%; bottom: 2%; height: 54%; aspect-ratio: 240 / 360; overflow: hidden; transform: translateX(-50%); filter: drop-shadow(0 6px 4px rgba(0,0,0,.3)); }
+.mv-boy img { left: 0; top: 0; height: 100%; width: auto; }   /* the game's runner: a 12-frame run cycle */
+.ht-slide.on .mv-boy img { animation: mv-sprite .5s steps(12) infinite; }
+@keyframes mv-sprite { to { transform: translateX(-100%); } }
+.ht-slide.on .mv-boy { animation: mv-lanes 4s ease-in-out infinite; }
+@keyframes mv-lanes { 0%, 14% { left: 50%; translate: 0 0; } 22%, 40% { left: 26%; } 48%, 62% { left: 50%; } 70%, 82% { left: 74%; } 88% { left: 50%; translate: 0 0; } 92% { left: 50%; translate: 0 -22%; } 97%, 100% { left: 50%; translate: 0 0; } }
 .mv-arrow { position: absolute; font: 400 44px/1 "Lilita One", sans-serif; color: var(--diva-logo-red); -webkit-text-stroke: 5px #fff; paint-order: stroke fill; opacity: .3; }
 .mv-arrow.l { left: 6%; top: 52%; } .mv-arrow.r { right: 6%; top: 52%; } .mv-arrow.u { left: 50%; top: 4%; transform: translateX(-50%) rotate(90deg); }
 .ht-slide.on .mv-arrow.l { animation: mv-glow-l 4s infinite; } .ht-slide.on .mv-arrow.r { animation: mv-glow-r 4s infinite; } .ht-slide.on .mv-arrow.u { animation: mv-glow-u 4s infinite; }
@@ -506,7 +513,7 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 .ht-slide.on .fr-halo { animation: fr-spin 5s linear infinite; }
 @keyframes fr-spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
 .fr-shirt { position: absolute; left: 50%; top: 45%; width: 40%; aspect-ratio: 120 / 108; transform: translate(-50%, -50%); }
-.fr-shirt img:first-child { left: 0; top: 0; width: 100%; height: 100%; filter: drop-shadow(0 4px 4px rgba(0,0,0,.2)); }
+.fr-shirt > img:first-child { left: 0; top: 0; width: 100%; height: 100%; filter: drop-shadow(0 4px 4px rgba(0,0,0,.2)); }
 .fr-mud { width: 40%; opacity: .95; } .fr-mud.m1 { left: 20%; top: 26%; rotate: 20deg; } .fr-mud.m2 { left: 46%; top: 48%; width: 36%; rotate: -30deg; } .fr-mud.m3 { left: 24%; top: 62%; width: 30%; rotate: 60deg; }
 .ht-slide.on .fr-mud.m1 { animation: fr-m1 4.8s infinite; } .ht-slide.on .fr-mud.m2 { animation: fr-m2 4.8s infinite; } .ht-slide.on .fr-mud.m3 { animation: fr-m3 4.8s infinite; }
 @keyframes fr-m1 { 0%, 18% { opacity: .95; } 23%, 95% { opacity: 0; } 100% { opacity: .95; } }

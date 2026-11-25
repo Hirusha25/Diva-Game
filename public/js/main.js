@@ -354,20 +354,22 @@ function htLayout() {
   $('ht-h').innerHTML = t.steps[htI][0]; $('ht-p').textContent = t.steps[htI][1];
   cap.classList.remove('swap'); void cap.offsetWidth; cap.classList.add('swap');
   const last = htI === htSlides.length - 1;
-  $('btn-howto-go').textContent = last ? (howtoThen === 'run' ? t.go : t.ok) : t.next;
+  const cta = HOWTO.en;   // the buttons stay in English in every language
+  $('btn-howto-go').textContent = last ? (howtoThen === 'run' ? cta.go : cta.ok) : cta.next;
   document.querySelector('#screen-howto .ht-foot').classList.toggle('last', last);
+  $('ht-prev').disabled = htI === 0; $('ht-next').disabled = last;
   clearTimeout(htTimer);
   if (htAuto && !last) htTimer = setTimeout(() => htGo(htI + 1), HT_DUR);
 }
 function htGo(i) { htI = Math.max(0, Math.min(htSlides.length - 1, i)); htLayout(); }
 function renderHowto() {
   const t = htT();
-  $('ht-title').textContent = t.title; $('btn-howto-skip').textContent = t.skip; $('ht-left').textContent = t.left; $('ht-left').lang = howtoLang;
+  $('ht-title').textContent = t.title; $('btn-howto-skip').textContent = HOWTO.en.skip; $('ht-left').textContent = t.left; $('ht-left').lang = howtoLang;
   for (const el of document.querySelectorAll('#ht-deck [data-k]')) el.textContent = t.tags[el.dataset.k];
   const lang = document.querySelector('#screen-howto .ht-lang'); lang.style.setProperty('--i', String(HT_LANGS.indexOf(howtoLang)));
   for (const b of lang.querySelectorAll('[data-lang]')) b.setAttribute('aria-selected', String(b.dataset.lang === howtoLang));
   $('ht-h').innerHTML = t.steps[htI][0]; $('ht-p').textContent = t.steps[htI][1];
-  const last = htI === htSlides.length - 1; $('btn-howto-go').textContent = last ? (howtoThen === 'run' ? t.go : t.ok) : t.next;
+  const last = htI === htSlides.length - 1; $('btn-howto-go').textContent = last ? (howtoThen === 'run' ? HOWTO.en.go : HOWTO.en.ok) : HOWTO.en.next;
   document.querySelector('#screen-howto .ht-cap').lang = howtoLang;
   requestAnimationFrame(() => hud.fitText($('ht-title')));
 }
@@ -391,6 +393,12 @@ $('btn-howto-go').addEventListener('click', () => {
   if (htI < htSlides.length - 1) { htAuto = false; htGo(htI + 1); } else closeHowto();
 });
 $('btn-howto-skip').addEventListener('click', () => { sound.tap(); closeHowto(); });
+$('ht-prev').addEventListener('click', () => { sound.tap(); htAuto = false; htGo(htI - 1); });
+$('ht-next').addEventListener('click', () => { sound.tap(); htAuto = false; htGo(htI + 1); });
+// clip each shirt's stains to the shirt's own outline (works with inlined images too)
+for (const d of document.querySelectorAll('#screen-howto .ht-dirt')) {
+  const src = d.parentElement.querySelector('img').src; d.style.webkitMaskImage = d.style.maskImage = `url("${src}")`;
+}
 // swipe the cards (the game's own swipe input is not running behind this screen)
 { const deck = $('ht-deck'); let sx = null, sy = 0;
   deck.addEventListener('pointerdown', (e) => { sx = e.clientX; sy = e.clientY; });
