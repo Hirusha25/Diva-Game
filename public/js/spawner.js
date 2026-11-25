@@ -69,6 +69,7 @@ export class Spawner {
     for (const sp of this.sparkles.items) sp.s.visible = false;
     this.items = [];
     this.nextSpawnIn = 20;
+    this.travelled = 0;   // metres this run: drives the difficulty
   }
 
   /**
@@ -86,10 +87,15 @@ export class Spawner {
     this.nextSpawnIn = 18;
   }
 
+  /** 0 at the start of a run … 1 after about 1.4 km: tighter gaps, more walls, fewer packs */
+  get difficulty() { return Math.min(1, (this.travelled || 0) / 1400); }
+
   _spawnPattern(z = SPAWN_Z) {
-    const r = Math.random();
+    const d = this.difficulty;
+    // harder as the run goes on: the easy pack-only pattern gets rarer, walls more common
+    const r = Math.min(0.999, Math.random() * (1 - 0.25 * d) + 0.25 * d * Math.random() + 0.12 * d);
     // rare bonus: the flower bubble, floating a little higher over a lane
-    if (this.bonusMap && Math.random() < 0.09) this._spawn('bonus', Math.floor(Math.random() * LANE_COUNT), z - 12);
+    if (this.bonusMap && Math.random() < 0.06) this._spawn('bonus', Math.floor(Math.random() * LANE_COUNT), z - 12);
     const L = () => Math.floor(Math.random() * LANE_COUNT);
     const other = (lane) => (lane + 1 + Math.floor(Math.random() * 2)) % LANE_COUNT;
     if (r < 0.3) {
@@ -106,10 +112,14 @@ export class Spawner {
       const free = L();
       for (let lane = 0; lane < LANE_COUNT; lane++) if (lane !== free) this._spawn('stain', lane, z);
       if (Math.random() < 0.35) this._spawn('pack', free, z - 9);
-    } else {
+    } else if (r < 0.93 || d < 0.35) {
       // staggered obstacles: switch lanes twice
       const a = L(), b2 = other(a);
       this._spawn('stain', a, z); this._spawn('stain', b2, z - 9);
+    } else {
+      // (later in a run) two walls in a row with different gaps: a quick double lane change
+      const f1 = L(), f2 = other(f1);
+      for (let lane = 0; lane < LANE_COUNT; lane++) { if (lane !== f1) this._spawn('stain', lane, z); if (lane !== f2) this._spawn('stain', lane, z - 13); }
     }
   }
 
@@ -191,10 +201,11 @@ export class Spawner {
 
   update(dt, distance, player) {
     this.time += dt;
-    this.nextSpawnIn -= distance;
+    this.nextSpawnIn -= distance; this.travelled = (this.travelled || 0) + distance;
     if (this.nextSpawnIn <= 0) {
       this._spawnPattern();
-      this.nextSpawnIn = 20 + Math.random() * 16;   // packs are scarce: you earn your washes
+      const d = this.difficulty;   // gaps shrink from ~17-29 m at the start to ~11-18 m later on
+      this.nextSpawnIn = (17 - 6 * d) + Math.random() * (12 - 5 * d);
     }
     const events = { pickups: 0, hits: 0, dust: 0, bus: 0 };
     // a bus parks at each bus stop on the right as it comes into range
@@ -205,7 +216,7 @@ export class Spawner {
         c.userData.busDone = true;
         // buses are rare: about one right-side stop in three, never two in a row
         this.stopsSinceBus = (this.stopsSinceBus ?? 1) + 1;
-        if (this.stopsSinceBus >= 2 && Math.random() < 0.35) { this.stopsSinceBus = 0; this._spawnBus(z + 2.8); }
+        if (this.stopsSinceBus >= 2 && Math.random() < 0.35 + 0.25 * this.difficulty) { this.stopsSinceBus = 0; this._spawnBus(z + 2.8); }
       }
     }
     for (const b of this.buses) {

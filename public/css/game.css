@@ -677,6 +677,11 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 /* which pieces each mood shows */
 #screen-over .ov-trophy, #screen-over .ov-rays, #screen-over .ov-gift, #screen-over .ov-stamp, #screen-over .ov-confetti { display: none; }
 #screen-over[data-mood="winner"] :is(.ov-win, .ov-trophy, .ov-confetti) { display: block; }
+/* new best: the same trophy picture, with the New Best! stamp over it */
+#screen-over[data-mood="best"] .ov-win { display: block; }
+#screen-over[data-mood="best"] :is(.ht-grass, .ov-runner) { display: none; }
+#screen-over[data-mood="best"] .ov-scene { height: auto; aspect-ratio: 1448 / 1086; max-height: min(40vh, 360px); }
+#screen-over[data-mood="best"] .ov-stamp { z-index: 2; top: auto; bottom: 7%; }
 /* the winner picture fills the scene; the rank medal sits in its top-right corner, the prize badge overlaps its bottom edge */
 .ov-win { display: none; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 #screen-over[data-mood="winner"] .ov-scene { height: auto; aspect-ratio: 1448 / 1086; }   /* the whole picture, uncropped */
@@ -718,9 +723,9 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 .cd-num { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); white-space: nowrap; color: #fff;
   font: 400 128px/1 "Lilita One", "Trebuchet MS", sans-serif; -webkit-text-stroke: 14px var(--diva-blue-dark); paint-order: stroke fill;
   text-shadow: 0 8px 0 var(--diva-blue-dark), 0 14px 26px rgba(0,0,0,.35); }
-.cd-ring { display: none; position: absolute; left: -95px; top: -95px; width: 190px; height: 190px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,255,255,.95) 0 38%, rgba(160,225,255,.75) 52%, rgba(61,155,233,0) 70%);
-  box-shadow: 0 0 0 6px rgba(255,255,255,.8), 0 0 0 12px var(--diva-sky), 0 0 40px 10px rgba(61,155,233,.6); }
+.cd-ring { position: absolute; left: -92px; top: -92px; width: 184px; height: 184px; border-radius: 50%;   /* an outline only: no fill */
+  border: 6px solid #fff; background: none;
+  box-shadow: 0 0 0 5px var(--diva-sky), 0 0 18px 6px rgba(61,155,233,.55), inset 0 0 0 5px var(--diva-sky), inset 0 0 18px 4px rgba(61,155,233,.45); }
 .countdown.beat .cd-num { animation: cd-num .8s cubic-bezier(.3,1.6,.5,1) both; }
 .countdown.beat .cd-ring { animation: cd-ring .8s ease-out both; }
 @keyframes cd-num { 0% { opacity: 0; transform: translate(-50%, -50%) scale(2.4); } 22% { opacity: 1; transform: translate(-50%, -50%) scale(.92); }
@@ -728,14 +733,12 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 @keyframes cd-ring { 0% { opacity: 0; transform: scale(.3); } 25% { opacity: 1; transform: scale(1); } 75% { opacity: .9; transform: scale(1.05); } 100% { opacity: 0; transform: scale(1.6); } }
 /* GO!: gold with the Diva red stroke, a bigger burst */
 .countdown.go .cd-num { font-size: 110px; color: var(--diva-gold); -webkit-text-stroke-color: var(--diva-logo-red); text-shadow: 0 8px 0 #a52a17, 0 14px 26px rgba(0,0,0,.35); }
-.countdown.go .cd-ring { background: radial-gradient(circle, rgba(255,250,210,.95) 0 34%, rgba(255,214,0,.7) 52%, rgba(255,140,0,0) 72%);
-  box-shadow: 0 0 0 6px rgba(255,255,255,.85), 0 0 0 12px var(--diva-gold), 0 0 50px 14px rgba(255,190,0,.65); }
-.countdown.go.beat .cd-ring { animation-name: cd-ring-go; }
+.countdown.go .cd-ring { display: none; }   /* GO! stands on its own */
 @keyframes cd-ring-go { 0% { opacity: 0; transform: scale(.3); } 25% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0; transform: scale(2.4); } }
 @media (prefers-reduced-motion: reduce) { .countdown.beat .cd-num, .countdown.beat .cd-ring { animation-duration: .01s; } }
 /* short phones: the end-of-run pictures shrink so Run Again and Home always fit */
 @media (max-height: 720px) {
-  #screen-over[data-mood="thanks"] .ov-scene, #screen-over[data-mood="winner"] .ov-scene { max-height: 30vh; }
+  #screen-over[data-mood="thanks"] .ov-scene, #screen-over[data-mood="winner"] .ov-scene, #screen-over[data-mood="best"] .ov-scene { max-height: 30vh; }
   #screen-over .card { padding-top: 40px; }
   .ov-msg { margin: 8px 2px 6px; font-size: 13px; line-height: 1.35; }
   .ov-stats .ps-stat { padding: 6px 4px 5px; }

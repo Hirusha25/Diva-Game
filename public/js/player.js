@@ -216,7 +216,7 @@ export class Player {
   }
 
   /** an obstacle: more grime. Returns true when the shirt is ruined. */
-  stain(amount = 0.28) {
+  stain(amount = 0.31) {
     this.grime = Math.min(1, this.grime + amount); this._applyGrime(); this.shine = 0;
     this.mud.burst(new THREE.Vector3(0, RUNNER_SCALE * 0.9, 0.3), 16, 0x5a3212, 2.4, 0.5);   // mud splashes up onto him
     return this.grime >= 1;

@@ -590,7 +590,7 @@ function frame() {
     if (ev.pickups) {
       state.score += ev.pickups * SCORE_PICKUP; sound.pickup();
       const wasDirty = player.grime > 0 || player.dull > 0;
-      player.clean(0.12 * ev.pickups); state.packs += ev.pickups;
+      player.clean(0.1 * ev.pickups); state.packs += ev.pickups;
       const spotless = wasDirty && player.grime <= 0 && player.dull <= 0;
       if (spotless) hud.celebrate(line('spotless'));
       else hud.flash(line('pack'), 750, 'pack', `+${ev.pickups * SCORE_PICKUP}`);
