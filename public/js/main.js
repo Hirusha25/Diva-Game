@@ -549,7 +549,7 @@ function adaptResolution(rawDt) {
   perfT += rawDt; perfN++;
   if (perfT < 2) return;
   const avg = perfT / perfN; perfT = 0; perfN = 0;
-  const maxPR = Math.min(window.devicePixelRatio, 2), minPR = Math.min(maxPR, 1.5);   // never drops below 1.5 (1 looked pixelated)
+  const maxPR = Math.min(window.devicePixelRatio, 2.5), minPR = Math.min(maxPR, 1.5);   // phones that keep up go sharper than 2x   // never drops below 1.5 (1 looked pixelated)
   let next = pixelRatio;
   if (avg > 1 / 38 && pixelRatio > minPR) next = Math.max(minPR, pixelRatio - 0.25);          // clearly too slow: draw fewer pixels
   else if (avg < 1 / 52 && pixelRatio < maxPR) next = Math.min(maxPR, pixelRatio + 0.25);   // headroom (a 60 Hz screen counts): sharpen again

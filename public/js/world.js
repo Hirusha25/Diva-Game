@@ -28,6 +28,34 @@ const BUSH_FLOWER_CARDS = 14;
  * billboard trees. The world moves toward the player (+z); the player
  * stays near z = 0.
  */
+/**
+ * Bake a static model's parts into one mesh per material (same look, far
+ * fewer draw calls: the bus stop was ~70 separate draws per stop).
+ */
+function mergeByMaterial(root) {
+  root.updateMatrixWorld(true);
+  const inv = new THREE.Matrix4().copy(root.matrixWorld).invert(), M = new THREE.Matrix4();
+  const buckets = new Map();
+  root.traverse((o) => {
+    if (!o.isMesh || Array.isArray(o.material)) return;
+    let geo = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
+    for (const k of Object.keys(geo.attributes)) if (!['position', 'normal', 'uv'].includes(k)) geo.deleteAttribute(k);
+    if (!geo.attributes.normal) geo.computeVertexNormals();
+    if (!geo.attributes.uv) geo.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(geo.attributes.position.count * 2), 2));
+    geo.clearGroups();
+    geo.applyMatrix4(M.multiplyMatrices(inv, o.matrixWorld));
+    const b = buckets.get(o.material) || []; b.push(geo); buckets.set(o.material, b);
+  });
+  const out = new THREE.Group();
+  for (const [mat, geos] of buckets) {
+    const merged = mergeGeometries(geos, false);
+    if (!merged) continue;
+    merged.computeBoundingSphere();
+    out.add(new THREE.Mesh(merged, mat));
+  }
+  return out;
+}
+
 export class World {
   constructor(scene, assets) {
     this.scene = scene;
@@ -71,7 +99,7 @@ export class World {
       material: new THREE.MeshBasicMaterial({ map: b.map, alphaTest: 0.5, side: THREE.DoubleSide, fog: true, toneMapped: false }),
     }));
     // 3D Diva bus stop (public/js/busstop.js), cloned into each chunk
-    this.busStopModel = assets.busStopArt ? buildBusStop({ ...assets.busStopArt, flowers: this.bunchKinds }) : null;
+    this.busStopModel = assets.busStopArt ? mergeByMaterial(buildBusStop({ ...assets.busStopArt, flowers: this.bunchKinds })) : null;   // ~70 parts -> one mesh per material
     if (this.busStopModel) { const sz = new THREE.Box3().setFromObject(this.busStopModel).getSize(new THREE.Vector3()); this.busStopSize = { d: sz.z }; }
     const kindOf = (b) => ({
       aspect: b.aspect,
@@ -96,6 +124,15 @@ export class World {
     };
     this.cardGeometry = new THREE.PlaneGeometry(1, 1);
     this.treeGeometry = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
+    // Trees are drawn in batches: one instanced draw per tree image for the
+    // whole road (they were ~140 separate draws). The per-tree groups stay as
+    // the logical trees (placement, facing); their own meshes are hidden.
+    this.treeInst = this.treeMaterials.map((k) => {
+      const im = new THREE.InstancedMesh(this.treeGeometry, k.material, CHUNK_COUNT * TREES_PER_CHUNK);
+      im.frustumCulled = false; im.count = 0; im.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      this.group.add(im); return im;
+    });
+    this._tm = new THREE.Matrix4(); this._tp = new THREE.Vector3(); this._tq = new THREE.Quaternion(); this._ts = new THREE.Vector3(); this._ty = new THREE.Euler();
 
     this.chunks = [];
     for (let i = 0; i < CHUNK_COUNT; i++) {
@@ -106,6 +143,21 @@ export class World {
       this.chunks.push(chunk);
     }
     this.chunkSerial = CHUNK_COUNT;
+    this._fillTrees();
+  }
+
+  /** write every visible tree into its batch (position, camera-facing turn, size) */
+  _fillTrees() {
+    const counts = this.treeInst.map(() => 0);
+    for (const chunk of this.chunks) for (const tree of chunk.userData.trees) {
+      if (!tree.visible) continue;
+      const k = tree.userData.kind ?? 0, im = this.treeInst[k];
+      this._tp.set(chunk.position.x + tree.position.x, chunk.position.y + tree.position.y, chunk.position.z + tree.position.z);
+      this._tq.setFromEuler(this._ty.set(0, tree.rotation.y, 0));
+      this._tm.compose(this._tp, this._tq, tree.scale);
+      im.setMatrixAt(counts[k]++, this._tm);
+    }
+    this.treeInst.forEach((im, k) => { im.count = counts[k]; im.instanceMatrix.needsUpdate = true; });
   }
 
   /**
@@ -132,6 +184,7 @@ export class World {
         }
       }
     }
+    this._fillTrees();
   }
 
   // ---------------------------------------------------------------- materials
@@ -400,6 +453,7 @@ export class World {
     chunk.userData.trees = [];
     for (let i = 0; i < TREES_PER_CHUNK; i++) {
       const tree = this._makeBillboard(this.treeMaterials[0].material);
+      tree.userData.front.visible = false;   // drawn by the tree batches (see _fillTrees)
       chunk.userData.trees.push(tree);
       chunk.add(tree);
     }
@@ -660,7 +714,8 @@ export class World {
     // staggered behind it so no sky shows through between trees. Trees are
     // set back behind the wall so trunks stay hidden.
     trees.forEach((tree, i) => {
-      const kind = this.treeMaterials[Math.floor(rng() * this.treeMaterials.length)];
+      const kindIdx = Math.floor(rng() * this.treeMaterials.length), kind = this.treeMaterials[kindIdx];
+      tree.userData.kind = kindIdx;
       const s = i % 2 === 0 ? -1 : 1;
       const j = Math.floor(i / 2);                        // 0..19
       const near = j < 12;
