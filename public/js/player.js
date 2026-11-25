@@ -375,17 +375,17 @@ export class Player {
         swing: 0.2 - 0.66 * f,
         across: side * (-0.06 * fwd),                                  // in towards the chest in front
         lift: 0.04 * fwd,                                              // shoulder rises a little in front
-        out: 0.12 + 0.05 * (1 - fwd),                                  // arms held a little out from the body, wider behind
+        out: 0.03 + 0.02 * (1 - fwd),                                  // arms tucked close to the body (elbows by the ribs)
         elbow: -1.42 - 0.28 * lag,                                     // about a right angle, folding a little as it comes forward
         hand: -0.12 + 0.07 * wrist,
         handRoll: side * 0.03 * Math.sin(a - 0.9),
       };
     };
     const aL = arm(phase - 2.55, 1), aR = arm(phase - 2.55 + Math.PI, -1);   // a touch ahead: the loose-arm spring brings it back in time with the legs
-    B.upperarm_L.rotation.set(run * aL.swing + air * -1.1 + hit * 0.4, (-0.75 * shYaw + aL.across) * run, 0.2 + (aL.out + aL.lift) * run - 0.75 * shRoll + air * 0.3);
-    B.upperarm_R.rotation.set(run * aR.swing + air * -1.1 + hit * 0.4, (-0.75 * shYaw + aR.across) * run, -0.2 - (aR.out + aR.lift) * run - 0.75 * shRoll - air * 0.3);
-    B.forearm_L.rotation.set(run * aL.elbow + air * -1.3, 0, -0.08);
-    B.forearm_R.rotation.set(run * aR.elbow + air * -1.3, 0, 0.08);
+    B.upperarm_L.rotation.set(run * aL.swing + air * -1.1 + hit * 0.4, (-0.75 * shYaw + aL.across) * run, 0.2 - 0.08 * run + (aL.out + aL.lift) * run - 0.75 * shRoll + air * 0.3);
+    B.upperarm_R.rotation.set(run * aR.swing + air * -1.1 + hit * 0.4, (-0.75 * shYaw + aR.across) * run, -0.2 + 0.08 * run - (aR.out + aR.lift) * run - 0.75 * shRoll - air * 0.3);
+    B.forearm_L.rotation.set(run * aL.elbow + air * -1.3, 0, -0.08 - 0.22 * run);   // hands in towards the body
+    B.forearm_R.rotation.set(run * aR.elbow + air * -1.3, 0, 0.08 + 0.22 * run);
     B.hand_L.rotation.set(run * aL.hand - 0.1 * air, 0, run * aL.handRoll);
     B.hand_R.rotation.set(run * aR.hand - 0.1 * air, 0, run * aR.handRoll);
 

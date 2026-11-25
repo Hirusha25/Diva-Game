@@ -214,7 +214,7 @@ img.layer { width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
 /* the registration design shows hcb, logo and tagline smaller and higher (sizes keep each layer's aspect) */
 .stage [data-layer="hcb"], .stage [data-layer="logo"], .stage [data-layer="tagline"] { transition: left .3s, top .3s, width .3s, height .3s; }
 .cover.reg [data-layer="hcb"] { left: 43.8% !important; top: 3.8% !important; width: 12.5% !important; height: 4.88% !important; }
-.cover.reg [data-layer="logo"] { left: 40.4% !important; top: 9.2% !important; width: 24.4% !important; height: 14.8% !important; }   /* 2026 logo, 70 % size, artwork centred */
+.cover.reg [data-layer="logo"] { left: 40.25% !important; top: 10.72% !important; width: 19.5% !important; height: 11.84% !important; }   /* 2026 logo, smaller, its box centred between hcb and the tagline */
 .cover.reg [data-layer="tagline"] { left: 35.2% !important; top: 24.6% !important; width: 34.3% !important; height: 6.56% !important; }
 .cover.reg [data-layer="heroes"], .cover.reg #btn-start { opacity: 0; pointer-events: none; transition: opacity .25s; }
 .cover.reg .reg .layer { animation: reg-in .35s ease-out backwards; }
@@ -275,15 +275,18 @@ img.layer { width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .cover.reg .reg .layer, .screen.cover > .reg-error { animation: none; } }
 
 /* ---------- Loading screen: poster road scene, logo, the runner running ---------- */
-.screen.loading { flex-direction: column; align-items: center; justify-content: flex-start; gap: 14px;
+.screen.loading { flex-direction: column; align-items: center; justify-content: flex-start; gap: 0;
   background: #1b6fe3 center / cover no-repeat;
-  padding: calc(env(safe-area-inset-top) + 28px) 24px calc(env(safe-area-inset-bottom) + 40px); }
-.screen.loading .load-logo { width: min(64vw, 300px); margin: 0; filter: drop-shadow(0 6px 10px rgba(0,0,0,.25)); }
+  padding: 3.64vh 24px calc(env(safe-area-inset-bottom) + 40px); }
+/* hcb + logo sized and spaced exactly as on the cover poster (the poster is
+   65.51vh wide), so nothing jumps when the cover replaces this screen */
+.screen.loading .load-hcb { flex: none; width: 11.31vh; height: auto; margin: 0; }
+.screen.loading .load-logo { flex: none; width: 13.9vh; margin: 2.21vh 0 0; filter: drop-shadow(0 6px 10px rgba(0,0,0,.25)); }
 .load-heroes { display: block; margin-top: auto; width: min(82vw, 400px); height: auto; min-height: 0; flex: 0 1 auto; object-fit: contain;
   max-height: 52vh; filter: drop-shadow(0 8px 14px rgba(0,0,0,.25)); }
 /* loading bar in the registration screen's style: glassy pill with the cyan
    rim (like the input fields), Diva red→yellow fill, game-font label */
-.load-box { width: min(84vw, 360px); text-align: center; }
+.load-box { width: min(84vw, 360px); margin-top: 14px; text-align: center; }
 .load-box .bar { height: 28px; padding: 4px; border-radius: 999px; overflow: hidden;
   background: linear-gradient(#f4f9ff, #d6e9fb); border: 3px solid #29c5f6;
   box-shadow: 0 0 0 2px rgba(255,255,255,.85), 0 0 14px rgba(41,197,246,.65), 0 6px 14px rgba(0,0,0,.28), inset 0 2px 4px rgba(11,58,158,.18); }
