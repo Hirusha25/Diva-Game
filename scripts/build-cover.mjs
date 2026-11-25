@@ -54,10 +54,14 @@ for (const [key, n, width, role] of LAYERS) {
 await sharp('assets/raw/new/1.png').resize({ width: 1242 }).webp({ quality: 80 }).toFile(`${OUT}/cover-bg.webp`);
 console.log('bg       poster background'.padEnd(42), await kb(`${OUT}/cover-bg.webp`));
 meta.frame = { aspect: 2048 / 3126 };
-// the 2026 logo, large as in the client's mock: 2.3x the hcb width, its box
-// centred, starting high (its blue panel tucks up beside hcb, which stays in
-// front), with the tagline just below it
-{ const L = meta.logo, Hc = meta.hcb, T = meta.tagline, k = (Hc.w * 2.3) / L.w;
-  L.w *= k; L.h *= k; L.x = 0.5 - L.w / 2; L.y = Hc.y + 0.3 * Hc.h;
-  T.y = L.y + L.h + 0.006; }
+// logo and tagline placed exactly as in the client's mock, measured against
+// the hcb logo (all in units of the hcb width): logo 2.41 wide, its box
+// centre 0.18 left of hcb's centre, its top 0.19 below hcb's top; tagline
+// 2.91 wide, centre 0.143 left of hcb's centre, top 2.443 below hcb's top
+{ const L = meta.logo, Hc = meta.hcb, T = meta.tagline, PW = 2048, PH = 3126;
+  const u = Hc.w * PW, hcx = (Hc.x + Hc.w / 2) * PW, top = Hc.y * PH;
+  const kL = (2.41 * u) / (L.w * PW); L.w *= kL; L.h *= kL;
+  L.x = (hcx - 0.18 * u) / PW - L.w / 2; L.y = (top + 0.189 * u) / PH;
+  const kT = (2.91 * u) / (T.w * PW); T.w *= kT; T.h *= kT;
+  T.x = (hcx - 0.143 * u) / PW - T.w / 2; T.y = (top + 2.443 * u) / PH; }
 await writeFile(`${OUT}/cover.json`, JSON.stringify(meta, null, 2));

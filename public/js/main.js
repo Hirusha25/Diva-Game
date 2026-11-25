@@ -304,87 +304,107 @@ $('btn-retry').addEventListener('click', startRun);
 // ------------------------------------------------- How to play (trilingual)
 // Sinhala and Tamil: please have them checked by a native speaker before launch.
 const HOWTO = {
-  en: { title: 'How to Play', go: "Let's Run!", ok: 'Got it', items: [
-    ['shirts', '3 white shirts', 'You start your run with 3 clean white shirts.'],
-    ['swipe', 'Swipe to move', 'Swipe left or right to change lanes. Swipe up to jump.'],
-    ['pack', 'Grab Diva packs', '+10 points, and every pack washes your shirt cleaner.'],
-    ['mud', 'Dodge mud & dust', 'Mud, sand and bus smoke make your shirt dirtier and dirtier.'],
-    ['ruined', 'Ruined shirt = 1 shirt lost', 'When the shirt is fully dirty you lose it and get a fresh one.'],
-    ['banana', 'Banana peels', 'Slip on one and you slow down for a moment.'],
-    ['bubble', 'Flower bubble', '+50, a speed boost and a spotless shirt!'],
-    ['bus', 'Never hit the bus', 'Running into a parked bus ends your run.'],
-    ['trophy', 'Score is what matters', 'Lose all 3 shirts and the run is over. Beat your best!'],
-  ] },
-  si: { title: 'ක්‍රීඩා කරන ආකාරය', go: 'දුවමු!', ok: 'හරි', items: [
-    ['shirts', 'සුදු ෂර්ට් 3ක්', 'ඔබ ධාවනය අරඹන්නේ පිරිසිදු සුදු ෂර්ට් 3ක් සමඟයි.'],
-    ['swipe', 'ස්වයිප් කර චලනය වන්න', 'මංතීරු මාරු කිරීමට වමට හෝ දකුණට ස්වයිප් කරන්න. පැනීමට ඉහළට ස්වයිප් කරන්න.'],
-    ['pack', 'Diva පැකට් එකතු කරන්න', 'ලකුණු +10ක් සහ සෑම පැකට්ටුවකින්ම ෂර්ට් එක තවත් පිරිසිදු වේ.'],
-    ['mud', 'මඩ සහ දූවිලි මගහරින්න', 'මඩ, වැලි සහ බස් දුම ඔබේ ෂර්ට් එක ක්‍රමයෙන් අපිරිසිදු කරයි.'],
-    ['ruined', 'නරක් වූ ෂර්ට් = ෂර්ට් 1ක් අහිමියි', 'ෂර්ට් එක සම්පූර්ණයෙන් අපිරිසිදු වූ විට එය අහිමි වී අලුත් එකක් ලැබේ.'],
-    ['banana', 'කෙසෙල් ලෙලි', 'එකක ලිස්සා ගියොත් මොහොතකට වේගය අඩු වේ.'],
-    ['bubble', 'මල් බුබුල', 'ලකුණු +50, වැඩි වේගය සහ පිරිසිදු ෂර්ට් එකක්!'],
-    ['bus', 'බසයේ හැප්පෙන්න එපා', 'නවතා ඇති බසයක හැප්පුණොත් ධාවනය අවසන් වේ.'],
-    ['trophy', 'වැදගත් වන්නේ ලකුණුයි', 'ෂර්ට් 3ම අහිමි වූ විට ධාවනය අවසන්. ඔබේ හොඳම ලකුණු ඉක්මවන්න!'],
-  ] },
-  ta: { title: 'விளையாடும் முறை', go: 'ஓடுவோம்!', ok: 'சரி', items: [
-    ['shirts', '3 வெள்ளை சட்டைகள்', 'உங்கள் ஓட்டத்தை 3 சுத்தமான வெள்ளை சட்டைகளுடன் தொடங்குவீர்கள்.'],
-    ['swipe', 'ஸ்வைப் செய்து நகருங்கள்', 'பாதையை மாற்ற இடது அல்லது வலது பக்கம் ஸ்வைப் செய்யுங்கள். குதிக்க மேலே ஸ்வைப் செய்யுங்கள்.'],
-    ['pack', 'Diva பொதிகளை சேகரியுங்கள்', '+10 புள்ளிகள், ஒவ்வொரு பொதியும் சட்டையை மேலும் சுத்தமாக்கும்.'],
-    ['mud', 'சேறு, தூசியை தவிருங்கள்', 'சேறு, மணல், பஸ் புகை உங்கள் சட்டையை படிப்படியாக அழுக்காக்கும்.'],
-    ['ruined', 'பாழான சட்டை = 1 சட்டை இழப்பு', 'சட்டை முழுவதும் அழுக்கானால் அதை இழந்து புதிய சட்டை கிடைக்கும்.'],
-    ['banana', 'வாழைப்பழத் தோல்', 'அதில் வழுக்கினால் சிறிது நேரம் வேகம் குறையும்.'],
-    ['bubble', 'பூ குமிழி', '+50 புள்ளிகள், கூடுதல் வேகம், சுத்தமான சட்டை!'],
-    ['bus', 'பஸ்ஸில் மோதாதீர்கள்', 'நிறுத்தப்பட்ட பஸ்ஸில் மோதினால் ஓட்டம் முடிந்துவிடும்.'],
-    ['trophy', 'புள்ளிகளே முக்கியம்', '3 சட்டைகளையும் இழந்தால் ஓட்டம் முடியும். உங்கள் சிறந்த புள்ளிகளை முறியடியுங்கள்!'],
-  ] },
+  en: { title: 'How to Play', next: 'Next', go: "Let's Run!", ok: 'Got it', skip: 'Skip', left: '2 Shirts Left!!',
+    tags: { mud: 'Dirtier', banana: 'Slower', smoke: 'Dusty', bus: 'Game over' },
+    steps: [
+      ['Swipe to <em>move</em>', 'Swipe left or right to change lanes. Swipe up to jump.'],
+      ['Grab <em>Diva</em> packs', '+10 points, and every pack washes your shirt cleaner. Flower bubble = +50!'],
+      ['Dodge the <em>mess</em>', 'Mud, sand and bus smoke dirty your shirt. Banana peels slow you down. Never hit the bus!'],
+      ['3 shirts, <em>1 goal</em>', 'A fully dirty shirt drops. Lose all 3 and the run ends. Score is what matters!'],
+    ] },
+  si: { title: 'ක්‍රීඩා කරන ආකාරය', next: 'ඊළඟ', go: 'දුවමු!', ok: 'හරි', skip: 'මඟ හරින්න', left: 'ෂර්ට් 2ක් ඉතිරියි!!',
+    tags: { mud: 'අපිරිසිදුයි', banana: 'වේගය අඩුයි', smoke: 'දූවිලි', bus: 'ක්‍රීඩාව අවසන්' },
+    steps: [
+      ['ස්වයිප් කර <em>චලනය</em> වන්න', 'මංතීරු මාරු කිරීමට වමට හෝ දකුණට ස්වයිප් කරන්න. පැනීමට ඉහළට ස්වයිප් කරන්න.'],
+      ['<em>Diva</em> පැකට් එකතු කරන්න', 'ලකුණු +10ක් සහ සෑම පැකට්ටුවකින්ම ෂර්ට් එක තවත් පිරිසිදු වේ. මල් බුබුල = +50!'],
+      ['<em>මඩ</em> මගහරින්න', 'මඩ, වැලි සහ බස් දුම ෂර්ට් එක අපිරිසිදු කරයි. කෙසෙල් ලෙලි වේගය අඩු කරයි. බසයේ හැප්පෙන්න එපා!'],
+      ['ෂර්ට් 3ක්, <em>එක් ඉලක්කයක්</em>', 'සම්පූර්ණයෙන් අපිරිසිදු වූ ෂර්ට් එක අහිමි වේ. ෂර්ට් 3ම අහිමි වූ විට ධාවනය අවසන්. වැදගත් වන්නේ ලකුණුයි!'],
+    ] },
+  ta: { title: 'விளையாடும் முறை', next: 'அடுத்து', go: 'ஓடுவோம்!', ok: 'சரி', skip: 'தவிர்', left: '2 சட்டைகள் மீதம்!!',
+    tags: { mud: 'அழுக்கு', banana: 'மெதுவாக', smoke: 'தூசி', bus: 'ஆட்டம் முடிந்தது' },
+    steps: [
+      ['ஸ்வைப் செய்து <em>நகருங்கள்</em>', 'பாதையை மாற்ற இடது அல்லது வலது பக்கம் ஸ்வைப் செய்யுங்கள். குதிக்க மேலே ஸ்வைப் செய்யுங்கள்.'],
+      ['<em>Diva</em> பொதிகளை சேகரியுங்கள்', '+10 புள்ளிகள், ஒவ்வொரு பொதியும் சட்டையை மேலும் சுத்தமாக்கும். பூ குமிழி = +50!'],
+      ['<em>சேறு</em> தவிருங்கள்', 'சேறு, மணல், பஸ் புகை சட்டையை அழுக்காக்கும். வாழைப்பழத் தோல் வேகத்தை குறைக்கும். பஸ்ஸில் மோதாதீர்கள்!'],
+      ['3 சட்டைகள், <em>1 இலக்கு</em>', 'முழுவதும் அழுக்கான சட்டை இழக்கப்படும். 3 சட்டைகளையும் இழந்தால் ஓட்டம் முடியும். புள்ளிகளே முக்கியம்!'],
+    ] },
 };
-const HT_ICON = {
-  shirts: '<img src="assets/ui/shirt-clean.webp" alt=""><img src="assets/ui/shirt-clean.webp" alt=""><img src="assets/ui/shirt-clean.webp" alt="">',
-  swipe: '<span class="ht-swipe"><b>&#8249;</b><i>&#9757;&#65039;</i><b>&#8250;</b></span>',
-  pack: '<img src="assets/textures/packs/pack-rose.webp" alt="">',
-  mud: '<img src="assets/textures/stains/mud-1.webp" alt="">',
-  ruined: '<img src="assets/ui/shirt-dirty.webp" alt=""><span class="ht-x">&#10005;</span>',
-  banana: '<img src="assets/textures/props2/banana.webp" alt="">',
-  bubble: '<img src="assets/ui/flower-bubble.webp" alt="">',
-  bus: '<img src="assets/textures/props2/bus.webp" alt=""><span class="ht-x">&#10005;</span>',
-  trophy: '<span class="ht-emoji">&#127942;</span>',
-};
-let howtoLang = (() => { try { return localStorage.getItem('diva.lang') || 'en'; } catch { return 'en'; } })();
-let howtoThen = null;   // what the main button does
+// Sinhala and Tamil: please have them checked by a native speaker before launch.
+const HT_LANGS = ['en', 'si', 'ta'], HT_DUR = 6000;
+let howtoLang = (() => { try { const l = localStorage.getItem('diva.lang'); return HT_LANGS.includes(l) ? l : 'en'; } catch { return 'en'; } })();
+let howtoThen = null;   // 'run' | 'cover' | 'pause': what happens when it closes
+let htI = 0, htAuto = true, htTimer = 0;
+const htSlides = [...document.querySelectorAll('#ht-deck .ht-slide')], htBars = [...document.querySelectorAll('#ht-bars i')];
+function htT() { return HOWTO[howtoLang] || HOWTO.en; }
+/** lay the cards out in 3D around the current one, restart the current scene and its story bar */
+function htLayout() {
+  const t = htT();
+  for (const el of htSlides) {
+    const off = +el.dataset.i - htI, a = Math.abs(off);
+    el.style.transform = `translateX(${off * 84}%) translateZ(${-a * 90}px) rotateY(${off * -38}deg) scale(${1 - Math.min(a, 2) * 0.1})`;
+    el.style.opacity = a > 1.5 ? '0' : String(1 - a * 0.25); el.style.zIndex = String(10 - a);
+    el.style.filter = a ? `brightness(${1 - a * 0.18}) saturate(.8)` : ''; el.style.pointerEvents = a ? 'none' : '';
+    el.setAttribute('aria-hidden', String(a > 0));
+    el.classList.remove('on'); if (!a) { void el.offsetWidth; el.classList.add('on'); }
+  }
+  htBars.forEach((b, i) => { b.className = i < htI ? 'done' : ''; if (i === htI) { void b.offsetWidth; b.className = 'now'; } });
+  $('ht-bars').classList.toggle('manual', !htAuto);
+  $('ht-bars').style.setProperty('--dur', `${HT_DUR}ms`);
+  const cap = document.querySelector('#screen-howto .ht-cap'); cap.lang = howtoLang;
+  $('ht-h').innerHTML = t.steps[htI][0]; $('ht-p').textContent = t.steps[htI][1];
+  cap.classList.remove('swap'); void cap.offsetWidth; cap.classList.add('swap');
+  const last = htI === htSlides.length - 1;
+  $('btn-howto-go').textContent = last ? (howtoThen === 'run' ? t.go : t.ok) : t.next;
+  $('btn-howto-skip').style.visibility = last ? 'hidden' : '';
+  clearTimeout(htTimer);
+  if (htAuto && !last) htTimer = setTimeout(() => htGo(htI + 1), HT_DUR);
+}
+function htGo(i) { htI = Math.max(0, Math.min(htSlides.length - 1, i)); htLayout(); }
 function renderHowto() {
-  const t = HOWTO[howtoLang] || HOWTO.en;
-  $('ht-title').textContent = t.title;
-  $('btn-howto-go').textContent = howtoThen === 'run' ? t.go : t.ok;
-  for (const b of document.querySelectorAll('.ht-lang [data-lang]')) b.setAttribute('aria-selected', String(b.dataset.lang === howtoLang));
-  const list = $('ht-list'); list.textContent = ''; list.lang = howtoLang;
-  t.items.forEach(([icon, head, text], i) => {
-    const row = document.createElement('div'); row.className = `ht-item ht-${icon}`; row.style.animationDelay = `${0.04 * i}s`;
-    const ic = document.createElement('div'); ic.className = 'ht-icon'; ic.innerHTML = HT_ICON[icon];
-    const tx = document.createElement('div'); tx.className = 'ht-text';
-    const h = document.createElement('h3'); h.textContent = head; const p = document.createElement('p'); p.textContent = text;
-    tx.append(h, p); row.append(ic, tx); list.append(row);
-  });
+  const t = htT();
+  $('ht-title').textContent = t.title; $('btn-howto-skip').textContent = t.skip; $('ht-left').textContent = t.left; $('ht-left').lang = howtoLang;
+  for (const el of document.querySelectorAll('#ht-deck [data-k]')) el.textContent = t.tags[el.dataset.k];
+  const lang = document.querySelector('#screen-howto .ht-lang'); lang.style.setProperty('--i', String(HT_LANGS.indexOf(howtoLang)));
+  for (const b of lang.querySelectorAll('[data-lang]')) b.setAttribute('aria-selected', String(b.dataset.lang === howtoLang));
+  $('ht-h').innerHTML = t.steps[htI][0]; $('ht-p').textContent = t.steps[htI][1];
+  const last = htI === htSlides.length - 1; $('btn-howto-go').textContent = last ? (howtoThen === 'run' ? t.go : t.ok) : t.next;
+  document.querySelector('#screen-howto .ht-cap').lang = howtoLang;
   requestAnimationFrame(() => hud.fitText($('ht-title')));
 }
 function showHowto(then) {
-  howtoThen = then; renderHowto();
-  $('screen-howto').classList.remove('hidden'); $('ht-list').scrollTop = 0;
+  howtoThen = then; htI = 0; htAuto = true; renderHowto();
+  $('screen-howto').classList.remove('hidden'); htLayout();
 }
-for (const b of document.querySelectorAll('.ht-lang [data-lang]')) b.addEventListener('click', () => {
+function closeHowto() {
+  clearTimeout(htTimer); $('screen-howto').classList.add('hidden');
+  for (const el of htSlides) el.classList.remove('on');
+  try { sessionStorage.setItem('diva.howto', '1'); } catch { /* private mode */ }
+  if (howtoThen === 'run') startRun();
+  else if (howtoThen === 'pause') hud.screens.pause.classList.remove('hidden');
+}
+for (const b of document.querySelectorAll('#screen-howto .ht-lang [data-lang]')) b.addEventListener('click', () => {
   howtoLang = b.dataset.lang; try { localStorage.setItem('diva.lang', howtoLang); } catch { /* private mode */ }
   sound.tap(); renderHowto();
 });
 $('btn-howto-go').addEventListener('click', () => {
-  sound.tap(); $('screen-howto').classList.add('hidden');
-  try { localStorage.setItem('diva.howto', '1'); } catch { /* private mode */ }
-  if (howtoThen === 'run') startRun();
-  else if (howtoThen === 'pause') hud.screens.pause.classList.remove('hidden');
+  sound.tap();
+  if (htI < htSlides.length - 1) { htAuto = false; htGo(htI + 1); } else closeHowto();
 });
+$('btn-howto-skip').addEventListener('click', () => { sound.tap(); closeHowto(); });
+// swipe the cards (the game's own swipe input is not running behind this screen)
+{ const deck = $('ht-deck'); let sx = null, sy = 0;
+  deck.addEventListener('pointerdown', (e) => { sx = e.clientX; sy = e.clientY; });
+  deck.addEventListener('pointerup', (e) => {
+    if (sx === null) return; const dx = e.clientX - sx, dy = e.clientY - sy; sx = null;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) { htAuto = false; sound.tap(); htGo(htI + (dx < 0 ? 1 : -1)); }
+  });
+  deck.addEventListener('pointercancel', () => { sx = null; });
+  for (const ev of ['touchstart', 'touchmove', 'touchend', 'pointerdown', 'pointerup']) $('screen-howto').addEventListener(ev, (e) => e.stopPropagation()); }
 $('btn-help').addEventListener('click', () => { sound.tap(); showHowto('cover'); });
 $('btn-pause-howto').addEventListener('click', () => { sound.tap(); hud.screens.pause.classList.add('hidden'); showHowto('pause'); });
-/** START: the first time on this device, show How to play first */
+/** START: show How to play once each time the game is opened */
 function beginRun() {
-  let seen = false; try { seen = localStorage.getItem('diva.howto') === '1'; } catch { /* private mode */ }
+  let seen = false; try { seen = sessionStorage.getItem('diva.howto') === '1'; } catch { /* private mode */ }
   if (seen) startRun(); else showHowto('run');
 }
 

@@ -139,8 +139,46 @@
         <button type="button" role="tab" data-lang="si" aria-selected="false">සිංහල</button>
         <button type="button" role="tab" data-lang="ta" aria-selected="false">தமிழ்</button>
       </div>
-      <div class="ht-list" id="ht-list"></div>
-      <button type="button" class="btn btn-start" id="btn-howto-go">Let's Run!</button>
+      <div class="ht-bars" id="ht-bars" aria-hidden="true"><i><b></b></i><i><b></b></i><i><b></b></i><i><b></b></i></div>
+      <div class="ht-deck" id="ht-deck">
+        <!-- 1: swipe to move -->
+        <div class="ht-slide" data-i="0"><div class="ht-scene sc-move">
+          <div class="mv-road"><i class="mv-line l"></i><i class="mv-line r"></i></div>
+          <img class="mv-pack" src="assets/textures/packs/pack-jasmine.webp" alt="">
+          <img class="mv-boy" src="assets/ui/runner-boy.webp" alt="">
+          <span class="mv-arrow l">&#8249;</span><span class="mv-arrow r">&#8250;</span><span class="mv-arrow u">&#8249;</span>
+          <span class="mv-hand">&#9757;&#65039;</span>
+        </div></div>
+        <!-- 2: grab Diva packs -->
+        <div class="ht-slide" data-i="1"><div class="ht-scene sc-fresh">
+          <div class="fr-halo"></div>
+          <div class="fr-shirt"><img src="assets/ui/shirt-clean.webp" alt=""><img class="fr-mud m1" src="assets/textures/stains/mud-1.webp" alt=""><img class="fr-mud m2" src="assets/textures/stains/mud-2.webp" alt=""><img class="fr-mud m3" src="assets/textures/stains/mud-1.webp" alt=""></div>
+          <img class="fr-pack p1" src="assets/textures/packs/pack-rose.webp" alt=""><img class="fr-pack p2" src="assets/textures/packs/pack-jasmine.webp" alt=""><img class="fr-pack p3" src="assets/textures/packs/pack-lotus.webp" alt="">
+          <span class="fr-pts t1">+10</span><span class="fr-pts t2">+10</span><span class="fr-pts t3">+10</span>
+          <span class="fr-star s1">&#10022;</span><span class="fr-star s2">&#10022;</span><span class="fr-star s3">&#10022;</span>
+          <div class="fr-bonus"><img src="assets/ui/flower-bubble.webp" alt=""><b>+50</b></div>
+        </div></div>
+        <!-- 3: dodge the mess -->
+        <div class="ht-slide" data-i="2"><div class="ht-scene sc-dodge">
+          <div class="dg-tile"><img src="assets/textures/stains/mud-1.webp" alt=""><span class="dg-tag y" data-k="mud"></span></div>
+          <div class="dg-tile"><img src="assets/textures/props2/banana.webp" alt=""><span class="dg-tag y" data-k="banana"></span></div>
+          <div class="dg-tile"><img src="assets/textures/props2/smoke.webp" alt=""><span class="dg-tag y" data-k="smoke"></span></div>
+          <div class="dg-tile bus"><img src="assets/textures/props2/bus.webp" alt=""><span class="dg-tag r" data-k="bus"></span></div>
+        </div></div>
+        <!-- 4: three shirts -->
+        <div class="ht-slide" data-i="3"><div class="ht-scene sc-shirts">
+          <div class="sh-lives"><img src="assets/ui/shirt-clean.webp" alt=""><img src="assets/ui/shirt-clean.webp" alt=""><img class="gone" src="assets/ui/shirt-clean.webp" alt=""></div>
+          <div class="sh-big"><img class="sh-img" src="assets/ui/shirt-clean.webp" alt=""><img class="sh-mud m1" src="assets/textures/stains/mud-1.webp" alt=""><img class="sh-mud m2" src="assets/textures/stains/mud-2.webp" alt=""><img class="sh-mud m3" src="assets/textures/stains/sand-1.webp" alt=""><img class="sh-mud m4" src="assets/textures/stains/mud-1.webp" alt=""></div>
+          <div class="sh-meter"><i></i></div>
+          <p class="sh-left" id="ht-left"></p>
+          <span class="sh-trophy">&#127942;</span>
+        </div></div>
+      </div>
+      <div class="ht-cap"><h3 id="ht-h"></h3><p id="ht-p"></p></div>
+      <div class="ht-foot">
+        <button type="button" class="ht-skip" id="btn-howto-skip">Skip</button>
+        <button type="button" class="btn btn-start" id="btn-howto-go">Next</button>
+      </div>
     </div>
   </div>
 
