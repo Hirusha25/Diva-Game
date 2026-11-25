@@ -39,7 +39,7 @@ if (inline) {
     'assets/textures/card-leaf-1.webp', 'assets/textures/card-leaf-2.webp', 'assets/textures/card-leaf-3.webp', 'assets/textures/card-flower-white.webp', 'assets/textures/card-flower-pink.webp',
     'assets/ui/cover-bg.webp', 'assets/ui/glow.webp', 'assets/ui/hcb.webp', 'assets/ui/logo.webp', 'assets/ui/tagline.webp', 'assets/ui/heroes.webp', 'assets/ui/ribbon.webp', 'assets/ui/start.webp',
     'assets/textures/packs/pack-gardenia.webp', 'assets/textures/packs/pack-jasmine.webp', 'assets/textures/packs/pack-lotus.webp', 'assets/textures/packs/pack-rose.webp', 'assets/textures/packs/pack-sepalika.webp', 'assets/textures/runner-clean.webp', 'assets/textures/runner-outfit.webp', 'assets/textures/props2/banana.webp',
-    'assets/textures/props2/bus.webp', 'assets/textures/props2/smoke.webp', 'assets/ui/flower-bubble.webp', 'assets/ui/shirt-clean.webp', 'assets/ui/shirt-dirty.webp', 'assets/ui/runner-run.webp',
+    'assets/textures/props2/bus.webp', 'assets/textures/props2/smoke.webp', 'assets/ui/flower-bubble.webp', 'assets/ui/shirt-clean.webp', 'assets/ui/shirt-dirty.webp', 'assets/ui/runner-run.webp', 'assets/ui/grass.webp',
     'assets/textures/stains/mud-1.webp', 'assets/textures/stains/mud-2.webp', 'assets/textures/stains/sand-1.webp',
     'assets/textures/busstop/poster.webp', 'assets/textures/busstop/sign.webp', 'assets/textures/busstop/roof.webp',
     'assets/ui/reg/panel.webp', 'assets/ui/reg/header.webp', 'assets/ui/reg/fieldName.webp', 'assets/ui/reg/fieldPhone.webp', 'assets/ui/reg/divider.webp', 'assets/ui/reg/male.webp', 'assets/ui/reg/female.webp', 'assets/ui/reg/card.webp', 'assets/ui/reg/banner.webp', 'assets/ui/reg/cardPlain.webp', 'assets/ui/reg/button.webp', 'assets/ui/reg/tick.webp', 'assets/ui/reg/submit.webp',

@@ -1,5 +1,5 @@
 /**
- * Renders the game's own runner, running towards the camera, into a
+ * Renders the game's own runner, running away from the camera (seen from behind, as in the game), into a
  * transparent 12-frame sprite strip for the How to Play screen.
  *   (serve public/ on :8080 first)  node scripts/build-runner-sprite.cjs
  */
@@ -20,7 +20,7 @@ const FW = 240, FH = 360, N = 12;
     const fill = new THREE.DirectionalLight(0xdfe9ff, 0.6); fill.position.set(4, 4, 6); sc.add(fill);
     sc.add(pl.group); pl.group.position.set(0, 0, 0); pl.body.rotation.set(0, 0, 0); pl.body.position.set(0, pl.body.position.y, 0);
     if (pl.shadow) pl.shadow.visible = false;
-    const cam = new THREE.PerspectiveCamera(30, ${FW} / ${FH}, 0.1, 50); cam.position.set(0.3, 1.0, -3.3); cam.lookAt(0, 0.8, 0);
+    const cam = new THREE.PerspectiveCamera(30, ${FW} / ${FH}, 0.1, 50); cam.position.set(0, 1.15, 3.3); cam.lookAt(0, 0.8, 0);   // from behind, as the game camera sees him
     window.__frame = (ph) => { pl._pose(ph, 0, 0); pl.body.position.x = 0; r.render(sc, cam); return r.domElement.toDataURL('image/png'); }; })()`);
   const frames = [];
   for (let i = 0; i < N; i++) frames.push(Buffer.from((await p.evaluate(`window.__frame(${(i / N) * Math.PI * 2})`)).split(',')[1], 'base64'));

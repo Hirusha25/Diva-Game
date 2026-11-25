@@ -478,10 +478,11 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 /* stains are clipped to the shirt's own shape, so none can stick out */
 .ht-dirt { position: absolute; inset: 0; -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
 .ht-slide { position: absolute; inset: 0 7%; transform-style: preserve-3d; transition: transform .6s cubic-bezier(.25,1.1,.35,1), opacity .45s, filter .45s; }
-.ht-scene { position: absolute; inset: 0; overflow: hidden; border-radius: 24px; background: linear-gradient(#7fcaff, #cfeeff 56%, #a8dca0 57%, #6fbf73);
+.ht-scene { position: absolute; inset: 0; overflow: hidden; border-radius: 24px; background: linear-gradient(#6cc0ff, #cfeeff 55%, #e6f6ff);
   box-shadow: inset 0 0 0 3px rgba(255,255,255,.9), 0 12px 24px rgba(13,58,143,.32); }
 .ht-scene::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; background: linear-gradient(155deg, rgba(255,255,255,.4), rgba(255,255,255,0) 38%); }
 .ht-scene img { position: absolute; display: block; pointer-events: none; -webkit-user-drag: none; }
+.ht-scene .ht-grass { left: 0; bottom: 0; width: 100%; height: 54%; object-fit: cover; object-position: 50% 0; }   /* real grass below the horizon */
 /* 1: swipe to move */
 .mv-road { position: absolute; left: -20%; right: -20%; top: 40%; bottom: 0; background: linear-gradient(#6a707b, #454a55); clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%); }
 .mv-line { position: absolute; top: 0; bottom: 0; left: calc(50% - 3px); width: 6px; transform-origin: 50% 0;
@@ -536,12 +537,12 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 .fr-star.s1 { left: 30%; top: 24%; } .fr-star.s2 { left: 66%; top: 36%; font-size: 30px; } .fr-star.s3 { left: 38%; top: 60%; font-size: 18px; }
 .ht-slide.on .fr-star { animation: fr-star 4.8s infinite; } .ht-slide.on .fr-star.s2 { animation-delay: .15s; } .ht-slide.on .fr-star.s3 { animation-delay: .3s; }
 @keyframes fr-star { 0%, 72% { opacity: 0; transform: scale(.2) rotate(0); } 77% { opacity: 1; transform: scale(1.3) rotate(45deg); } 86% { opacity: .9; transform: scale(1) rotate(90deg); } 92%, 100% { opacity: 0; transform: scale(.4) rotate(120deg); } }
-.fr-bonus { position: absolute; right: 5%; bottom: 5%; display: flex; align-items: center; gap: 4px; padding: 4px 12px 4px 4px; border-radius: 99px;
-  background: rgba(255,255,255,.94); box-shadow: 0 4px 10px rgba(13,58,143,.25); }
-.fr-bonus img { position: static; width: 38px; height: 38px; }
-.fr-bonus b { font: 400 20px/1 "Lilita One", sans-serif; color: var(--diva-logo-red); }
+.fr-bonus { position: absolute; left: 50%; bottom: 7%; display: flex; align-items: center; gap: 8px; padding: 6px 20px 6px 6px; border-radius: 99px; transform: translateX(-50%);
+  background: rgba(255,255,255,.96); border: 3px solid var(--diva-gold); box-shadow: 0 0 0 3px #fff, 0 6px 16px rgba(13,58,143,.3), 0 0 22px rgba(255,214,0,.55); }
+.fr-bonus img { position: static; width: 58px; height: 58px; }
+.fr-bonus b { font: 400 34px/1 "Lilita One", sans-serif; color: var(--diva-logo-red); -webkit-text-stroke: 2px #fff; paint-order: stroke fill; }
 .ht-slide.on .fr-bonus { animation: fr-bonus 1.6s ease-in-out infinite; }
-@keyframes fr-bonus { 50% { transform: translateY(-4px) scale(1.05); } }
+@keyframes fr-bonus { 50% { translate: 0 -4px; scale: 1.06; } }
 /* 3: dodge the mess: tiles flip in, the bus tile flashes */
 .sc-dodge { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 9px; padding: 9px; background: linear-gradient(#ffd9cf, #ffb7a6); }
 .dg-tile { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border-radius: 18px; background: rgba(255,255,255,.93);
@@ -594,7 +595,7 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 .sh-trophy { position: absolute; right: 6%; top: 4%; font-size: 30px; line-height: 1; filter: drop-shadow(0 3px 3px rgba(0,0,0,.25)); }
 .ht-slide.on .sh-trophy { animation: fr-bonus 1.8s ease-in-out infinite; }
 /* caption and buttons */
-.ht-cap { flex: none; min-height: 92px; padding: 12px 6px 2px; text-align: center; }
+.ht-cap { flex: none; min-height: 86px; padding: 10px 6px 0; text-align: center; }
 .ht-cap.swap { animation: ht-cap .35s ease-out; }
 @keyframes ht-cap { from { opacity: 0; transform: translateY(8px); } }
 .ht-cap h3 { margin: 0 0 5px; font: 400 27px/1.05 "Lilita One", "Trebuchet MS", sans-serif; color: var(--diva-blue-dark); }
@@ -602,10 +603,10 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 .ht-cap p { margin: 0; font: 700 14.5px/1.4 "Nunito", system-ui, sans-serif; color: #36507e; }
 .ht-cap:lang(si) h3, .ht-cap:lang(ta) h3 { font: 800 20px/1.25 "Noto Sans Sinhala", "Noto Sans Tamil", sans-serif; }
 .ht-cap:lang(si) p, .ht-cap:lang(ta) p { font: 600 13px/1.5 "Noto Sans Sinhala", "Noto Sans Tamil", sans-serif; }
-.ht-foot { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 6px; }
-.ht-skip { flex: none; padding: 10px 12px; border: 0; background: none; cursor: pointer; color: #36507e; font: 800 15px/1 "Nunito", "Noto Sans Sinhala", "Noto Sans Tamil", system-ui, sans-serif; }
-#screen-howto .ht-foot .btn-start { width: min(220px, 70%); margin: 0; font-size: 24px; }
-.ht-foot.last { justify-content: center; } .ht-foot.last .ht-skip { display: none; }
+.ht-foot { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 8px; }   /* button centred, Skip under it */
+.ht-skip { order: 2; flex: none; padding: 6px 16px 2px; border: 0; background: none; cursor: pointer; color: #36507e; font: 800 15px/1 "Nunito", "Noto Sans Sinhala", "Noto Sans Tamil", system-ui, sans-serif; }
+#screen-howto .ht-foot .btn-start { order: 1; width: min(280px, 92%); margin: 0 auto; }
+.ht-foot.last .ht-skip { visibility: hidden; }   /* keeps the same spacing on the last card */
 @media (max-height: 640px) { .ht-cap { min-height: 0; padding-top: 8px; } .ht-cap h3 { font-size: 22px; } .ht-cap p { font-size: 13px; } }
 @media (prefers-reduced-motion: reduce) { #screen-howto::before, .ht-slide.on * { animation-duration: .01s !important; animation-iteration-count: 1 !important; } }
 #screen-howto .subtitle { font-family: "Lilita One", "Noto Sans Sinhala", "Noto Sans Tamil", sans-serif; }
