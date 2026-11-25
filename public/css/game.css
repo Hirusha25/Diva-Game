@@ -687,6 +687,12 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 #screen-over[data-mood="winner"] .ov-gift { display: flex; }
 #screen-over[data-mood="winner"] :is(.ht-grass, .ov-runner, .ov-pack) { display: none; }
 #screen-over[data-mood="best"] :is(.ov-stamp, .ov-confetti) { display: block; }
+/* thank you: the kids with a Diva pack, shown whole; a blurred copy fills any side margins on short screens */
+.ov-thx, .ov-thx-bg { display: none; inset: 0; width: 100%; height: 100%; }
+.ov-thx { object-fit: contain; } .ov-thx-bg { object-fit: cover; filter: blur(12px) brightness(.95); transform: scale(1.1); }
+#screen-over[data-mood="thanks"] :is(.ov-thx, .ov-thx-bg) { display: block; }
+#screen-over[data-mood="thanks"] :is(.ht-grass, .ov-runner, .ov-pack) { display: none; }
+#screen-over[data-mood="thanks"] .ov-scene { height: auto; aspect-ratio: 1283 / 1226; max-height: min(42vh, 360px); }
 #screen-over[data-mood="best"] .ov-pack { display: none; }
 /* message, stats, rank, leaderboard, buttons */
 .ov-msg { margin: 12px 4px 10px; text-align: center; font: 700 14.5px/1.45 "Nunito", system-ui, sans-serif; color: #36507e; }
@@ -727,3 +733,12 @@ body:has(#hud:not(.hidden)) .sound-btn { top: calc(env(safe-area-inset-top, 0px)
 .countdown.go.beat .cd-ring { animation-name: cd-ring-go; }
 @keyframes cd-ring-go { 0% { opacity: 0; transform: scale(.3); } 25% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0; transform: scale(2.4); } }
 @media (prefers-reduced-motion: reduce) { .countdown.beat .cd-num, .countdown.beat .cd-ring { animation-duration: .01s; } }
+/* short phones: the end-of-run pictures shrink so Run Again and Home always fit */
+@media (max-height: 720px) {
+  #screen-over[data-mood="thanks"] .ov-scene, #screen-over[data-mood="winner"] .ov-scene { max-height: 30vh; }
+  #screen-over .card { padding-top: 40px; }
+  .ov-msg { margin: 8px 2px 6px; font-size: 13px; line-height: 1.35; }
+  .ov-stats .ps-stat { padding: 6px 4px 5px; }
+  .ov-stats .ps-stat img, .ov-stats .ps-star, .ov-cup-s { width: 24px; height: 24px; font-size: 20px; }
+}
+#screen-over[data-mood="winner"] .ov-scene { max-height: min(40vh, 360px); }
