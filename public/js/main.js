@@ -248,13 +248,19 @@ function startResendCountdown(seconds) {
   resendTimer = setInterval(tick, 1000);
 }
 
+// contact number: digits only, at most 10 (07XXXXXXXX); typing, pasting and autofill are all cleaned
+$('reg-phone').addEventListener('input', (e) => {
+  const el = e.target; let d = el.value.replace(/\D/g, '');
+  if (d.length > 10 && d.startsWith('94')) d = '0' + d.slice(2);   // +94 7X… pasted or autofilled
+  d = d.slice(0, 10); if (el.value !== d) el.value = d;
+});
 $('form-register').addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = $('reg-name').value.trim();
   const phone = $('reg-phone').value.trim();
   hud.error('reg-error', '');
   if (name.length < 2) { $('reg-name').focus(); return hud.error('reg-error', 'Please enter your full name'); }
-  if (phone.replace(/\D/g, '').length < 9) { $('reg-phone').focus(); return hud.error('reg-error', 'Please enter your contact number'); }
+  if (!/^0\d{9}$/.test(phone)) { $('reg-phone').focus(); return hud.error('reg-error', 'Please enter a 10-digit mobile number, e.g. 0771234567'); }
   if (!regChoice.gender) return hud.error('reg-error', 'Please select Male or Female');
   if (!checked('consent-game')) return hud.error('reg-error', 'Please tick the required consent');
   const btn = $('btn-register'); btn.disabled = true; sound.tap();
@@ -308,7 +314,7 @@ const HOWTO = {
   en: { title: 'How to Play', next: 'Next', go: "Let's Run!", ok: 'Got it', skip: 'Skip', left: '2 Shirts Left!!',
     tags: { mud: 'Dirtier', banana: 'Slower', smoke: 'Dusty', bus: 'Game over' },
     steps: [
-      ['Swipe to <em>move</em>', 'Swipe left or right to change lanes. Swipe up to jump.'],
+      ['Swipe or tap to <em>move</em>', 'Swipe left or right, or tap the left or right side, to change lanes. Swipe up or tap the middle to jump.'],
       ['Grab <em>Diva</em> packs', '+10 points, and every pack washes your shirt cleaner. Flower bubble = +50!'],
       ['Dodge the <em>mess</em>', 'Mud, sand and bus smoke dirty your shirt. Banana peels slow you down. Never hit the bus!'],
       ['3 shirts, <em>1 goal</em>', 'A fully dirty shirt drops. Lose all 3 and the run ends. Score is what matters!'],
@@ -316,7 +322,7 @@ const HOWTO = {
   si: { title: 'ක්‍රීඩා කරන ආකාරය', next: 'ඊළඟ', go: 'දුවමු!', ok: 'හරි', skip: 'මඟ හරින්න', left: 'ෂර්ට් 2ක් ඉතිරියි!!',
     tags: { mud: 'අපිරිසිදුයි', banana: 'වේගය අඩුයි', smoke: 'දූවිලි', bus: 'ක්‍රීඩාව අවසන්' },
     steps: [
-      ['ස්වයිප් කර <em>චලනය</em> වන්න', 'මංතීරු මාරු කිරීමට වමට හෝ දකුණට ස්වයිප් කරන්න. පැනීමට ඉහළට ස්වයිප් කරන්න.'],
+      ['ස්වයිප් කර <em>චලනය</em> වන්න', 'මංතීරු මාරු කිරීමට වමට හෝ දකුණට ස්වයිප් කරන්න, නැතහොත් තිරයේ වම් හෝ දකුණු පැත්ත තට්ටු කරන්න. පැනීමට ඉහළට ස්වයිප් කරන්න හෝ මැද තට්ටු කරන්න.'],
       ['<em>Diva</em> පැකට් එකතු කරන්න', 'ලකුණු +10ක් සහ සෑම පැකට්ටුවකින්ම ෂර්ට් එක තවත් පිරිසිදු වේ. මල් බුබුල = +50!'],
       ['<em>මඩ</em> මගහරින්න', 'මඩ, වැලි සහ බස් දුම ෂර්ට් එක අපිරිසිදු කරයි. කෙසෙල් ලෙලි වේගය අඩු කරයි. බසයේ හැප්පෙන්න එපා!'],
       ['ෂර්ට් 3ක්, <em>එක් ඉලක්කයක්</em>', 'සම්පූර්ණයෙන් අපිරිසිදු වූ ෂර්ට් එක අහිමි වේ. ෂර්ට් 3ම අහිමි වූ විට ධාවනය අවසන්. වැදගත් වන්නේ ලකුණුයි!'],
@@ -324,7 +330,7 @@ const HOWTO = {
   ta: { title: 'விளையாடும் முறை', next: 'அடுத்து', go: 'ஓடுவோம்!', ok: 'சரி', skip: 'தவிர்', left: '2 சட்டைகள் மீதம்!!',
     tags: { mud: 'அழுக்கு', banana: 'மெதுவாக', smoke: 'தூசி', bus: 'ஆட்டம் முடிந்தது' },
     steps: [
-      ['ஸ்வைப் செய்து <em>நகருங்கள்</em>', 'பாதையை மாற்ற இடது அல்லது வலது பக்கம் ஸ்வைப் செய்யுங்கள். குதிக்க மேலே ஸ்வைப் செய்யுங்கள்.'],
+      ['ஸ்வைப் செய்து <em>நகருங்கள்</em>', 'பாதையை மாற்ற இடது அல்லது வலது பக்கம் ஸ்வைப் செய்யுங்கள், அல்லது திரையின் இடது அல்லது வலது பக்கத்தைத் தட்டுங்கள். குதிக்க மேலே ஸ்வைப் செய்யுங்கள் அல்லது நடுவில் தட்டுங்கள்.'],
       ['<em>Diva</em> பொதிகளை சேகரியுங்கள்', '+10 புள்ளிகள், ஒவ்வொரு பொதியும் சட்டையை மேலும் சுத்தமாக்கும். பூ குமிழி = +50!'],
       ['<em>சேறு</em> தவிருங்கள்', 'சேறு, மணல், பஸ் புகை சட்டையை அழுக்காக்கும். வாழைப்பழத் தோல் வேகத்தை குறைக்கும். பஸ்ஸில் மோதாதீர்கள்!'],
       ['3 சட்டைகள், <em>1 இலக்கு</em>', 'முழுவதும் அழுக்கான சட்டை இழக்கப்படும். 3 சட்டைகளையும் இழந்தால் ஓட்டம் முடியும். புள்ளிகளே முக்கியம்!'],
@@ -332,7 +338,7 @@ const HOWTO = {
 };
 // Sinhala and Tamil: please have them checked by a native speaker before launch.
 const HT_LANGS = ['en', 'si', 'ta'], HT_DUR = 6000;
-let howtoLang = (() => { try { const l = localStorage.getItem('diva.lang'); return HT_LANGS.includes(l) ? l : 'en'; } catch { return 'en'; } })();
+let howtoLang = 'en';
 let howtoThen = null;   // 'run' | 'cover' | 'pause': what happens when it closes
 let htI = 0, htAuto = true, htTimer = 0;
 const htSlides = [...document.querySelectorAll('#ht-deck .ht-slide')], htBars = [...document.querySelectorAll('#ht-bars i')];
@@ -375,7 +381,7 @@ function renderHowto() {
   requestAnimationFrame(() => hud.fitText($('ht-title')));
 }
 function showHowto(then) {
-  howtoThen = then; htI = 0; htAuto = true; renderHowto();
+  howtoThen = then; htI = 0; htAuto = true; howtoLang = 'en'; renderHowto();   // always opens in English
   $('screen-howto').classList.remove('hidden'); htLayout();
 }
 function closeHowto() {
@@ -386,7 +392,7 @@ function closeHowto() {
   else if (howtoThen === 'pause') hud.screens.pause.classList.remove('hidden');
 }
 for (const b of document.querySelectorAll('#screen-howto .ht-lang [data-lang]')) b.addEventListener('click', () => {
-  howtoLang = b.dataset.lang; try { localStorage.setItem('diva.lang', howtoLang); } catch { /* private mode */ }
+  howtoLang = b.dataset.lang;
   sound.tap(); renderHowto();
 });
 $('btn-howto-go').addEventListener('click', () => {
@@ -425,17 +431,13 @@ function startRun() {
     setTimeout(() => { cover.classList.remove('leaving', 'reg'); cover.classList.add('hidden'); }, 320);
   }
   sound.unlock();
-  sound.start();
-  sound.startMusic();
-  state.mode = 'running';
+  state.mode = 'countdown';   // 3, 2, 1, GO! then the run starts (see runCountdown)
   state.speed = SPEED.start;
   state.distance = 0;
   state.score = 0;
   state.lives = LIVES;
   state.packs = 0; state.paused = false; state.boostT = 0; state.slipT = 0;
   state.invulnerable = 0;
-  state.runStart = performance.now();
-  showHint();
   player.reset();
   spawner.reset();
   spawner.start();
@@ -443,6 +445,26 @@ function startRun() {
   for (const [k, el] of Object.entries(hud.screens)) if (k !== 'cover') el.classList.add('hidden');
   hud.hud.classList.remove('hidden');
   hud.update(state);
+  runCountdown();
+}
+
+/** 3, 2, 1, GO! over the live road (the runner jogs on the spot), each with a beat. */
+let cdTimers = [];
+function runCountdown() {
+  cdTimers.forEach(clearTimeout); cdTimers = [];
+  const box = $('countdown'), num = $('cd-num');
+  const show = (txt, go) => {
+    num.textContent = txt; box.classList.toggle('go', go);
+    box.classList.remove('hidden', 'beat'); void box.offsetWidth; box.classList.add('beat');
+  };
+  [3, 2, 1].forEach((n, i) => cdTimers.push(setTimeout(() => { if (state.mode !== 'countdown') return; show(String(n), false); sound.countdown(n); }, i * 800)));
+  cdTimers.push(setTimeout(() => {
+    if (state.mode !== 'countdown') return;
+    show('GO!', true); sound.go();
+    state.mode = 'running'; state.runStart = performance.now(); clock.getDelta();
+    sound.startMusic(); showHint();
+  }, 2400));
+  cdTimers.push(setTimeout(() => box.classList.add('hidden'), 3150));
 }
 
 async function endRun() {
@@ -540,7 +562,7 @@ function frame() {
   cloudField.update(dt, step);
   if (state.mode !== 'running' && spawner) spawner.drift(dt, step);   // puddles, packs and buses stay put on the road
   player.update(dt, state.speed * (state.speedMul ?? 1));
-  player.group.visible = state.mode === 'running';
+  player.group.visible = state.mode === 'running' || state.mode === 'countdown';
 
   if (state.mode === 'running') {
     state.distance += step;

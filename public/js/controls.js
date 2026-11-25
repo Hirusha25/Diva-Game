@@ -1,6 +1,7 @@
 /**
  * Touch + keyboard input. Emits 'left' | 'right' | 'up' | 'tap'.
- * Swipes are recognised on pointer-up so a drag never fires twice.
+ * Swipes are recognised on pointer-up so a drag never fires twice. A tap also
+ * steers: the left or right third of the screen changes lane, the middle jumps.
  */
 export class Controls {
   constructor(element, onAction) {
@@ -17,7 +18,12 @@ export class Controls {
       const dx = e.clientX - this.start.x;
       const dy = e.clientY - this.start.y;
       this.start = null;
-      if (Math.abs(dx) < THRESHOLD && Math.abs(dy) < THRESHOLD) return onAction('tap');
+      if (Math.abs(dx) < THRESHOLD && Math.abs(dy) < THRESHOLD) {
+        // a tap works as well as a swipe: left third = left, right third = right, middle = jump
+        const r = element.getBoundingClientRect(), fx = (e.clientX - r.left) / (r.width || 1);
+        onAction(fx < 1 / 3 ? 'left' : fx > 2 / 3 ? 'right' : 'up', 'tap');
+        return onAction('tap');
+      }
       if (Math.abs(dx) > Math.abs(dy)) onAction(dx > 0 ? 'right' : 'left');
       else if (dy < 0) onAction('up');
     };

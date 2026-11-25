@@ -43,10 +43,11 @@
       <p class="sd-title">2 Shirts Left!!</p>
       <p class="sd-sub">Shirt ruined!</p>
     </div>
+    <div id="countdown" class="countdown hidden" aria-live="assertive"><div class="cd-ring"></div><span class="cd-num" id="cd-num">3</span></div>
     <div id="swipe-hint" class="swipe-hint hidden" aria-live="polite">
       <div class="sh-track"><span class="sh-arrow l">&#8249;</span><span class="sh-hand">&#9757;&#65039;</span><span class="sh-arrow r">&#8250;</span></div>
-      <div class="sh-text"><p class="sh-title">Swipe to move</p>
-      <p class="sh-sub">Swipe up to jump<span id="hint-keys"> &middot; or arrow keys</span></p></div>
+      <div class="sh-text"><p class="sh-title">Swipe or tap to move</p>
+      <p class="sh-sub">Swipe up or tap the middle to jump<span id="hint-keys"> &middot; or arrow keys</span></p></div>
     </div>
   </div>
   <div id="screen-pause" class="screen pause hidden">
@@ -90,7 +91,7 @@
         <img class="layer" data-layer="panel" alt="" draggable="false">
         <img class="layer" data-layer="header" alt="Register Now" draggable="false">
         <label class="layer field" data-layer="fieldName"><input id="reg-name" name="name" type="text" maxlength="40" autocomplete="name" placeholder="Full Name" aria-label="Full name" required></label>
-        <label class="layer field" data-layer="fieldPhone"><input id="reg-phone" name="phone" type="tel" inputmode="numeric" maxlength="13" autocomplete="tel" placeholder="Contact Number" aria-label="Contact number" required></label>
+        <label class="layer field" data-layer="fieldPhone"><input id="reg-phone" name="phone" type="tel" inputmode="numeric" pattern="[0-9]{10}" autocomplete="tel-national" placeholder="Contact Number (07XXXXXXXX)" aria-label="Contact number" required></label>
         <img class="layer" data-layer="divider" alt="Select Gender" draggable="false">
         <div class="gender-group" role="radiogroup" aria-label="Select gender">
           <button type="button" class="layer tap gender" data-layer="male" data-gender="male" role="radio" aria-checked="false" aria-label="Male"><span class="dot"></span></button>

@@ -122,6 +122,21 @@ export class Sound {
     this._noise(t, 0.5, { gain: 0.12, type: 'highpass', freq: 3000, to: 9000 });
   }
 
+  /** Countdown 3-2-1: a round "ding" (a little higher each beat); GO: a bright rising chord with a sparkle. */
+  countdown(n, at) {
+    if (!this.ready) return; const t = this._t(at);
+    const base = { 3: 67, 2: 69, 1: 71 }[n] ?? 67;
+    this._tone(midi(base + 12), t, 0.32, { type: 'triangle', gain: 0.34 });
+    this._tone(midi(base + 24), t, 0.18, { type: 'sine', gain: 0.1 });
+    this._tone(midi(base), t, 0.2, { type: 'sine', gain: 0.18 });
+  }
+  go(at) {
+    if (!this.ready) return; const t = this._t(at);
+    [72, 76, 79, 84].forEach((n, i) => this._tone(midi(n + 12), t + i * 0.045, 0.55, { type: 'triangle', gain: 0.26 }));
+    this._tone(midi(60), t, 0.5, { type: 'sine', gain: 0.3, to: midi(72) });
+    this._noise(t + 0.05, 0.45, { gain: 0.1, type: 'highpass', freq: 4000, to: 10000 });
+  }
+
   /** Diva pack picked up: a bright chime that climbs while you keep collecting. */
   pickup(at) {
     if (!this.ready) return; const t = this._t(at);
