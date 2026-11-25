@@ -214,8 +214,8 @@ img.layer { width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
 /* the registration design shows hcb, logo and tagline smaller and higher (sizes keep each layer's aspect) */
 .stage [data-layer="hcb"], .stage [data-layer="logo"], .stage [data-layer="tagline"] { transition: left .3s, top .3s, width .3s, height .3s; }
 .cover.reg [data-layer="hcb"] { left: 43.8% !important; top: 3% !important; width: 12.5% !important; height: 4.88% !important; }
-.cover.reg [data-layer="logo"] { left: 37.8% !important; top: 9.08% !important; width: 24.4% !important; height: 14.8% !important; }   /* 2026 logo, its box centred, even 1.2 % gaps to hcb and the tagline */
-.cover.reg [data-layer="tagline"] { left: 35.2% !important; top: 25.08% !important; width: 34.3% !important; height: 6.56% !important; }
+.cover.reg [data-layer="logo"] { left: 37.8% !important; top: 8.84% !important; width: 24.4% !important; height: 14.8% !important; }   /* 2026 logo, its box centred, even gaps to hcb and the tagline */
+.cover.reg [data-layer="tagline"] { left: 35.2% !important; top: 24.6% !important; width: 34.3% !important; height: 6.56% !important; }
 .cover.reg [data-layer="heroes"], .cover.reg #btn-start { opacity: 0; pointer-events: none; transition: opacity .25s; }
 .cover.reg .reg .layer { animation: reg-in .35s ease-out backwards; }
 /* SUBMIT pulses and shines like START (after its entrance) */
@@ -282,7 +282,7 @@ img.layer { width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
    65.51vh wide), so nothing jumps when the cover replaces this screen */
 .screen.loading .load-hcb { position: relative; flex: none; width: 11.31vh; height: auto; margin: 0; }
 .screen.loading .load-glow { position: absolute; left: 50%; top: -1vh; width: 35.07vh; height: 20.31vh; transform: translateX(-50%); pointer-events: none; mix-blend-mode: screen; animation: glow 6s ease-in-out infinite; }
-.screen.loading .load-logo { position: relative; flex: none; width: 17.59vh; margin: 1.3vh 0 0; filter: drop-shadow(0 6px 10px rgba(0,0,0,.25)); }
+.screen.loading .load-logo { position: relative; flex: none; width: 17.59vh; margin: 0.9vh 0 0; filter: drop-shadow(0 6px 10px rgba(0,0,0,.25)); }
 .load-heroes { display: block; margin-top: auto; width: min(82vw, 400px); height: auto; min-height: 0; flex: 0 1 auto; object-fit: contain;
   max-height: 52vh; filter: drop-shadow(0 8px 14px rgba(0,0,0,.25)); }
 /* loading bar in the registration screen's style: glassy pill with the cyan
