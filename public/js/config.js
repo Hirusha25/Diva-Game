@@ -14,7 +14,7 @@ export const SHELTER_OFFSET_X = 4.98; // shelter origin → its kerb edge lands 
 export const CHUNK_LENGTH = 60;
 export const CHUNK_COUNT = 4;
 
-export const SPEED = { lobby: 4, start: 30, max: 44, ramp: 0.4 };   // faster start, quicker ramp, higher top speed
+export const SPEED = { lobby: 4, start: 24, max: 42, ramp: 0.42 };   // faster start, quicker ramp, higher top speed
 export const LANE_SWITCH_SPEED = 15;  // metres/second sideways (keeps up with the higher run speed)
 export const JUMP = { height: 1.5, duration: 0.55 };
 

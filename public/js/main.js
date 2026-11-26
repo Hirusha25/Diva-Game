@@ -462,6 +462,7 @@ function runCountdown() {
     if (state.mode !== 'countdown') return;
     show('GO!', true); sound.go();
     state.mode = 'running'; state.runStart = performance.now(); clock.getDelta();
+    state.speed = SPEED.start; state.speedMul = 1;   // full start speed on GO! (the countdown frames ran at the lobby jog)
     sound.startMusic(); showHint();
   }, 2400));
   cdTimers.push(setTimeout(() => box.classList.add('hidden'), 3150));
